@@ -1,10 +1,12 @@
 Command-Line Interface for the DAISY Pipeline 2 (Golang)
 =======================================================
-
+[![Build Status](https://travis-ci.org/daisy-consortium/pipeline-cli-go.png?branch=master)](https://travis-ci.org/daisy-consortium/pipeline-cli-go)
 
 How to build
 ------------
 
+        go get github.com/capitancambio/go-subcommand
+        go get github.com/daisy-consortium/pipeline-clientlib-go
         go build github.com/daisy-consortium/pipeline-cli-go	
 
 Usage
