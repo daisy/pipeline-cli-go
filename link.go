@@ -14,14 +14,15 @@ type PipelineApi interface {
 //Maintains some information about the pipeline client
 type PipelineLink struct {
 	pipeline       PipelineApi //Allows access to the pipeline fwk
-	Version        string      //Framework version
-	Authentication bool        //Framework authentication
-	Mode           string      //Framework mode
+	config         Config
+	Version        string //Framework version
+	Authentication bool   //Framework authentication
+	Mode           string //Framework mode
 }
 
-func NewLink() (pLink *PipelineLink, err error) {
+func NewLink(conf Config) (pLink *PipelineLink, err error) {
 	pLink = &PipelineLink{
-		pipeline: *pipeline.NewPipeline("http://localhost:8181/ws/"),
+		pipeline: *pipeline.NewPipeline(conf.Url()),
 	}
 	//assure that the pipeline is up
 	err = bringUp(pLink)
