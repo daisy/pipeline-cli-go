@@ -1,6 +1,8 @@
 #test builds
 *.test
 
+#coverage files
+coverage.*
 #vim files
 *.sw?
 
