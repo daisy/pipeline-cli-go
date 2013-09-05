@@ -1,0 +1,8 @@
+#test builds
+*.test
+
+#vim files
+*.sw?
+
+#ctags files
+tags
