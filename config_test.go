@@ -10,7 +10,7 @@ var (
 #WS CONFIGURATION
 host: http://localhost
 port: 8181
-path: ws
+ws_path: ws
 ws_timeup: 25
 #DP2 launch config 
 exec_line_nix: unix
@@ -29,7 +29,7 @@ debug: true
 		"url":           "http://localhost:8181/ws/",
 		"host":          "http://localhost",
 		"port":          8181,
-		"path":          "ws",
+		"ws_path":          "ws",
 		"ws_timeup":     25,
 		"unix":          "unix",
 		"windows":       "windows",
@@ -62,7 +62,7 @@ func TestConfigCreation(t *testing.T) {
 		t.Errorf(T_STRING, test, EXP[test], res)
 	}
 
-	test = "path"
+	test = "ws_path"
 	res = cnf.Path
 	if res != EXP[test] {
 		t.Errorf(T_STRING, test, EXP[test], res)

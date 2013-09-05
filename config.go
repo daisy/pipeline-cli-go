@@ -10,7 +10,7 @@ import (
 const (
 	HOST         = "host"
 	PORT         = "port"
-	PATH         = "path"
+	PATH         = "ws_path"
 	WSTIMEUP     = "ws_timeup"
 	EXECLINENIX  = "exec_line_nix"
 	EXCLINEWIN   = "exec_line_win"
