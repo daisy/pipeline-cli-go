@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+        "log"
 )
 
 const (
@@ -12,6 +13,7 @@ const (
 )
 
 func main() {
+        log.SetFlags(log.Lshortfile)
 	// proper error handlign missing
 
 	cnf, err := loadConfig()
