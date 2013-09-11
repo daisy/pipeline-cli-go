@@ -36,15 +36,26 @@ func NewCli(name, outputFlag string, link PipelineLink) (cli *Cli, err error) {
 
 func Helper(cli *Cli, link PipelineLink) func(string, ...string) {
 	return func(help string, args ...string) {
+                printHelp(*cli,args...)
+	}
+}
+
+func printHelp(cli Cli,  args ...string){
 		scripts := cli.Scripts
-		fmt.Printf("Usage %v [GLOBAL_OPTS] command [COMMAND_OPTIONS]\n", cli.Name)
 		if len(args) == 0 {
-			fmt.Printf("\nscripts\n")
-			fmt.Printf("_______\n\n")
+		        fmt.Printf("Usage %v [GLOBAL_OPTIONS] command [COMMAND_OPTIONS]\n", cli.Name)
+                        fmt.Printf("\nScript commands:\n\n")
+                        maxLen:=getLongestName(scripts)
 			for _, s := range scripts {
-				fmt.Printf("%v\t\t%v\n", s.Name, s.Description)
+				fmt.Printf("%v%v%v\n", s.Name,strings.Repeat(" ",maxLen-len(s.Name)+4), s.Description)
 			}
+
+                        fmt.Printf("\nGeneral commands:\n\n")
+
+                        fmt.Printf("List of global options:\t\t\t%v help -g\n",cli.Name)
+                        fmt.Printf("Detailed help for a single command:\t%v help COMMAND\n",cli.Name)
 		} else {
+		        fmt.Printf("Usage %v [GLOBAL_OPTIONS] %v [COMMAND_OPTIONS]\n", args[0],cli.Name)
 			c := cli.Parser.Commands[args[0]]
 			fmt.Printf("%v\t\t%v\n", c.Name, c.Description)
 			fmt.Printf("\n")
@@ -52,8 +63,19 @@ func Helper(cli *Cli, link PipelineLink) func(string, ...string) {
 				fmt.Printf("%v\n", flag)
 			}
 		}
-	}
 }
+
+
+func getLongestName(scripts []*JobRequestCommand) int{
+        max := -1
+        for _, s := range scripts {
+                if max<len(s.Name){
+                        max=len(s.Name)
+                }
+        }
+        return max
+}
+
 func (c *Cli) AddScripts(scripts []pipeline.Script) error {
 	for _, s := range scripts {
 		if err := c.addScript(s); err != nil {
@@ -144,6 +166,7 @@ func scriptToCommand(cli *Cli, script pipeline.Script) (jobRequestCommand *JobRe
 	}
 
 	for _, option := range script.Options {
+                //desc:=option.Desc+
 		command.AddOption("x-"+option.Name, "", option.Desc, optionFunc(option, jobRequest)).Must(option.Required)
 	}
 	return &JobRequestCommand{*command, jobRequest}, nil
