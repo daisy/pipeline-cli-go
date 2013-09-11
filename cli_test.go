@@ -111,7 +111,7 @@ func TestScriptToCommand(t *testing.T) {
         }
 }
 func TestCliRequiredOptions(t *testing.T) {
-        cli,err:=NewCli("testprog","[]",PipelineLink{})
+        cli,err:=NewCli("testprog","[]",PipelineLink{pipeline: PipelineTest{false}})
         if(err!=nil){
                 t.Error("Unexpected error")
         }
@@ -127,7 +127,7 @@ func TestCliRequiredOptions(t *testing.T) {
         }
 }
 func TestCliNonRequiredOptions(t *testing.T) {
-        cli,err:=NewCli("testprog","[]",PipelineLink{})
+        cli,err:=NewCli("testprog","[]",PipelineLink{pipeline: PipelineTest{false}})
         if(err!=nil){
                 t.Error("Unexpected error")
         }

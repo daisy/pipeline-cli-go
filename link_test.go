@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
-	"net/url"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
+	"net/url"
 	"testing"
 )
 
@@ -53,6 +53,14 @@ func (p PipelineTest) Script(id string) (script pipeline.Script, err error) {
 	}
 	return SCRIPT, nil
 
+}
+func (p PipelineTest) ScriptUrl(id string) string {
+	return "test" //TODO?
+
+}
+
+func (p PipelineTest) JobRequest(newJob pipeline.JobRequest) (job pipeline.Job, err error) {
+	return
 }
 func TestBringUp(t *testing.T) {
 	link := PipelineLink{pipeline: PipelineTest{false}}
@@ -119,12 +127,13 @@ func TestScriptsFail(t *testing.T) {
 }
 
 func TestJobRequestToPipeline(t *testing.T) {
-	req, err := jobRequestToPipeline(JOB_REQUEST)
+	link := PipelineLink{pipeline: PipelineTest{false}}
+        req, err := jobRequestToPipeline(JOB_REQUEST,link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	if req.Script.Id != SCRIPT.Id {
-		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", SCRIPT.Id, req.Script.Id)
+	if req.Script.Href != SCRIPT.Id {
+		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", SCRIPT.Id, req.Script.Href)
 	}
 	if len(req.Inputs) != 2 {
 		t.Errorf("Bad input list len %v", len(req.Inputs))

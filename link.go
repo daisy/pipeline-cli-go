@@ -9,6 +9,8 @@ type PipelineApi interface {
 	Alive() (alive pipeline.Alive, err error)
 	Scripts() (scripts pipeline.Scripts, err error)
 	Script(id string) (script pipeline.Script, err error)
+        JobRequest(newJob pipeline.JobRequest) (job pipeline.Job , err error)
+        ScriptUrl(id string) (string)
 }
 
 //Maintains some information about the pipeline client
@@ -64,12 +66,18 @@ func (p PipelineLink) Scripts() (scripts []pipeline.Script, err error) {
 }
 
 func (p PipelineLink) Execute(job JobRequest) error {
-	return nil
+        req,err:=jobRequestToPipeline(job,p)
+        if err!=nil{
+                return err
+        }
+        _,err=p.pipeline.JobRequest(req)
+	return err
 }
 
-func jobRequestToPipeline(req JobRequest) (pReq pipeline.JobRequest, err error) {
+func jobRequestToPipeline(req JobRequest,p PipelineLink) (pReq pipeline.JobRequest,err error) {
+        href:=p.pipeline.ScriptUrl(req.Script)
 	pReq = pipeline.JobRequest{
-		Script: pipeline.Script{Id: req.Script},
+		Script: pipeline.Script{Href: href},
 	}
 	for name, values := range req.Inputs {
 		input := pipeline.Input{Name: name}
