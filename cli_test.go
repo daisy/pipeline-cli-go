@@ -111,7 +111,7 @@ func TestScriptToCommand(t *testing.T) {
         }
 }
 func TestCliRequiredOptions(t *testing.T) {
-        cli,err:=NewCli("testprog","[]",PipelineLink{pipeline: PipelineTest{false}})
+        cli,err:=NewCli("testprog","[]",PipelineLink{pipeline: &PipelineTest{false,0}})
         if(err!=nil){
                 t.Error("Unexpected error")
         }
@@ -127,7 +127,7 @@ func TestCliRequiredOptions(t *testing.T) {
         }
 }
 func TestCliNonRequiredOptions(t *testing.T) {
-        cli,err:=NewCli("testprog","[]",PipelineLink{pipeline: PipelineTest{false}})
+        cli,err:=NewCli("testprog","[]",PipelineLink{pipeline: &PipelineTest{false,0}})
         if(err!=nil){
                 t.Error("Unexpected error")
         }
@@ -143,9 +143,9 @@ type MockExecutor struct{
         Visited bool
 }
 
-func (m *MockExecutor) Execute(job JobRequest) error{
+func (m *MockExecutor) Execute(job JobRequest) (ch chan string,err error){
         m.Visited=true
-        return nil
+        return 
 }
 
 func TestCliExecuteRequest(t *testing.T) {

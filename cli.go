@@ -19,7 +19,7 @@ type Cli struct {
 }
 
 type JobExecutor interface {
-	Execute(JobRequest) error
+	Execute(JobRequest) (chan string,error)
 }
 
 func NewCli(name, outputFlag string, link PipelineLink) (cli *Cli, err error) {
@@ -157,7 +157,8 @@ func scriptToCommand(cli *Cli, script pipeline.Script) (jobRequestCommand *JobRe
 	jobRequest.Script = script.Id
 	command := cli.Parser.AddCommand(script.Id, script.Description, func(string, ...string) {
 		cli.execFunction = func() error {
-			return cli.Executor.Execute(*jobRequest)
+                        _,err:=cli.Executor.Execute(*jobRequest)
+			return err
 		}
 	})
 

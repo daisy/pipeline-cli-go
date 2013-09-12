@@ -5,6 +5,7 @@ import (
 	"github.com/daisy-consortium/pipeline-clientlib-go"
 	"net/url"
 	"testing"
+        "fmt"
 )
 
 var (
@@ -24,13 +25,36 @@ var (
 			},
 		},
 	}
+	JOB_1 = pipeline.Job{
+		Status: "RUNNING",
+		Messages: []pipeline.Message{
+			pipeline.Message{
+				Sequence: 1,
+				Content:  "Message 1",
+			},
+			pipeline.Message{
+				Sequence: 2,
+				Content:  "Message 2",
+			},
+		},
+	}
+	JOB_2 = pipeline.Job{
+		Status: "DONE",
+		Messages: []pipeline.Message{
+			pipeline.Message{
+				Sequence: 3,
+				Content:  "Message 3",
+			},
+		},
+	}
 )
 
 type PipelineTest struct {
-	fail bool
+	fail  bool
+	count int
 }
 
-func (p PipelineTest) Alive() (alive pipeline.Alive, err error) {
+func (p *PipelineTest) Alive() (alive pipeline.Alive, err error) {
 	if p.fail {
 		return alive, errors.New("Error")
 	}
@@ -40,30 +64,42 @@ func (p PipelineTest) Alive() (alive pipeline.Alive, err error) {
 	return
 }
 
-func (p PipelineTest) Scripts() (scripts pipeline.Scripts, err error) {
+func (p *PipelineTest) Scripts() (scripts pipeline.Scripts, err error) {
 	if p.fail {
 		return scripts, errors.New("Error")
 	}
 	return pipeline.Scripts{Href: "test", Scripts: []pipeline.Script{pipeline.Script{Id: "test"}, pipeline.Script{Id: "test"}}}, err
 }
 
-func (p PipelineTest) Script(id string) (script pipeline.Script, err error) {
+func (p *PipelineTest) Script(id string) (script pipeline.Script, err error) {
 	if p.fail {
 		return script, errors.New("Error")
 	}
 	return SCRIPT, nil
 
 }
-func (p PipelineTest) ScriptUrl(id string) string {
-	return "test" //TODO?
-
+func (p *PipelineTest) ScriptUrl(id string) string {
+	return "test"
 }
 
-func (p PipelineTest) JobRequest(newJob pipeline.JobRequest) (job pipeline.Job, err error) {
+func (p *PipelineTest) Job(id string, msgSeq int) (job pipeline.Job, err error) {
+	if p.fail {
+		return job, errors.New("Error")
+	}
+	if p.count == 0 {
+		p.count++
+		return JOB_1, nil
+	} else {
+		p.count++
+		return JOB_2, nil
+	}
+}
+
+func (p *PipelineTest) JobRequest(newJob pipeline.JobRequest) (job pipeline.Job, err error) {
 	return
 }
 func TestBringUp(t *testing.T) {
-	link := PipelineLink{pipeline: PipelineTest{false}}
+	link := PipelineLink{pipeline: &PipelineTest{false, 0}}
 	err := bringUp(&link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -82,7 +118,7 @@ func TestBringUp(t *testing.T) {
 }
 
 func TestBringUpFail(t *testing.T) {
-	link := PipelineLink{pipeline: PipelineTest{true}}
+	link := PipelineLink{pipeline: &PipelineTest{true, 0}}
 	err := bringUp(&link)
 	if err == nil {
 		t.Error("Expected error is nil")
@@ -90,7 +126,7 @@ func TestBringUpFail(t *testing.T) {
 }
 
 func TestScripts(t *testing.T) {
-	link := PipelineLink{pipeline: PipelineTest{false}}
+	link := PipelineLink{pipeline: &PipelineTest{false, 0}}
 	list, err := link.Scripts()
 	if err != nil {
 		t.Error("Unexpected error")
@@ -119,7 +155,7 @@ func TestScripts(t *testing.T) {
 }
 
 func TestScriptsFail(t *testing.T) {
-	link := PipelineLink{pipeline: PipelineTest{true}}
+	link := PipelineLink{pipeline: &PipelineTest{true, 0}}
 	_, err := link.Scripts()
 	if err == nil {
 		t.Error("Expected error is nil")
@@ -127,8 +163,8 @@ func TestScriptsFail(t *testing.T) {
 }
 
 func TestJobRequestToPipeline(t *testing.T) {
-	link := PipelineLink{pipeline: PipelineTest{false}}
-        req, err := jobRequestToPipeline(JOB_REQUEST,link)
+	link := PipelineLink{pipeline: &PipelineTest{false, 0}}
+	req, err := jobRequestToPipeline(JOB_REQUEST, link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -179,4 +215,49 @@ func TestJobRequestToPipeline(t *testing.T) {
 	if req.Options[1].Value != JOB_REQUEST.Options[req.Options[1].Name][0] {
 		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", JOB_REQUEST.Options[req.Options[0].Name][1], req.Options[0].Items[1].Value)
 	}
+}
+
+func TestAsyncMessagesErr(t *testing.T) {
+	link := PipelineLink{pipeline: &PipelineTest{true, 0}}
+	chMsg := make(chan string)
+	chErr := make(chan error)
+	go getAsyncMessages(link, "jobId", chMsg, chErr)
+	for {
+		select {
+		case <-chMsg:
+			t.Error("Expected error in async messages")
+		case <-chErr:
+			return
+		}
+	}
+
+}
+
+func TestAsyncMessages(t *testing.T) {
+	link := PipelineLink{pipeline: &PipelineTest{false, 0}}
+	chMsg := make(chan string)
+	chErr := make(chan error)
+        var msgs []string
+	go getAsyncMessages(link, "jobId", chMsg, chErr)
+        for {
+                select {
+                case msg,ok:= <-chMsg:
+                        if(!ok){
+                                return
+                        }else{
+                                msgs=append(msgs,msg)
+                        }
+                case <-chErr:
+                        t.Error("Unexpected error in select")
+                }
+        }
+        if len(msgs)!=3{
+                t.Errorf("Wrong message list size %v",len(msgs))
+        }
+
+        for i:=1;i!=3;i++{
+                if msgs[i-1]!=fmt.Sprintf("Message %v",i){
+                        t.Errorf("Wrong message %v",msgs[i-1])
+                }
+        }
 }
