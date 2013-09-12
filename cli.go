@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+        "log"
 )
 
 type Cli struct {
@@ -128,6 +129,7 @@ type JobRequestCommand struct {
 //
 func pathToUri(paths string, separator string, basePath string) (urls []url.URL, err error) {
 	var urlBase *url.URL
+
 	if basePath != "" {
 		urlBase, err = url.Parse("file:" + basePath)
 	}
@@ -163,6 +165,7 @@ func scriptToCommand(cli *Cli, script pipeline.Script) (jobRequestCommand *JobRe
 			return err
 		}
 	})
+        log.Printf("cnf: %+v\n",cli.Config)
 	basePath := getBasePath(cli.Config.Local)
 	for _, input := range script.Inputs {
 		command.AddOption("i-"+input.Name, "", input.Desc, inputFunc(input, jobRequest, basePath)).Must(true)
@@ -208,7 +211,7 @@ func getBasePath(isLocal bool) string {
 		if err != nil {
                         panic("Error while getting current directory:"+err.Error())
 		}
-		return base
+		return base+"/"
 	} else {
 		return ""
 	}
