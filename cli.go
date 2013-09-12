@@ -5,21 +5,23 @@ import (
 	"github.com/capitancambio/go-subcommand"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 )
 
 type Cli struct {
-	Name       string
-	OutputFlag string
-	Parser     *subcommand.Parser
-	Executor   JobExecutor
-	Scripts    []*JobRequestCommand
-	execFunction  func() error
+	Name         string
+	OutputFlag   string
+	Parser       *subcommand.Parser
+	Executor     JobExecutor
+	Scripts      []*JobRequestCommand
+	Config       Config
+	execFunction func() error
 }
 
 type JobExecutor interface {
-	Execute(JobRequest) (chan string,error)
+	Execute(JobRequest) (chan string, error)
 }
 
 func NewCli(name, outputFlag string, link PipelineLink) (cli *Cli, err error) {
@@ -27,6 +29,7 @@ func NewCli(name, outputFlag string, link PipelineLink) (cli *Cli, err error) {
 		Name:       name,
 		OutputFlag: outputFlag,
 		Parser:     subcommand.NewParser(name),
+		Config:     link.config,
 		Executor:   link,
 	}
 	cli.Parser.SetHelp("help", "Help description", Helper(cli, link))
@@ -36,44 +39,43 @@ func NewCli(name, outputFlag string, link PipelineLink) (cli *Cli, err error) {
 
 func Helper(cli *Cli, link PipelineLink) func(string, ...string) {
 	return func(help string, args ...string) {
-                printHelp(*cli,args...)
+		printHelp(*cli, args...)
 	}
 }
 
-func printHelp(cli Cli,  args ...string){
-		scripts := cli.Scripts
-		if len(args) == 0 {
-		        fmt.Printf("Usage %v [GLOBAL_OPTIONS] command [COMMAND_OPTIONS]\n", cli.Name)
-                        fmt.Printf("\nScript commands:\n\n")
-                        maxLen:=getLongestName(scripts)
-			for _, s := range scripts {
-				fmt.Printf("%v%v%v\n", s.Name,strings.Repeat(" ",maxLen-len(s.Name)+4), s.Description)
-			}
-
-                        fmt.Printf("\nGeneral commands:\n\n")
-
-                        fmt.Printf("List of global options:\t\t\t%v help -g\n",cli.Name)
-                        fmt.Printf("Detailed help for a single command:\t%v help COMMAND\n",cli.Name)
-		} else {
-		        fmt.Printf("Usage %v [GLOBAL_OPTIONS] %v [COMMAND_OPTIONS]\n", args[0],cli.Name)
-			c := cli.Parser.Commands[args[0]]
-			fmt.Printf("%v\t\t%v\n", c.Name, c.Description)
-			fmt.Printf("\n")
-			for _, flag := range c.Flags() {
-				fmt.Printf("%v\n", flag)
-			}
+func printHelp(cli Cli, args ...string) {
+	scripts := cli.Scripts
+	if len(args) == 0 {
+		fmt.Printf("Usage %v [GLOBAL_OPTIONS] command [COMMAND_OPTIONS]\n", cli.Name)
+		fmt.Printf("\nScript commands:\n\n")
+		maxLen := getLongestName(scripts)
+		for _, s := range scripts {
+			fmt.Printf("%v%v%v\n", s.Name, strings.Repeat(" ", maxLen-len(s.Name)+4), s.Description)
 		}
+
+		fmt.Printf("\nGeneral commands:\n\n")
+
+		fmt.Printf("List of global options:\t\t\t%v help -g\n", cli.Name)
+		fmt.Printf("Detailed help for a single command:\t%v help COMMAND\n", cli.Name)
+	} else {
+		fmt.Printf("Usage %v [GLOBAL_OPTIONS] %v [COMMAND_OPTIONS]\n", args[0], cli.Name)
+		c := cli.Parser.Commands[args[0]]
+		fmt.Printf("%v\t\t%v\n", c.Name, c.Description)
+		fmt.Printf("\n")
+		for _, flag := range c.Flags() {
+			fmt.Printf("%v\n", flag)
+		}
+	}
 }
 
-
-func getLongestName(scripts []*JobRequestCommand) int{
-        max := -1
-        for _, s := range scripts {
-                if max<len(s.Name){
-                        max=len(s.Name)
-                }
-        }
-        return max
+func getLongestName(scripts []*JobRequestCommand) int {
+	max := -1
+	for _, s := range scripts {
+		if max < len(s.Name) {
+			max = len(s.Name)
+		}
+	}
+	return max
 }
 
 func (c *Cli) AddScripts(scripts []pipeline.Script) error {
@@ -157,37 +159,37 @@ func scriptToCommand(cli *Cli, script pipeline.Script) (jobRequestCommand *JobRe
 	jobRequest.Script = script.Id
 	command := cli.Parser.AddCommand(script.Id, script.Description, func(string, ...string) {
 		cli.execFunction = func() error {
-                        _,err:=cli.Executor.Execute(*jobRequest)
+			_, err := cli.Executor.Execute(*jobRequest)
 			return err
 		}
 	})
-
+	basePath := getBasePath(cli.Config.Local)
 	for _, input := range script.Inputs {
-		command.AddOption("i-"+input.Name, "", input.Desc, inputFunc(input, jobRequest)).Must(true)
+		command.AddOption("i-"+input.Name, "", input.Desc, inputFunc(input, jobRequest, basePath)).Must(true)
 	}
 
 	for _, option := range script.Options {
-                //desc:=option.Desc+
-		command.AddOption("x-"+option.Name, "", option.Desc, optionFunc(option, jobRequest)).Must(option.Required)
+		//desc:=option.Desc+
+		command.AddOption("x-"+option.Name, "", option.Desc, optionFunc(option, jobRequest, basePath)).Must(option.Required)
 	}
 	return &JobRequestCommand{*command, jobRequest}, nil
 }
 
-func inputFunc(input pipeline.Input, req *JobRequest) func(string, string) {
+func inputFunc(input pipeline.Input, req *JobRequest, basePath string) func(string, string) {
 	return func(name, value string) {
 		var err error
-		req.Inputs[name[2:]], err = pathToUri(value, ",", "")
+		req.Inputs[name[2:]], err = pathToUri(value, ",", basePath)
 		if err != nil {
 			panic(err)
 		}
 	}
 }
 
-func optionFunc(option pipeline.Option, req *JobRequest) func(string, string) {
+func optionFunc(option pipeline.Option, req *JobRequest, basePath string) func(string, string) {
 	return func(name, value string) {
 		name = name[2:]
 		if option.Type == "anyFileURI" || option.Type == "anyDirURI" {
-			urls, err := pathToUri(value, ",", "")
+			urls, err := pathToUri(value, ",", basePath)
 			if err != nil {
 				panic(err)
 			}
@@ -197,5 +199,17 @@ func optionFunc(option pipeline.Option, req *JobRequest) func(string, string) {
 		} else {
 			req.Options[name] = []string{value}
 		}
+	}
+}
+
+func getBasePath(isLocal bool) string {
+	if isLocal {
+		base, err := os.Getwd()
+		if err != nil {
+                        panic("Error while getting current directory:"+err.Error())
+		}
+		return base
+	} else {
+		return ""
 	}
 }

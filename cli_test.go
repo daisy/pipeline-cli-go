@@ -165,3 +165,14 @@ func TestCliExecuteRequest(t *testing.T) {
         }
 }
 
+func TestGetBasePath(t *testing.T){
+        //return os.Getwd()
+        basePath:=getBasePath(true)
+        if len(basePath)==0{
+                t.Error("Base path is 0")
+        }
+        basePath=getBasePath(false)
+        if len(basePath)!=0{
+                t.Errorf("Base path len is !=0: %v",basePath)
+        }
+}
