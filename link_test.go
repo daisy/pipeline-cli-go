@@ -219,37 +219,22 @@ func TestJobRequestToPipeline(t *testing.T) {
 
 func TestAsyncMessagesErr(t *testing.T) {
 	link := PipelineLink{pipeline: &PipelineTest{true, 0}}
-	chMsg := make(chan string)
-	chErr := make(chan error)
-	go getAsyncMessages(link, "jobId", chMsg, chErr)
-	for {
-		select {
-		case <-chMsg:
-			t.Error("Expected error in async messages")
-		case <-chErr:
-			return
-		}
-	}
+	chMsg := make(chan Message)
+	go getAsyncMessages(link, "jobId", chMsg)
+        message:=<-chMsg
+        if message.Error ==nil{
+                t.Error("Expected error nil")
+        }
 
 }
 
 func TestAsyncMessages(t *testing.T) {
 	link := PipelineLink{pipeline: &PipelineTest{false, 0}}
-	chMsg := make(chan string)
-	chErr := make(chan error)
+	chMsg := make(chan Message)
         var msgs []string
-	go getAsyncMessages(link, "jobId", chMsg, chErr)
-        for {
-                select {
-                case msg,ok:= <-chMsg:
-                        if(!ok){
-                                return
-                        }else{
-                                msgs=append(msgs,msg)
-                        }
-                case <-chErr:
-                        t.Error("Unexpected error in select")
-                }
+	go getAsyncMessages(link, "jobId", chMsg)
+        for msg:=range chMsg{
+                msgs=append(msgs,msg.Message.Content)
         }
         if len(msgs)!=3{
                 t.Errorf("Wrong message list size %v",len(msgs))

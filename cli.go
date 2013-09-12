@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"github.com/capitancambio/go-subcommand"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
+	"log"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
-        "log"
 )
 
 type Cli struct {
@@ -22,7 +22,7 @@ type Cli struct {
 }
 
 type JobExecutor interface {
-	Execute(JobRequest) (chan string, error)
+	Execute(JobRequest) (chan Message, error)
 }
 
 func NewCli(name, outputFlag string, link PipelineLink) (cli *Cli, err error) {
@@ -159,14 +159,26 @@ func pathToUri(paths string, separator string, basePath string) (urls []url.URL,
 func scriptToCommand(cli *Cli, script pipeline.Script) (jobRequestCommand *JobRequestCommand, err error) {
 	jobRequest := newJobRequest()
 	jobRequest.Script = script.Id
+	basePath := getBasePath(cli.Config.Local)
+
 	command := cli.Parser.AddCommand(script.Id, script.Description, func(string, ...string) {
 		cli.execFunction = func() error {
-			_, err := cli.Executor.Execute(*jobRequest)
-			return err
+			messages, err := cli.Executor.Execute(*jobRequest)
+                        if err!=nil{
+                                return err
+                        }
+			for msg := range messages {
+                                if msg.Error!=nil{
+                                        err=msg.Error
+                                        break
+                                }
+                                println(msg.String())
+			}
+                        return err
 		}
 	})
-        log.Printf("cnf: %+v\n",cli.Config)
-	basePath := getBasePath(cli.Config.Local)
+
+	log.Printf("cnf: %+v\n", cli.Config)
 	for _, input := range script.Inputs {
 		command.AddOption("i-"+input.Name, "", input.Desc, inputFunc(input, jobRequest, basePath)).Must(true)
 	}
@@ -209,9 +221,9 @@ func getBasePath(isLocal bool) string {
 	if isLocal {
 		base, err := os.Getwd()
 		if err != nil {
-                        panic("Error while getting current directory:"+err.Error())
+			panic("Error while getting current directory:" + err.Error())
 		}
-		return base+"/"
+		return base + "/"
 	} else {
 		return ""
 	}

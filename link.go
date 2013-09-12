@@ -2,19 +2,21 @@ package main
 
 import (
 	"github.com/daisy-consortium/pipeline-clientlib-go"
-        "time"
+	"time"
+        "fmt"
 )
+
 //waiting time for getting messages
-var MSG_WAIT=200*time.Millisecond
+var MSG_WAIT = 200 * time.Millisecond
 
 //Convinience for testing
 type PipelineApi interface {
 	Alive() (alive pipeline.Alive, err error)
 	Scripts() (scripts pipeline.Scripts, err error)
 	Script(id string) (script pipeline.Script, err error)
-        JobRequest(newJob pipeline.JobRequest) (job pipeline.Job , err error)
-        ScriptUrl(id string) (string)
-        Job (string,int) (pipeline.Job,error)
+	JobRequest(newJob pipeline.JobRequest) (job pipeline.Job, err error)
+	ScriptUrl(id string) string
+	Job(string, int) (pipeline.Job, error)
 }
 
 //Maintains some information about the pipeline client
@@ -29,7 +31,7 @@ type PipelineLink struct {
 func NewLink(conf Config) (pLink *PipelineLink, err error) {
 	pLink = &PipelineLink{
 		pipeline: *pipeline.NewPipeline(conf.Url()),
-                config: conf,
+		config:   conf,
 	}
 	//assure that the pipeline is up
 	err = bringUp(pLink)
@@ -70,42 +72,53 @@ func (p PipelineLink) Scripts() (scripts []pipeline.Script, err error) {
 	return scripts, err
 }
 
-func (p PipelineLink) Execute(jobReq JobRequest) (messages chan string, err error) {
-        req,err:=jobRequestToPipeline(jobReq,p)
-        if err!=nil{
-                return
-        }
-        _,err=p.pipeline.JobRequest(req)
-        if err!=nil{
-                return
-        }
-	return
+type Message struct{
+        Message pipeline.Message
+        Error error
 }
 
+func (m Message) String() string{
+        return fmt.Sprintf("(%v)[%v]\t%v",m.Message.Sequence,m.Message.Level,m.Message.Content)
+}
 
-func getAsyncMessages(p PipelineLink,jobId string,messages chan string,err chan error) {
-        msgNum:=0
-        for{
-                job,errQ:=p.pipeline.Job(jobId,msgNum)
-                if errQ!=nil{
-                        err <- errQ
-                        return
-                }
-                for _,msg := range job.Messages{
-                        msgNum=msg.Sequence
-                        messages <- msg.Content
-                }
-                if job.Status=="DONE" || job.Status=="ERROR" || job.Status=="VALID"{
-                       close(messages)
-                       return
-                }
-                time.Sleep(MSG_WAIT)
-        }
+func (p PipelineLink) Execute(jobReq JobRequest) (messages chan Message, err error) {
+	req, err := jobRequestToPipeline(jobReq, p)
+	if err != nil {
+		return
+	}
+	job, err := p.pipeline.JobRequest(req)
+	if err != nil {
+		return
+	}
+	messages = make(chan Message)
+	go getAsyncMessages(p, job.Id, messages)
+        return
+}
+
+func getAsyncMessages(p PipelineLink, jobId string, messages chan Message) {
+	msgNum := 0
+	for {
+		job, err := p.pipeline.Job(jobId, msgNum)
+		if err != nil {
+                        messages <- Message{Error: err }
+                        close(messages)
+			return
+		}
+		for _, msg := range job.Messages {
+			msgNum = msg.Sequence
+                        messages <- Message{Message: msg}
+		}
+		if job.Status == "DONE" || job.Status == "ERROR" || job.Status == "VALID" {
+			close(messages)
+			return
+		}
+		time.Sleep(MSG_WAIT)
+	}
 
 }
 
-func jobRequestToPipeline(req JobRequest,p PipelineLink) (pReq pipeline.JobRequest,err error) {
-        href:=p.pipeline.ScriptUrl(req.Script)
+func jobRequestToPipeline(req JobRequest, p PipelineLink) (pReq pipeline.JobRequest, err error) {
+	href := p.pipeline.ScriptUrl(req.Script)
 	pReq = pipeline.JobRequest{
 		Script: pipeline.Script{Href: href},
 	}
