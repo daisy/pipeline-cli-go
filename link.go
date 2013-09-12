@@ -29,6 +29,7 @@ type PipelineLink struct {
 func NewLink(conf Config) (pLink *PipelineLink, err error) {
 	pLink = &PipelineLink{
 		pipeline: *pipeline.NewPipeline(conf.Url()),
+                config: conf,
 	}
 	//assure that the pipeline is up
 	err = bringUp(pLink)
