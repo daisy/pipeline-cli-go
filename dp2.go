@@ -30,15 +30,15 @@ func main() {
 		panic(fmt.Sprintf("Error connecting to the pipeline webservice:\n\t%v", err))
 	}
 
-	cli, err := NewCli("dp2", "[DP2]", *link)
+	cli, err := NewCli("dp2",*link)
 	if err != nil {
 		panic(fmt.Sprintf("Error creating client:\n\t%v", err))
 	}
-	scripts, err := link.Scripts()
+        _, err = link.Scripts()
 	if err != nil {
 		panic(fmt.Sprintf("Error loading scripts:\n\t%v", err))
 	}
-	cli.AddScripts(scripts)
+	//cli.AddScripts(scripts)
 
         AddJobStatusCommand(cli.Parser,*link)
 
