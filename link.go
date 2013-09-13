@@ -72,15 +72,25 @@ func (p PipelineLink) Scripts() (scripts []pipeline.Script, err error) {
 	return scripts, err
 }
 
+//Gets the job identified by the jobId 
+func (p PipelineLink) Job(jobId string) (job pipeline.Job,err error){
+        job,err=p.pipeline.Job(jobId,0)
+        return
+}
+
+//Convience structure to handle message and errors from the communication with the pipelineApi
 type Message struct{
         Message pipeline.Message
         Error error
 }
-
+//Returns a simple string representation of the messages strucutre:
+//(index)[LEVEL]        Message content
 func (m Message) String() string{
         return fmt.Sprintf("(%v)[%v]\t%v",m.Message.Sequence,m.Message.Level,m.Message.Content)
 }
 
+//Executes the job request and returns a channel fed with the job's messages 
+//TODO: Refactor to return the job too
 func (p PipelineLink) Execute(jobReq JobRequest) (messages chan Message, err error) {
 	req, err := jobRequestToPipeline(jobReq, p)
 	if err != nil {
@@ -90,11 +100,14 @@ func (p PipelineLink) Execute(jobReq JobRequest) (messages chan Message, err err
 	if err != nil {
 		return
 	}
+        println(job.Id)
 	messages = make(chan Message)
 	go getAsyncMessages(p, job.Id, messages)
         return
 }
 
+
+//Feeds the channel with the messages describing the job's execution 
 func getAsyncMessages(p PipelineLink, jobId string, messages chan Message) {
 	msgNum := 0
 	for {

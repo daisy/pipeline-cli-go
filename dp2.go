@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
         "log"
+        "io/ioutil"
 )
 
 const (
@@ -15,8 +16,10 @@ const (
 func main() {
         log.SetFlags(log.Lshortfile)
 	// proper error handlign missing
-
 	cnf, err := loadConfig()
+        if !cnf.Debug{
+                log.SetOutput(ioutil.Discard)
+        }
 	if err != nil {
 		panic(fmt.Sprintf("Error loading configuaration file:\n\t%v", err))
 	}
@@ -36,7 +39,13 @@ func main() {
 		panic(fmt.Sprintf("Error loading scripts:\n\t%v", err))
 	}
 	cli.AddScripts(scripts)
+
+        AddJobStatusCommand(cli.Parser,*link)
+
 	err = cli.Run(os.Args[1:])
+	if err != nil {
+		panic(fmt.Sprintf("Error:\n\t%v", err))
+	}
 }
 
 func loadConfig() (cnf Config, err error) {

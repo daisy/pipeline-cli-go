@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/kylelemons/go-gypsy/yaml"
 	"io"
-        "log"
 )
 
 //Yaml file keys
@@ -110,6 +109,5 @@ func nodeToConfig(node yaml.Node, conf *Config) error {
 	if err != nil {
 		return fmt.Errorf(ERR_STR, err)
 	}
-        log.Printf("Config: %+v",conf)
 	return nil
 }
