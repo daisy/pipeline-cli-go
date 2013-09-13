@@ -50,17 +50,40 @@ var SCRIPT pipeline.Script = pipeline.Script{
 
 var in1, in2 = "tmp/dir1/file.xml", "tmp/dir2/file.xml"
 
-func TestCliNonRequiredOptions(t *testing.T) {
-        link:=PipelineLink{pipeline: &PipelineTest{false, 0}}
-        cli, err := NewCli("testprog", link)
-        if err != nil {
-                t.Error("Unexpected error")
-        }
-        cli.AddScripts([]pipeline.Script{SCRIPT},link,false)
-        //parser.Parse([]string{"test","--i-source","value"})
-        err = cli.Run([]string{"test", "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml"})
-        if err != nil {
-                t.Errorf("Non required option threw an error")
-        }
+func TestCliAddScriptCommand(t *testing.T) {
+	link := PipelineLink{pipeline: &PipelineTest{false, 0}}
+	cli, err := NewCli("testprog", link)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	cli.AddScriptCommand("test","",func(string,...string){})
+	if cli.Scripts[0].Name != "test" {
+		t.Error("Add script is not adding scripts to the list")
+	}
 }
 
+func TestCliAddCommand(t *testing.T) {
+	link := PipelineLink{pipeline: &PipelineTest{false, 0}}
+	cli, err := NewCli("testprog", link)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	cli.AddCommand("test","",func(string,...string){})
+	if cli.StaticCommands[0].Name != "test" {
+		t.Error("Add Command is not adding commands to the list")
+	}
+}
+
+func TestCliNonRequiredOptions(t *testing.T) {
+	link := PipelineLink{pipeline: &PipelineTest{false, 0}}
+	cli, err := NewCli("testprog", link)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	cli.AddScripts([]pipeline.Script{SCRIPT}, link, false)
+	//parser.Parse([]string{"test","--i-source","value"})
+	err = cli.Run([]string{"test", "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml"})
+	if err != nil {
+		t.Error("Non required option threw an error")
+	}
+}

@@ -11,7 +11,8 @@ import (
 //the help display
 type Cli struct {
 	*subcommand.Parser
-	Scripts []subcommand.Command
+	Scripts        []*subcommand.Command
+	StaticCommands []*subcommand.Command
 }
 
 func NewCli(name string, link PipelineLink) (cli *Cli, err error) {
@@ -26,10 +27,16 @@ func NewCli(name string, link PipelineLink) (cli *Cli, err error) {
 //Adds the command to the cli and stores the it into the scripts list
 func (c *Cli) AddScriptCommand(name, desc string, fn func(string, ...string)) *subcommand.Command {
 	cmd := c.Parser.AddCommand(name, desc, fn)
-	c.Scripts = append(c.Scripts, *cmd)
+	c.Scripts = append(c.Scripts, cmd)
 	return cmd
 }
 
+//Adds a static command to the cli 
+func (c *Cli) AddCommand(name, desc string, fn func(string, ...string)) *subcommand.Command {
+	cmd := c.Parser.AddCommand(name, desc, fn)
+	c.StaticCommands= append(c.Scripts, cmd)
+	return cmd
+}
 func Helper(cli *Cli, link PipelineLink) func(string, ...string) {
 	return func(help string, args ...string) {
 		printHelp(*cli, args...)
@@ -61,7 +68,7 @@ func printHelp(cli Cli, args ...string) {
 	}
 }
 
-func getLongestName(scripts []subcommand.Command) int {
+func getLongestName(scripts []*subcommand.Command) int {
 	max := -1
 	for _, s := range scripts {
 		if max < len(s.Name) {
@@ -85,4 +92,3 @@ func (c *Cli) Run(args []string) error {
 	}
 	return err
 }
-
