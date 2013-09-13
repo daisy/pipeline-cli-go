@@ -34,13 +34,13 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("Error creating client:\n\t%v", err))
 	}
-        _, err = link.Scripts()
+        scripts, err := link.Scripts()
 	if err != nil {
 		panic(fmt.Sprintf("Error loading scripts:\n\t%v", err))
 	}
-	//cli.AddScripts(scripts)
+	cli.AddScripts(scripts,*link,cnf.Local)
 
-        AddJobStatusCommand(cli.Parser,*link)
+        AddJobStatusCommand(cli,*link)
 
 	err = cli.Run(os.Args[1:])
 	if err != nil {

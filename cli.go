@@ -31,7 +31,7 @@ func (c *Cli) AddScriptCommand(name, desc string, fn func(string, ...string)) *s
 	return cmd
 }
 
-//Adds a static command to the cli 
+//Adds a static command to the cli and keeps track of it for the displaying the help
 func (c *Cli) AddCommand(name, desc string, fn func(string, ...string)) *subcommand.Command {
 	cmd := c.Parser.AddCommand(name, desc, fn)
 	c.StaticCommands= append(c.Scripts, cmd)
