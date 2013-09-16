@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/capitancambio/go-subcommand"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
 	"os"
 	"text/template"
@@ -24,13 +25,13 @@ type printableJob struct {
 }
 
 func AddJobStatusCommand(cli *Cli, link PipelineLink) {
-	lastId := false
+	lastId := new(bool)
 	printable := &printableJob{
 		Data:    pipeline.Job{},
 		Verbose: false,
 	}
 	cmd := cli.AddCommand("status", "Returns the status of a job", func(command string, args ...string) {
-		id, err := checkId(lastId, command, args...)
+		id, err := checkId(*lastId, command, args...)
 		if err != nil {
 			//TODO subcommand functions to return errors
 			println("error")
@@ -56,12 +57,19 @@ func AddJobStatusCommand(cli *Cli, link PipelineLink) {
 	cmd.AddSwitch("verbose", "v", "Prints the job's messages", func(swtich, nop string) {
 		printable.Verbose = true
 	})
+	addLastId(cmd, lastId)
+}
+
+func addLastId(cmd *subcommand.Command, lastId *bool) {
+	cmd.AddSwitch("lastid", "l", "Get id from the last executed job", func(string, string) {
+		*lastId = true
+	})
 }
 
 func AddDeleteCommand(cli *Cli, link PipelineLink) {
-	lastId := false
-	cli.AddCommand("remove", "Removes a job from the pipeline", func(command string, args ...string) {
-		id, err := checkId(lastId, command, args...)
+	lastId := new(bool)
+	cmd := cli.AddCommand("remove", "Removes a job from the pipeline", func(command string, args ...string) {
+		id, err := checkId(*lastId, command, args...)
 		if err != nil {
 			//TODO subcommand functions to return errors
 			println("error")
@@ -80,10 +88,19 @@ func AddDeleteCommand(cli *Cli, link PipelineLink) {
 		}
 
 	})
+	addLastId(cmd, lastId)
 }
 func checkId(lastId bool, command string, args ...string) (id string, err error) {
 	if len(args) != 1 && !lastId {
 		return id, fmt.Errorf("Command %v needs a job id")
 	}
-	return args[0], nil
+	//got it from file
+	if lastId {
+		id, err = getLastId()
+		return
+	} else {
+		//first arg otherwise
+		id = args[0]
+		return
+	}
 }
