@@ -2,10 +2,10 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
 	"net/url"
 	"testing"
-        "fmt"
 )
 
 var (
@@ -99,11 +99,9 @@ func (p *PipelineTest) JobRequest(newJob pipeline.JobRequest) (job pipeline.Job,
 	return
 }
 
-func (p *PipelineTest) DeleteJob(id string) (ok bool,err error){
-        return
+func (p *PipelineTest) DeleteJob(id string) (ok bool, err error) {
+	return
 }
-
-
 
 func TestBringUp(t *testing.T) {
 	link := PipelineLink{pipeline: &PipelineTest{false, 0}}
@@ -228,28 +226,28 @@ func TestAsyncMessagesErr(t *testing.T) {
 	link := PipelineLink{pipeline: &PipelineTest{true, 0}}
 	chMsg := make(chan Message)
 	go getAsyncMessages(link, "jobId", chMsg)
-        message:=<-chMsg
-        if message.Error ==nil{
-                t.Error("Expected error nil")
-        }
+	message := <-chMsg
+	if message.Error == nil {
+		t.Error("Expected error nil")
+	}
 
 }
 
 func TestAsyncMessages(t *testing.T) {
 	link := PipelineLink{pipeline: &PipelineTest{false, 0}}
 	chMsg := make(chan Message)
-        var msgs []string
+	var msgs []string
 	go getAsyncMessages(link, "jobId", chMsg)
-        for msg:=range chMsg{
-                msgs=append(msgs,msg.Message.Content)
-        }
-        if len(msgs)!=3{
-                t.Errorf("Wrong message list size %v",len(msgs))
-        }
+	for msg := range chMsg {
+		msgs = append(msgs, msg.Message.Content)
+	}
+	if len(msgs) != 3 {
+		t.Errorf("Wrong message list size %v", len(msgs))
+	}
 
-        for i:=1;i!=3;i++{
-                if msgs[i-1]!=fmt.Sprintf("Message %v",i){
-                        t.Errorf("Wrong message %v",msgs[i-1])
-                }
-        }
+	for i := 1; i != 3; i++ {
+		if msgs[i-1] != fmt.Sprintf("Message %v", i) {
+			t.Errorf("Wrong message %v", msgs[i-1])
+		}
+	}
 }
