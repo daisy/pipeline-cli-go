@@ -41,6 +41,7 @@ func main() {
 	cli.AddScripts(scripts,*link,cnf.Local)
 
         AddJobStatusCommand(cli,*link)
+        AddDeleteCommand(cli,*link)
 
 	err = cli.Run(os.Args[1:])
 	if err != nil {

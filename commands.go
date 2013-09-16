@@ -56,6 +56,29 @@ func AddJobStatusCommand (cli *Cli, link PipelineLink){
         })
 }
 
+func AddDeleteCommand(cli *Cli, link PipelineLink){
+        lastId:=false
+        cli.AddCommand("remove","Removes a job from the pipeline",func (command string,args ...string){
+                id,err:=checkId(lastId,command,args...)
+                if err!=nil{
+                        //TODO subcommand functions to return errors
+                        println("error")
+                }
+                ok,err:=link.Delete(id)
+                if err!=nil{
+                        //TODO subcommand functions to return errors
+                        println("error",err.Error())
+                }
+                if err!=nil{
+                        println("error",err.Error())
+                        return
+                }
+                if ok{
+                        fmt.Printf("Job %v removed\n",id)
+                }
+
+        })
+}
 func checkId(lastId bool,command string, args... string) (id string, err error){
         if len(args)!=1 && !lastId{
                 return id,fmt.Errorf("Command %v needs a job id")
