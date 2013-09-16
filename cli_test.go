@@ -68,10 +68,14 @@ func TestCliAddCommand(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	cli.AddCommand("test","",func(string,...string){})
-	if cli.StaticCommands[0].Name != "test" {
+	cli.AddCommand("stest","",func(string,...string){})
+	if cli.StaticCommands[0].Name != "stest" {
 		t.Error("Add Command is not adding commands to the list")
 	}
+
+        if len(cli.Scripts)!=0{
+		t.Error("Scripts is not empty")
+        }
 }
 
 func TestCliNonRequiredOptions(t *testing.T) {
