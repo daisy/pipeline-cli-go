@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
 	"time"
-        "fmt"
 )
 
 //waiting time for getting messages
@@ -73,59 +73,60 @@ func (p PipelineLink) Scripts() (scripts []pipeline.Script, err error) {
 	return scripts, err
 }
 
-//Gets the job identified by the jobId 
-func (p PipelineLink) Job(jobId string) (job pipeline.Job,err error){
-        job,err=p.pipeline.Job(jobId,0)
-        return
+//Gets the job identified by the jobId
+func (p PipelineLink) Job(jobId string) (job pipeline.Job, err error) {
+	job, err = p.pipeline.Job(jobId, 0)
+	return
 }
 
 //Deletes the given job
-func (p PipelineLink) Delete(jobId string) (ok bool,err error){
-        ok,err=p.pipeline.DeleteJob(jobId)
-        return
-}
-//Convience structure to handle message and errors from the communication with the pipelineApi
-type Message struct{
-        Message pipeline.Message
-        Error error
-}
-//Returns a simple string representation of the messages strucutre:
-//(index)[LEVEL]        Message content
-func (m Message) String() string{
-        return fmt.Sprintf("(%v)[%v]\t%v",m.Message.Sequence,m.Message.Level,m.Message.Content)
+func (p PipelineLink) Delete(jobId string) (ok bool, err error) {
+	ok, err = p.pipeline.DeleteJob(jobId)
+	return
 }
 
-//Executes the job request and returns a channel fed with the job's messages 
+//Convience structure to handle message and errors from the communication with the pipelineApi
+type Message struct {
+	Message pipeline.Message
+	Error   error
+}
+
+//Returns a simple string representation of the messages strucutre:
+//(index)[LEVEL]        Message content
+func (m Message) String() string {
+	return fmt.Sprintf("(%v)[%v]\t%v", m.Message.Sequence, m.Message.Level, m.Message.Content)
+}
+
+//Executes the job request and returns a channel fed with the job's messages
 //TODO: Refactor to return the job too
-func (p PipelineLink) Execute(jobReq JobRequest) (messages chan Message, err error) {
+func (p PipelineLink) Execute(jobReq JobRequest) (job pipeline.Job, messages chan Message, err error) {
 	req, err := jobRequestToPipeline(jobReq, p)
 	if err != nil {
 		return
 	}
-	job, err := p.pipeline.JobRequest(req)
+	job, err = p.pipeline.JobRequest(req)
 	if err != nil {
 		return
 	}
-        println(job.Id)
+	println(job.Id)
 	messages = make(chan Message)
 	go getAsyncMessages(p, job.Id, messages)
-        return
+	return
 }
 
-
-//Feeds the channel with the messages describing the job's execution 
+//Feeds the channel with the messages describing the job's execution
 func getAsyncMessages(p PipelineLink, jobId string, messages chan Message) {
 	msgNum := 0
 	for {
 		job, err := p.pipeline.Job(jobId, msgNum)
 		if err != nil {
-                        messages <- Message{Error: err }
-                        close(messages)
+			messages <- Message{Error: err}
+			close(messages)
 			return
 		}
 		for _, msg := range job.Messages {
 			msgNum = msg.Sequence
-                        messages <- Message{Message: msg}
+			messages <- Message{Message: msg}
 		}
 		if job.Status == "DONE" || job.Status == "ERROR" || job.Status == "VALID" {
 			close(messages)

@@ -6,10 +6,9 @@ import (
 	//"github.com/daisy-consortium/pipeline-clientlib-go"
 	"io/ioutil"
 	"log"
+	"os"
 	"testing"
 )
-
-
 
 func TestGetBasePath(t *testing.T) {
 	//return os.Getwd()
@@ -25,8 +24,6 @@ func TestGetBasePath(t *testing.T) {
 		t.Errorf("Base path len is !=0: %v", basePath)
 	}
 }
-
-
 
 func TestParseInputs(t *testing.T) {
 	log.SetOutput(ioutil.Discard)
@@ -44,7 +41,6 @@ func TestParseInputs(t *testing.T) {
 	}
 }
 
-
 func TestParseInputsBased(t *testing.T) {
 	inputs := fmt.Sprintf("%v,%v", in1, in2)
 	urls, err := pathToUri(inputs, ",", "/mydata/")
@@ -61,14 +57,13 @@ func TestParseInputsBased(t *testing.T) {
 	}
 }
 
-
 func TestScriptToCommand(t *testing.T) {
 	link := PipelineLink{pipeline: &PipelineTest{true, 0}}
-	cli,err := NewCli("test",link)
+	cli, err := NewCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	jobRequest, err := scriptToCommand(SCRIPT,cli,link,false)
+	jobRequest, err := scriptToCommand(SCRIPT, cli, link, false)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -96,11 +91,11 @@ func TestScriptToCommand(t *testing.T) {
 }
 func TestCliRequiredOptions(t *testing.T) {
 	link := PipelineLink{pipeline: &PipelineTest{true, 0}}
-	cli,err := NewCli("test",link)
+	cli, err := NewCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	_, err = scriptToCommand(SCRIPT,cli,link,false)
+	_, err = scriptToCommand(SCRIPT, cli, link, false)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -115,6 +110,29 @@ func TestCliRequiredOptions(t *testing.T) {
 	}
 }
 
+func TestStoreLastId(t *testing.T) {
+	LastIdPath = os.TempDir() + string(os.PathSeparator) + "testLastId"
+	//mariachi style
+	id := "ayayyyyaaay"
+	err := storeLastId(id)
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	idGet, err := getLastId()
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
 
+	if id != idGet {
+		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "id ", id, idGet)
+	}
+}
 
+func TestGetLastIdErr(t *testing.T) {
+	LastIdPath = os.TempDir() + string(os.PathSeparator) + "pipeline_go_testing_id_bad"
+	_, err := getLastId()
+	if err == nil {
+		t.Error("Expected error not thrown")
+	}
 
+}

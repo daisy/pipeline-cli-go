@@ -1,12 +1,25 @@
 package main
 
 import (
+	"bitbucket.org/kardianos/osext"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
+	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 )
+
+//set the last id path
+var LastIdPath = getLastIdPath()
+
+func getLastIdPath() string {
+	path, err := osext.ExecutableFolder()
+	if err != nil {
+		panic("Couldn't get the executable path")
+	}
+	return path + string(os.PathSeparator) + ".lastid"
+}
 
 //Represents the job request
 type JobRequest struct {
@@ -27,11 +40,11 @@ func newJobRequest() *JobRequest {
 	}
 }
 
-//Convinience method to add several scripts to a client 
+//Convinience method to add several scripts to a client
 func (c *Cli) AddScripts(scripts []pipeline.Script, link PipelineLink, isLocal bool) error {
 
 	for _, s := range scripts {
-		if _,err :=scriptToCommand(s,c,link,isLocal); err != nil {
+		if _, err := scriptToCommand(s, c, link, isLocal); err != nil {
 			return err
 		}
 	}
@@ -40,21 +53,26 @@ func (c *Cli) AddScripts(scripts []pipeline.Script, link PipelineLink, isLocal b
 
 //Adds the command and flags to be able to call the script to the cli
 func scriptToCommand(script pipeline.Script, cli *Cli, link PipelineLink, isLocal bool) (req JobRequest, err error) {
-        jobRequest := newJobRequest()
+	jobRequest := newJobRequest()
 	jobRequest.Script = script.Id
 	basePath := getBasePath(isLocal)
 
 	command := cli.AddScriptCommand(script.Id, script.Description, func(string, ...string) {
-		messages, err := link.Execute(*jobRequest)
+		job, messages, err := link.Execute(*jobRequest)
 		if err != nil {
 			//TODO: subcommands to return errors
-			println("Got:", err.Error())
+			println("Error:", err.Error())
+		}
+		err = storeLastId(job.Id)
+		if err != nil {
+			//TODO: subcommands to return errors
+			println("Error:", err.Error())
 		}
 		for msg := range messages {
 			if msg.Error != nil {
 				err = msg.Error
 				//TODO: subcommands to return errors
-				println("Got:", err.Error())
+				println("Error:", err.Error())
 				break
 			}
 			println(msg.String())
@@ -69,7 +87,7 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link PipelineLink, isLoca
 		//desc:=option.Desc+
 		command.AddOption("x-"+option.Name, "", option.Desc, optionFunc(jobRequest, basePath, option.Type)).Must(option.Required)
 	}
-	return  *jobRequest, nil
+	return *jobRequest, nil
 }
 
 //Returns a function that fills the request info with the subcommand option name
@@ -147,4 +165,26 @@ func pathToUri(paths string, separator string, basePath string) (urls []url.URL,
 	}
 	//clean
 	return
+}
+
+func storeLastId(id string) error {
+	file, err := os.Create(LastIdPath)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		file.Close()
+	}()
+	if _, err := file.Write([]byte(id)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func getLastId() (id string, err error) {
+	idBuf, err := ioutil.ReadFile(LastIdPath)
+	if err != nil {
+		return "", err
+	}
+	return string(idBuf), nil
 }
