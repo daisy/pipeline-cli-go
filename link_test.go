@@ -98,6 +98,13 @@ func (p *PipelineTest) Job(id string, msgSeq int) (job pipeline.Job, err error) 
 func (p *PipelineTest) JobRequest(newJob pipeline.JobRequest) (job pipeline.Job, err error) {
 	return
 }
+
+func (p *PipelineTest) DeleteJob(id string) (ok bool,err error){
+        return
+}
+
+
+
 func TestBringUp(t *testing.T) {
 	link := PipelineLink{pipeline: &PipelineTest{false, 0}}
 	err := bringUp(&link)
