@@ -68,7 +68,7 @@ func TestScriptToCommand(t *testing.T) {
 		t.Error("Unexpected error")
 	}
 	//parser.Parse([]string{"test","--i-source","value"})
-	_, err = cli.Parse([]string{"test", "-o", "folder", "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
+	_, err = cli.Parse([]string{"test", "-o", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -168,7 +168,7 @@ func TestScriptDefault(t *testing.T) {
 		t.Error("Unexpected error")
 	}
 	//parser.Parse([]string{"test","--i-source","value"})
-	err = cli.Run([]string{"test", "-o", "output", "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
+	err = cli.Run([]string{"test", "-o", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -189,7 +189,7 @@ func TestScriptBackground(t *testing.T) {
 		t.Error("Unexpected error")
 	}
 	//parser.Parse([]string{"test","--i-source","value"})
-	err = cli.Run([]string{"test", "-b", "-o", "output", "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
+	err = cli.Run([]string{"test", "-b", "-o", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -217,7 +217,7 @@ func TestScriptPersistent(t *testing.T) {
 		t.Error("Unexpected error")
 	}
 	//parser.Parse([]string{"test","--i-source","value"})
-	err = cli.Run([]string{"test", "-p", "-o", "output", "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
+	err = cli.Run([]string{"test", "-p", "-o", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}

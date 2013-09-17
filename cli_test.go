@@ -4,6 +4,7 @@ import (
 	//"github.com/capitancambio/go-subcommand"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
 	"testing"
+        "os"
 )
 
 var SCRIPT pipeline.Script = pipeline.Script{
@@ -86,7 +87,7 @@ func TestCliNonRequiredOptions(t *testing.T) {
 	}
 	cli.AddScripts([]pipeline.Script{SCRIPT}, link, false)
 	//parser.Parse([]string{"test","--i-source","value"})
-	err = cli.Run([]string{"test", "-o", "folder", "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml"})
+	err = cli.Run([]string{"test", "-o", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml"})
 	if err != nil {
 		t.Error("Non required option threw an error")
 	}
