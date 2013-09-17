@@ -42,6 +42,7 @@ func main() {
 
         AddJobStatusCommand(cli,*link)
         AddDeleteCommand(cli,*link)
+        AddResultsCommand(cli,*link)
 
 	err = cli.Run(os.Args[1:])
 	if err != nil {

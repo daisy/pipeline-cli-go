@@ -103,6 +103,9 @@ func (p *PipelineTest) DeleteJob(id string) (ok bool, err error) {
 	return
 }
 
+func (p *PipelineTest) Results(id string) (data []byte, err error) {
+	return
+}
 func TestBringUp(t *testing.T) {
 	link := PipelineLink{pipeline: &PipelineTest{false, 0}}
 	err := bringUp(&link)
