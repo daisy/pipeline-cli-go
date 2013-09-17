@@ -2,6 +2,8 @@ package main
 
 import (
 	"bitbucket.org/kardianos/osext"
+	"errors"
+	"fmt"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
 	"io/ioutil"
 	"net/url"
@@ -51,32 +53,94 @@ func (c *Cli) AddScripts(scripts []pipeline.Script, link PipelineLink, isLocal b
 	return nil
 }
 
+//Executes a job request
+type jobExecution struct {
+	link       PipelineLink
+	req        JobRequest
+	output     string
+	verbose    bool
+	persistent bool
+	background bool
+}
+
+func (j jobExecution) run() error {
+	//manual check of output
+	if !j.background && j.output == "" {
+		return errors.New("--output option is mandatory if the job is not running in the background")
+	}
+	if j.background && j.output != "" {
+		fmt.Printf("Warning: --output option ignored as the job will run in the background\n")
+	}
+	storeId := j.background || j.persistent
+	//send the job
+	job, messages, err := j.link.Execute(j.req, j.background)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Job %v sent to the server\n", job.Id)
+	//store id if it suits
+	if storeId {
+		err = storeLastId(job.Id)
+		if err != nil {
+			return err
+		}
+	}
+	//get realtime messages and status from the webservice
+	status := job.Status
+	for msg := range messages {
+		if msg.Error != nil {
+			err = msg.Error
+			return err
+		}
+		//print messages
+		if j.verbose {
+			println(msg.String())
+		}
+		status = msg.Status
+	}
+
+	if status != "ERROR" {
+		//get the data
+		if !j.background {
+			data, err := j.link.Results(job.Id)
+			if err != nil {
+				return err
+			}
+			zippedDataToFolder(data, j.output)
+			fmt.Println("Results stored")
+			if !j.persistent {
+				_, err = j.link.Delete(job.Id)
+				if err != nil {
+					return err
+				}
+				fmt.Printf("The job has been deleted from the server\n")
+			}
+			fmt.Printf("Job finished with status: %v\n", status)
+		}
+
+	}
+	return nil
+}
+
 //Adds the command and flags to be able to call the script to the cli
 func scriptToCommand(script pipeline.Script, cli *Cli, link PipelineLink, isLocal bool) (req JobRequest, err error) {
 	jobRequest := newJobRequest()
 	jobRequest.Script = script.Id
 	basePath := getBasePath(isLocal)
 
-	command := cli.AddScriptCommand(script.Id, script.Description, func(string, ...string) {
-		job, messages, err := link.Execute(*jobRequest)
-		if err != nil {
-			//TODO: subcommands to return errors
-			println("Error:", err.Error())
+	jExec := jobExecution{
+		link:       link,
+		req:        *jobRequest,
+		output:     "",
+		verbose:    true,
+		persistent: false,
+		background: false,
+	}
+	command := cli.AddScriptCommand(script.Id, script.Description, func(string, ...string) error {
+		if err := jExec.run(); err != nil {
+			return err
 		}
-		err = storeLastId(job.Id)
-		if err != nil {
-			//TODO: subcommands to return errors
-			println("Error:", err.Error())
-		}
-		for msg := range messages {
-			if msg.Error != nil {
-				err = msg.Error
-				//TODO: subcommands to return errors
-				println("Error:", err.Error())
-				break
-			}
-			println(msg.String())
-		}
+		return nil
 	})
 
 	for _, input := range script.Inputs {
@@ -87,30 +151,46 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link PipelineLink, isLoca
 		//desc:=option.Desc+
 		command.AddOption("x-"+option.Name, "", option.Desc, optionFunc(jobRequest, basePath, option.Type)).Must(option.Required)
 	}
+
+	command.AddSwitch("quiet", "q", "Do not print the job's messages", func(string, string) error {
+		jExec.verbose = false
+		return nil
+	})
+	command.AddSwitch("persistent", "p", "Delete the job after it is executed", func(string, string) error {
+		jExec.persistent = true
+		return nil
+	})
+
+	command.AddSwitch("background", "b", "Sends the job and exits", func(string, string) error {
+		jExec.background = true
+		return nil
+	})
+	command.AddOption("output", "o", "Directory where to store the results. This option is mandatory when the job is not executed in the background", func(name, folder string) error {
+		jExec.output = folder
+		return nil
+	})
 	return *jobRequest, nil
 }
 
 //Returns a function that fills the request info with the subcommand option name
 //and value
-func inputFunc(req *JobRequest, basePath string) func(string, string) {
-	return func(name, value string) {
+func inputFunc(req *JobRequest, basePath string) func(string, string) error {
+	return func(name, value string) error {
 		var err error
 		req.Inputs[name[2:]], err = pathToUri(value, ",", basePath)
-		if err != nil {
-			panic(err)
-		}
+		return err
 	}
 }
 
 //Returns a function that fills the request option with the subcommand option name
 //and value
-func optionFunc(req *JobRequest, basePath string, optionType string) func(string, string) {
-	return func(name, value string) {
+func optionFunc(req *JobRequest, basePath string, optionType string) func(string, string) error {
+	return func(name, value string) error {
 		name = name[2:]
 		if optionType == "anyFileURI" || optionType == "anyDirURI" {
 			urls, err := pathToUri(value, ",", basePath)
 			if err != nil {
-				panic(err)
+				return err
 			}
 			for _, url := range urls {
 				req.Options[name] = append(req.Options[name], url.String())
@@ -118,6 +198,7 @@ func optionFunc(req *JobRequest, basePath string, optionType string) func(string
 		} else {
 			req.Options[name] = []string{value}
 		}
+		return nil
 	}
 }
 

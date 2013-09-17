@@ -58,7 +58,7 @@ func TestParseInputsBased(t *testing.T) {
 }
 
 func TestScriptToCommand(t *testing.T) {
-	link := PipelineLink{pipeline: &PipelineTest{true, 0}}
+	link := PipelineLink{pipeline: newPipelineTest(false)}
 	cli, err := NewCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -68,7 +68,7 @@ func TestScriptToCommand(t *testing.T) {
 		t.Error("Unexpected error")
 	}
 	//parser.Parse([]string{"test","--i-source","value"})
-	_, err = cli.Parse([]string{"test", "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
+	_, err = cli.Parse([]string{"test", "-o", "folder", "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -90,7 +90,7 @@ func TestScriptToCommand(t *testing.T) {
 	}
 }
 func TestCliRequiredOptions(t *testing.T) {
-	link := PipelineLink{pipeline: &PipelineTest{true, 0}}
+	link := PipelineLink{pipeline: newPipelineTest(true)}
 	cli, err := NewCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -126,6 +126,7 @@ func TestStoreLastId(t *testing.T) {
 	if id != idGet {
 		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "id ", id, idGet)
 	}
+	os.Remove(LastIdPath)
 }
 
 func TestGetLastIdErr(t *testing.T) {
@@ -133,6 +134,101 @@ func TestGetLastIdErr(t *testing.T) {
 	_, err := getLastId()
 	if err == nil {
 		t.Error("Expected error not thrown")
+	}
+	LastIdPath = os.TempDir() + string(os.PathSeparator) + "testLastId"
+
+}
+
+func TestScriptNoOutput(t *testing.T) {
+	link := PipelineLink{pipeline: newPipelineTest(false)}
+	cli, err := NewCli("test", link)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	_, err = scriptToCommand(SCRIPT, cli, link, false)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	//parser.Parse([]string{"test","--i-source","value"})
+	err = cli.Run([]string{"test", "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
+	if err == nil {
+		t.Errorf("No error thrown")
+	}
+}
+
+func TestScriptDefault(t *testing.T) {
+	pipeline := newPipelineTest(false)
+	link := PipelineLink{pipeline: pipeline}
+	cli, err := NewCli("test", link)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	_, err = scriptToCommand(SCRIPT, cli, link, false)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	//parser.Parse([]string{"test","--i-source","value"})
+	err = cli.Run([]string{"test", "-o", "output", "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if !pipeline.deleted {
+		t.Error("Job not deleted ")
+	}
+
+}
+func TestScriptBackground(t *testing.T) {
+	pipeline := newPipelineTest(false)
+	link := PipelineLink{pipeline: pipeline}
+	cli, err := NewCli("test", link)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	_, err = scriptToCommand(SCRIPT, cli, link, false)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	//parser.Parse([]string{"test","--i-source","value"})
+	err = cli.Run([]string{"test", "-b", "-o", "output", "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if pipeline.deleted {
+		t.Error("Job deleted in the background")
+	}
+	if pipeline.count != 0 {
+		t.Error("gathering the job several times in the background")
+	}
+	if pipeline.resulted {
+		t.Error("tried to get the results from a background job")
+	}
+
+}
+
+func TestScriptPersistent(t *testing.T) {
+	pipeline := newPipelineTest(false)
+	link := PipelineLink{pipeline: pipeline}
+	cli, err := NewCli("test", link)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	_, err = scriptToCommand(SCRIPT, cli, link, false)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	//parser.Parse([]string{"test","--i-source","value"})
+	err = cli.Run([]string{"test", "-p", "-o", "output", "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if pipeline.deleted {
+		t.Error("Job deleted and should be persistent")
+	}
+	if pipeline.count == 0 {
+		t.Error("Persistent job did not gather several times its status from the server")
+	}
+	if !pipeline.resulted {
+		t.Error("Persistent job did not gather its results")
 	}
 
 }

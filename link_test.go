@@ -50,8 +50,21 @@ var (
 )
 
 type PipelineTest struct {
-	fail  bool
-	count int
+	fail         bool
+	count        int
+	deleted      bool
+	resulted     bool
+	backgrounded bool
+}
+
+func newPipelineTest(fail bool) *PipelineTest {
+	return &PipelineTest{
+		fail:         fail,
+		count:        0,
+		deleted:      false,
+		resulted:     false,
+		backgrounded: false,
+	}
 }
 
 func (p *PipelineTest) Alive() (alive pipeline.Alive, err error) {
@@ -100,14 +113,16 @@ func (p *PipelineTest) JobRequest(newJob pipeline.JobRequest) (job pipeline.Job,
 }
 
 func (p *PipelineTest) DeleteJob(id string) (ok bool, err error) {
+	p.deleted = true
 	return
 }
 
 func (p *PipelineTest) Results(id string) (data []byte, err error) {
+	p.resulted = true
 	return
 }
 func TestBringUp(t *testing.T) {
-	link := PipelineLink{pipeline: &PipelineTest{false, 0}}
+	link := PipelineLink{pipeline: newPipelineTest(false)}
 	err := bringUp(&link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -126,7 +141,7 @@ func TestBringUp(t *testing.T) {
 }
 
 func TestBringUpFail(t *testing.T) {
-	link := PipelineLink{pipeline: &PipelineTest{true, 0}}
+	link := PipelineLink{pipeline: newPipelineTest(true)}
 	err := bringUp(&link)
 	if err == nil {
 		t.Error("Expected error is nil")
@@ -134,7 +149,7 @@ func TestBringUpFail(t *testing.T) {
 }
 
 func TestScripts(t *testing.T) {
-	link := PipelineLink{pipeline: &PipelineTest{false, 0}}
+	link := PipelineLink{pipeline: newPipelineTest(false)}
 	list, err := link.Scripts()
 	if err != nil {
 		t.Error("Unexpected error")
@@ -163,7 +178,7 @@ func TestScripts(t *testing.T) {
 }
 
 func TestScriptsFail(t *testing.T) {
-	link := PipelineLink{pipeline: &PipelineTest{true, 0}}
+	link := PipelineLink{pipeline: newPipelineTest(true)}
 	_, err := link.Scripts()
 	if err == nil {
 		t.Error("Expected error is nil")
@@ -171,7 +186,7 @@ func TestScriptsFail(t *testing.T) {
 }
 
 func TestJobRequestToPipeline(t *testing.T) {
-	link := PipelineLink{pipeline: &PipelineTest{false, 0}}
+	link := PipelineLink{pipeline: newPipelineTest(false)}
 	req, err := jobRequestToPipeline(JOB_REQUEST, link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -226,7 +241,7 @@ func TestJobRequestToPipeline(t *testing.T) {
 }
 
 func TestAsyncMessagesErr(t *testing.T) {
-	link := PipelineLink{pipeline: &PipelineTest{true, 0}}
+	link := PipelineLink{pipeline: newPipelineTest(true)}
 	chMsg := make(chan Message)
 	go getAsyncMessages(link, "jobId", chMsg)
 	message := <-chMsg
@@ -237,14 +252,14 @@ func TestAsyncMessagesErr(t *testing.T) {
 }
 
 func TestAsyncMessages(t *testing.T) {
-	link := PipelineLink{pipeline: &PipelineTest{false, 0}}
+	link := PipelineLink{pipeline: newPipelineTest(false)}
 	chMsg := make(chan Message)
 	var msgs []string
 	go getAsyncMessages(link, "jobId", chMsg)
 	for msg := range chMsg {
 		msgs = append(msgs, msg.Message.Content)
 	}
-	if len(msgs) != 3 {
+	if len(msgs) != 4 {
 		t.Errorf("Wrong message list size %v", len(msgs))
 	}
 

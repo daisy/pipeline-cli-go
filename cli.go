@@ -2,14 +2,13 @@ package main
 
 import (
 	"fmt"
-        "os"
 	"github.com/capitancambio/go-subcommand"
-        "text/template"
+	"os"
+	"text/template"
 )
 
-
 const (
-        MainHelpTemplate=`Usage {{.Name}} [GLOBAL_OPTIONS] command [COMMAND_OPTIONS]
+	MainHelpTemplate = `Usage {{.Name}} [GLOBAL_OPTIONS] command [COMMAND_OPTIONS]
 
 Script commands:
 
@@ -24,6 +23,7 @@ List of global options:                 {{.Name}} help -g
 Detailed help for a single command:     {{.Name}} help COMMAND
 `
 )
+
 //Cli is a subcommand that differenciates between script commands and regular commands just to treat them correctly during
 //the help display
 type Cli struct {
@@ -42,32 +42,33 @@ func NewCli(name string, link PipelineLink) (cli *Cli, err error) {
 }
 
 //Adds the command to the cli and stores the it into the scripts list
-func (c *Cli) AddScriptCommand(name, desc string, fn func(string, ...string)) *subcommand.Command {
+func (c *Cli) AddScriptCommand(name, desc string, fn func(string, ...string) error ) *subcommand.Command {
 	cmd := c.Parser.AddCommand(name, desc, fn)
 	c.Scripts = append(c.Scripts, cmd)
 	return cmd
 }
 
 //Adds a static command to the cli and keeps track of it for the displaying the help
-func (c *Cli) AddCommand(name, desc string, fn func(string, ...string)) *subcommand.Command {
+func (c *Cli) AddCommand(name, desc string, fn func(string, ...string) error) *subcommand.Command {
 	cmd := c.Parser.AddCommand(name, desc, fn)
-	c.StaticCommands= append(c.StaticCommands, cmd)
+	c.StaticCommands = append(c.StaticCommands, cmd)
 	return cmd
 }
-func Helper(cli *Cli, link PipelineLink) func(string, ...string) {
-	return func(help string, args ...string) {
+func Helper(cli *Cli, link PipelineLink) func(string, ...string) error {
+	return func(help string, args ...string) error {
 		printHelp(*cli, args...)
+		return nil
 	}
 }
 
 func printHelp(cli Cli, args ...string) {
 	if len(args) == 0 {
-                tmpl,err:=template.New("mainHelp").Parse(MainHelpTemplate)
-                if err!=nil{
-                        println(err.Error())
-                        panic("Error compiling help template")
-                }
-                tmpl.Execute(os.Stdout,cli)
+		tmpl, err := template.New("mainHelp").Parse(MainHelpTemplate)
+		if err != nil {
+			println(err.Error())
+			panic("Error compiling help template")
+		}
+		tmpl.Execute(os.Stdout, cli)
 	} else {
 		fmt.Printf("Usage %v [GLOBAL_OPTIONS] %v [COMMAND_OPTIONS]\n", args[0], cli.Name)
 		c := cli.Parser.Commands[args[0]]
@@ -80,13 +81,13 @@ func printHelp(cli Cli, args ...string) {
 }
 
 //func getLongestName(scripts []*subcommand.Command) int {
-	//max := -1
-	//for _, s := range scripts {
-		//if max < len(s.Name) {
-			//max = len(s.Name)
-		//}
-	//}
-	//return max
+//max := -1
+//for _, s := range scripts {
+//if max < len(s.Name) {
+//max = len(s.Name)
+//}
+//}
+//return max
 //}
 
 //func (c *Cli) addScript(script pipeline.Script) error {

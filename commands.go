@@ -34,61 +34,55 @@ func AddJobStatusCommand(cli *Cli, link PipelineLink) {
 		Data:    pipeline.Job{},
 		Verbose: false,
 	}
-	cmd := cli.AddCommand("status", "Returns the status of a job", func(command string, args ...string) {
+	cmd := cli.AddCommand("status", "Returns the status of a job", func(command string, args ...string) error {
 		id, err := checkId(*lastId, command, args...)
 		if err != nil {
-			//TODO subcommand functions to return errors
-			println("error")
-			return
+			return err
 		}
 		job, err := link.Job(id)
 		if err != nil {
-			//TODO subcommand functions to return errors
-			println("error", err.Error())
-			return
+			return err
 		}
 		tmpl, err := template.New("status").Parse(JobStatusTemplate)
 		if err != nil {
-			//TODO subcommand functions to return errors
-			println("error", err.Error())
-			return
+			return err
 		}
 		printable.Data = job
 		err = tmpl.Execute(os.Stdout, printable)
 		if err != nil {
-			//TODO subcommand functions to return errors
-			println("error", err.Error())
-			return
+			return err
 		}
-
+		return nil
 	})
-	cmd.AddSwitch("verbose", "v", "Prints the job's messages", func(swtich, nop string) {
+	cmd.AddSwitch("verbose", "v", "Prints the job's messages", func(swtich, nop string) error {
 		printable.Verbose = true
+		return nil
 	})
 	addLastId(cmd, lastId)
 }
 
 func AddDeleteCommand(cli *Cli, link PipelineLink) {
 	lastId := new(bool)
-	cmd := cli.AddCommand("delete", "Removes a job from the pipeline", func(command string, args ...string) {
+	cmd := cli.AddCommand("delete", "Removes a job from the pipeline", func(command string, args ...string) error {
 		id, err := checkId(*lastId, command, args...)
 		if err != nil {
-			//TODO subcommand functions to return errors
-			println("error")
+			return err
 		}
 		ok, err := link.Delete(id)
 		if err != nil {
 			//TODO subcommand functions to return errors
+			return err
 			println("error", err.Error())
 		}
 		if err != nil {
 			println("error", err.Error())
-			return
+			return err
 		}
 		if ok {
 			fmt.Printf("Job %v removed\n", id)
 		}
 
+		return nil
 	})
 	addLastId(cmd, lastId)
 }
@@ -96,33 +90,31 @@ func AddDeleteCommand(cli *Cli, link PipelineLink) {
 func AddResultsCommand(cli *Cli, link PipelineLink) {
 	lastId := new(bool)
 	outputPath := ""
-	cmd := cli.AddCommand("results", "Stores the results from a job", func(command string, args ...string) {
+	cmd := cli.AddCommand("results", "Stores the results from a job", func(command string, args ...string) error {
 		id, err := checkId(*lastId, command, args...)
 		if err != nil {
-			//TODO subcommand functions to return errors
-			println("error")
+			return err
 		}
 		data, err := link.Results(id)
 		if err != nil {
-			//TODO subcommand functions to return errors
-			println("error", err.Error())
+			return err
 		}
 		if err != nil {
-			println("error", err.Error())
-			return
+			return err
 		}
 
 		path, err := zippedDataToFolder(data, outputPath)
 		if err != nil {
-			println("error", err.Error())
-			return
+			return err
 		}
 
 		fmt.Printf("Results stored into %v\n", path)
 
+		return nil
 	})
-	cmd.AddOption("output", "o", "Directory where to store the results", func(name, folder string) {
+	cmd.AddOption("output", "o", "Directory where to store the results", func(name, folder string) error {
 		outputPath = folder
+		return nil
 	}).Must(true)
 	addLastId(cmd, lastId)
 }
@@ -142,8 +134,9 @@ func checkId(lastId bool, command string, args ...string) (id string, err error)
 }
 
 func addLastId(cmd *subcommand.Command, lastId *bool) {
-	cmd.AddSwitch("lastid", "l", "Get id from the last executed job", func(string, string) {
+	cmd.AddSwitch("lastid", "l", "Get id from the last executed job", func(string, string) error {
 		*lastId = true
+                return nil
 	})
 }
 

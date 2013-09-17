@@ -95,18 +95,23 @@ func (p PipelineLink) Results(jobId string) (data []byte, err error) {
 //Convience structure to handle message and errors from the communication with the pipelineApi
 type Message struct {
 	Message pipeline.Message
+	Status  string
 	Error   error
 }
 
 //Returns a simple string representation of the messages strucutre:
 //(index)[LEVEL]        Message content
 func (m Message) String() string {
-	return fmt.Sprintf("(%v)[%v]\t%v", m.Message.Sequence, m.Message.Level, m.Message.Content)
+	if m.Message.Content != "" {
+		return fmt.Sprintf("(%v)[%v]\t%v", m.Message.Sequence, m.Message.Level, m.Message.Content)
+	} else {
+		return ""
+	}
 }
 
-//Executes the job request and returns a channel fed with the job's messages
-//TODO: Refactor to return the job too
-func (p PipelineLink) Execute(jobReq JobRequest) (job pipeline.Job, messages chan Message, err error) {
+//Executes the job request and returns a channel fed with the job's messages,errors, and status.
+//The last message will have no contents but the status of the in which the job finished
+func (p PipelineLink) Execute(jobReq JobRequest, background bool) (job pipeline.Job, messages chan Message, err error) {
 	req, err := jobRequestToPipeline(jobReq, p)
 	if err != nil {
 		return
@@ -115,9 +120,12 @@ func (p PipelineLink) Execute(jobReq JobRequest) (job pipeline.Job, messages cha
 	if err != nil {
 		return
 	}
-	println(job.Id)
 	messages = make(chan Message)
-	go getAsyncMessages(p, job.Id, messages)
+	if !background {
+		go getAsyncMessages(p, job.Id, messages)
+	} else {
+		close(messages)
+	}
 	return
 }
 
@@ -133,9 +141,11 @@ func getAsyncMessages(p PipelineLink, jobId string, messages chan Message) {
 		}
 		for _, msg := range job.Messages {
 			msgNum = msg.Sequence
-			messages <- Message{Message: msg}
+			messages <- Message{Message: msg, Status: job.Status}
+
 		}
 		if job.Status == "DONE" || job.Status == "ERROR" || job.Status == "VALID" {
+			messages <- Message{Status: job.Status}
 			close(messages)
 			return
 		}
