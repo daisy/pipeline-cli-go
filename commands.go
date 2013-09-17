@@ -22,6 +22,12 @@ Status: {{.Data.Status}}
 {{end}}
 `
 
+var JobListTemplate = `
+Job Id          (Nicename)              [STATUS]
+
+{{range .}}{{.Id}}{{if .Nicename }}     ({{.Nicename}}){{end}}  [{{.Status}}]
+{{end}}`
+
 //Convinience struct
 type printableJob struct {
 	Data    pipeline.Job
@@ -118,6 +124,21 @@ func AddResultsCommand(cli *Cli, link PipelineLink) {
 	}).Must(true)
 	addLastId(cmd, lastId)
 }
+
+func AddJobsCommand(cli *Cli, link PipelineLink) {
+	cli.AddCommand("jobs", "Returns the list of jobs present in the server", func(command string, args ...string) error {
+		jobs, err := link.Jobs()
+		if err != nil {
+			return err
+		}
+		tmpl, err := template.New("joblist").Parse(JobListTemplate)
+		if err != nil {
+			return err
+		}
+		err = tmpl.Execute(os.Stdout, jobs)
+		return nil
+	})
+}
 func checkId(lastId bool, command string, args ...string) (id string, err error) {
 	if len(args) != 1 && !lastId {
 		return id, fmt.Errorf("Command %v needs a job id")
@@ -136,7 +157,7 @@ func checkId(lastId bool, command string, args ...string) (id string, err error)
 func addLastId(cmd *subcommand.Command, lastId *bool) {
 	cmd.AddSwitch("lastid", "l", "Get id from the last executed job", func(string, string) error {
 		*lastId = true
-                return nil
+		return nil
 	})
 }
 

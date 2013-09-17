@@ -121,6 +121,9 @@ func (p *PipelineTest) Results(id string) (data []byte, err error) {
 	p.resulted = true
 	return
 }
+func (p *PipelineTest) Jobs() (jobs pipeline.Jobs, err error) {
+	return
+}
 func TestBringUp(t *testing.T) {
 	link := PipelineLink{pipeline: newPipelineTest(false)}
 	err := bringUp(&link)

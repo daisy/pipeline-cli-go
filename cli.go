@@ -98,9 +98,5 @@ func printHelp(cli Cli, args ...string) {
 
 func (c *Cli) Run(args []string) error {
 	_, err := c.Parser.Parse(args)
-
-	if err != nil {
-		return err
-	}
 	return err
 }

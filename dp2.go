@@ -4,9 +4,9 @@ import (
 	"bitbucket.org/kardianos/osext"
 	"bufio"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
-        "log"
-        "io/ioutil"
 )
 
 const (
@@ -14,12 +14,12 @@ const (
 )
 
 func main() {
-        log.SetFlags(log.Lshortfile)
+	log.SetFlags(log.Lshortfile)
 	// proper error handlign missing
 	cnf, err := loadConfig()
-        if !cnf.Debug{
-                log.SetOutput(ioutil.Discard)
-        }
+	if !cnf.Debug {
+		log.SetOutput(ioutil.Discard)
+	}
 	if err != nil {
 		panic(fmt.Sprintf("Error loading configuaration file:\n\t%v", err))
 	}
@@ -30,19 +30,20 @@ func main() {
 		panic(fmt.Sprintf("Error connecting to the pipeline webservice:\n\t%v", err))
 	}
 
-	cli, err := NewCli("dp2",*link)
+	cli, err := NewCli("dp2", *link)
 	if err != nil {
 		panic(fmt.Sprintf("Error creating client:\n\t%v", err))
 	}
-        scripts, err := link.Scripts()
+	scripts, err := link.Scripts()
 	if err != nil {
 		panic(fmt.Sprintf("Error loading scripts:\n\t%v", err))
 	}
-	cli.AddScripts(scripts,*link,cnf.Local)
+	cli.AddScripts(scripts, *link, cnf.Local)
 
-        AddJobStatusCommand(cli,*link)
-        AddDeleteCommand(cli,*link)
-        AddResultsCommand(cli,*link)
+	AddJobStatusCommand(cli, *link)
+	AddDeleteCommand(cli, *link)
+	AddResultsCommand(cli, *link)
+	AddJobsCommand(cli, *link)
 
 	err = cli.Run(os.Args[1:])
 	if err != nil {

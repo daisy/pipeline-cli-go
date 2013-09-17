@@ -3,8 +3,8 @@ package main
 import (
 	//"github.com/capitancambio/go-subcommand"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
+	"os"
 	"testing"
-        "os"
 )
 
 var SCRIPT pipeline.Script = pipeline.Script{
