@@ -85,7 +85,7 @@ func TestCliNonRequiredOptions(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	cli.AddScripts([]pipeline.Script{SCRIPT}, link, false)
+	cli.AddScripts([]pipeline.Script{SCRIPT}, link, true)
 	//parser.Parse([]string{"test","--i-source","value"})
 	err = cli.Run([]string{"test", "-o", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml"})
 	if err != nil {

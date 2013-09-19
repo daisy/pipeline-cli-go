@@ -108,7 +108,7 @@ func (p *PipelineTest) Job(id string, msgSeq int) (job pipeline.Job, err error) 
 	}
 }
 
-func (p *PipelineTest) JobRequest(newJob pipeline.JobRequest) (job pipeline.Job, err error) {
+func (p *PipelineTest) JobRequest(newJob pipeline.JobRequest, data []byte) (job pipeline.Job, err error) {
 	return
 }
 

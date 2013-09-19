@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
 	"io/ioutil"
+	"log"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -28,9 +29,7 @@ type JobRequest struct {
 	Script     string               //Script id to call
 	Options    map[string][]string  //Options for the script
 	Inputs     map[string][]url.URL //Input ports for the script
-	Data       string               //Data to send with the job request
-	Verbose    bool                 //If true this request should return the job's messages
-	Persitent  bool                 //Do not delete the job once it's done
+	Data       []byte               //Data to send with the job request
 	Background bool                 //Send the request and return
 }
 
@@ -60,20 +59,19 @@ type jobExecution struct {
 	output     string
 	verbose    bool
 	persistent bool
-	background bool
 }
 
 func (j jobExecution) run() error {
 	//manual check of output
-	if !j.background && j.output == "" {
-		return errors.New("--output option is mandatory if the job is not running in the background")
+	if !j.req.Background && j.output == "" {
+		return errors.New("--output option is mandatory if the job is not running in the req.Background")
 	}
-	if j.background && j.output != "" {
+	if j.req.Background && j.output != "" {
 		fmt.Printf("Warning: --output option ignored as the job will run in the background\n")
 	}
-	storeId := j.background || j.persistent
+	storeId := j.req.Background || j.persistent
 	//send the job
-	job, messages, err := j.link.Execute(j.req, j.background)
+	job, messages, err := j.link.Execute(j.req)
 	if err != nil {
 		return err
 	}
@@ -101,7 +99,7 @@ func (j jobExecution) run() error {
 
 	if status != "ERROR" {
 		//get the data
-		if !j.background {
+		if !j.req.Background {
 			data, err := j.link.Results(job.Id)
 			if err != nil {
 				return err
@@ -127,14 +125,12 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link PipelineLink, isLoca
 	jobRequest := newJobRequest()
 	jobRequest.Script = script.Id
 	basePath := getBasePath(isLocal)
-
+	jobRequest.Background = false
 	jExec := jobExecution{
-		link:       link,
-		req:        *jobRequest,
-		output:     "",
-		verbose:    true,
-		persistent: false,
-		background: false,
+		link:    link,
+		req:     *jobRequest,
+		output:  "",
+		verbose: true,
 	}
 	command := cli.AddScriptCommand(script.Id, script.Description, func(string, ...string) error {
 		if err := jExec.run(); err != nil {
@@ -162,13 +158,31 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link PipelineLink, isLoca
 	})
 
 	command.AddSwitch("background", "b", "Sends the job and exits", func(string, string) error {
-		jExec.background = true
+		jExec.req.Background = true
 		return nil
 	})
 	command.AddOption("output", "o", "Directory where to store the results. This option is mandatory when the job is not executed in the background", func(name, folder string) error {
 		jExec.output = folder
 		return nil
 	})
+
+	if !isLocal {
+		command.AddOption("data", "d", "Zip file containing the files to convert", func(name, path string) error {
+			file, err := os.Open(path)
+			defer func() {
+				err := file.Close()
+				if err != nil {
+					log.Printf("Error closing file %v :%v", path, err.Error())
+				}
+			}()
+			if err != nil {
+				return err
+			}
+			jExec.req.Data, err = ioutil.ReadAll(file)
+			log.Printf("data len %v\n", len(jExec.req.Data))
+			return nil
+		}).Must(true)
+	}
 	return *jobRequest, nil
 }
 

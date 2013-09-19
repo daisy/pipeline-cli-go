@@ -21,22 +21,22 @@ func main() {
 		log.SetOutput(ioutil.Discard)
 	}
 	if err != nil {
-		panic(fmt.Sprintf("Error loading configuaration file:\n\t%v", err))
+		panic(fmt.Sprintf("Error loading configuaration file:\n\t%v\n", err))
 	}
 
 	link, err := NewLink(cnf)
 
 	if err != nil {
-		panic(fmt.Sprintf("Error connecting to the pipeline webservice:\n\t%v", err))
+		panic(fmt.Sprintf("Error connecting to the pipeline webservice:\n\t%v\n", err))
 	}
 
 	cli, err := NewCli("dp2", *link)
 	if err != nil {
-		panic(fmt.Sprintf("Error creating client:\n\t%v", err))
+		panic(fmt.Sprintf("Error creating client:\n\t%v\n", err))
 	}
 	scripts, err := link.Scripts()
 	if err != nil {
-		panic(fmt.Sprintf("Error loading scripts:\n\t%v", err))
+		panic(fmt.Sprintf("Error loading scripts:\n\t%v\n", err))
 	}
 	cli.AddScripts(scripts, *link, cnf.Local)
 
@@ -47,7 +47,7 @@ func main() {
 
 	err = cli.Run(os.Args[1:])
 	if err != nil {
-		panic(fmt.Sprintf("Error:\n\t%v", err))
+		panic(fmt.Sprintf("Error:\n\t%v\n", err))
 	}
 }
 

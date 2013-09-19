@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
 	"time"
+        "log"
 )
 
 //waiting time for getting messages
@@ -14,11 +15,11 @@ type PipelineApi interface {
 	Alive() (alive pipeline.Alive, err error)
 	Scripts() (scripts pipeline.Scripts, err error)
 	Script(id string) (script pipeline.Script, err error)
-	JobRequest(newJob pipeline.JobRequest) (job pipeline.Job, err error)
+	JobRequest(newJob pipeline.JobRequest, data []byte) (job pipeline.Job, err error)
 	ScriptUrl(id string) string
 	Job(string, int) (pipeline.Job, error)
-	DeleteJob(string) (bool, error)
-	Results(string) ([]byte, error)
+	DeleteJob(id string) (bool, error)
+	Results(id string) ([]byte, error)
 	Jobs() (pipeline.Jobs, error)
 }
 
@@ -120,17 +121,18 @@ func (m Message) String() string {
 
 //Executes the job request and returns a channel fed with the job's messages,errors, and status.
 //The last message will have no contents but the status of the in which the job finished
-func (p PipelineLink) Execute(jobReq JobRequest, background bool) (job pipeline.Job, messages chan Message, err error) {
+func (p PipelineLink) Execute(jobReq JobRequest) (job pipeline.Job, messages chan Message, err error) {
 	req, err := jobRequestToPipeline(jobReq, p)
 	if err != nil {
 		return
 	}
-	job, err = p.pipeline.JobRequest(req)
+	log.Printf("data len exec %v", len(jobReq.Data))
+	job, err = p.pipeline.JobRequest(req, jobReq.Data)
 	if err != nil {
 		return
 	}
 	messages = make(chan Message)
-	if !background {
+	if !jobReq.Background {
 		go getAsyncMessages(p, job.Id, messages)
 	} else {
 		close(messages)
