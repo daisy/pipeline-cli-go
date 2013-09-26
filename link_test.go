@@ -124,6 +124,11 @@ func (p *PipelineTest) Results(id string) (data []byte, err error) {
 func (p *PipelineTest) Jobs() (jobs pipeline.Jobs, err error) {
 	return
 }
+
+func (p *PipelineTest) Halt(key string) error {
+	return nil
+}
+
 func TestBringUp(t *testing.T) {
 	link := PipelineLink{pipeline: newPipelineTest(false)}
 	err := bringUp(&link)

@@ -3,10 +3,12 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/capitancambio/go-subcommand"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -123,6 +125,37 @@ func AddResultsCommand(cli *Cli, link PipelineLink) {
 		return nil
 	}).Must(true)
 	addLastId(cmd, lastId)
+}
+
+func AddHaltCommand(cli *Cli, link PipelineLink) {
+	cli.AddCommand("halt", "Stops the webservice", func(command string, args ...string) error {
+		key, err := loadKey()
+		if err != nil {
+			return err
+		}
+		err = link.Halt(key)
+		if err != nil {
+			return err
+		}
+		fmt.Println("The webservice has been halted")
+		return nil
+	})
+}
+
+func loadKey() (key string, err error) {
+	//get temp dir
+	path := filepath.Join(os.TempDir(), "dp2key.txt")
+	file, err := os.Open(path)
+	if err != nil {
+		errors.New("Could not find the key file, is the webservice running in this machine?")
+	}
+	bytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		return
+	}
+	key = string(bytes)
+
+	return
 }
 
 func AddJobsCommand(cli *Cli, link PipelineLink) {

@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
+	"log"
 	"time"
-        "log"
 )
 
 //waiting time for getting messages
@@ -21,6 +21,7 @@ type PipelineApi interface {
 	DeleteJob(id string) (bool, error)
 	Results(id string) ([]byte, error)
 	Jobs() (pipeline.Jobs, error)
+	Halt(key string) error
 }
 
 //Maintains some information about the pipeline client
@@ -100,6 +101,10 @@ func (p PipelineLink) Jobs() (jobs []pipeline.Job, err error) {
 	}
 	jobs = pJobs.Jobs
 	return
+}
+
+func (p PipelineLink) Halt(key string) error {
+	return p.pipeline.Halt(key)
 }
 
 //Convience structure to handle message and errors from the communication with the pipelineApi
