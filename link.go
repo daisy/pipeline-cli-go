@@ -4,11 +4,18 @@ import (
 	"fmt"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
 	"log"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
-//waiting time for getting messages
-var MSG_WAIT = 200 * time.Millisecond
+const (
+	MSG_WAIT   = 200 * time.Millisecond //waiting time for getting messages
+	JAVA_OPTS  = "JAVA_OPTS"
+	OH_MY_GOSH = "-Dgosh.args=--noi"
+)
 
 //Convinience for testing
 type PipelineApi interface {
@@ -39,6 +46,7 @@ func NewLink(conf Config) (pLink *PipelineLink, err error) {
 		config:   conf,
 	}
 	//assure that the pipeline is up
+
 	err = bringUp(pLink)
 	if err != nil {
 		return nil, err
@@ -52,12 +60,84 @@ func NewLink(conf Config) (pLink *PipelineLink, err error) {
 func bringUp(pLink *PipelineLink) error {
 	alive, err := pLink.pipeline.Alive()
 	if err != nil {
-		return err
+		log.Println("Starting the fwk")
+		//launch the ws
+
+		err = start(pLink.config)
+		if err != nil {
+			log.Println("Error in start")
+			return err
+		}
+		//wait til it's up and running
+		timeOut := time.After(time.Duration(pLink.config.WSTimeUp) * time.Second)
+		//communication
+		aliveChan := make(chan pipeline.Alive)
+		fmt.Println("Launching the pipeline webservice...")
+		go wait(*pLink, aliveChan)
+		select {
+		case alive = <-aliveChan:
+			fmt.Println("The webservice is UP!")
+			log.Println("The ws seems to be up")
+			//keep on going
+		case <-timeOut:
+			log.Println("bringUp timed up")
+			err = fmt.Errorf("I have been waiting %v seconds for the WS to come up but it did not")
+			break
+		}
+		if err != nil {
+			return err
+		}
 	}
 	pLink.Version = alive.Version
 	pLink.Mode = alive.Mode
 	pLink.Authentication = alive.Authentication
 	return nil
+}
+
+func wait(link PipelineLink, cAlive chan pipeline.Alive) {
+	log.Println("Calling alive")
+	for {
+		alive, err := link.pipeline.Alive()
+		if err != nil {
+			log.Printf("retrying...")
+			time.Sleep(333 * time.Millisecond)
+		} else {
+			cAlive <- alive
+			break
+		}
+	}
+
+}
+
+func start(cnf Config) error {
+	path := filepath.FromSlash(cnf.ExecLineNix)
+	log.Printf("command path %v\n", path)
+	cmd := exec.Command(path)
+	//TODO: modify current env to append -Dgosh.args=--noi to JAVA_OPTS
+	cmd.Env = os.Environ()
+	found := false
+	for idx, env := range cmd.Env {
+		if strings.HasPrefix(env, JAVA_OPTS) {
+			found = true
+			cmd.Env[idx] = appendOpts(env)
+		}
+	}
+	if !found {
+		cmd.Env = append(cmd.Env, appendOpts(JAVA_OPTS+"="))
+	}
+	log.Printf("Command %+v\n", cmd)
+	cmd.Stdin, cmd.Stdout, cmd.Stderr = nil, nil, nil
+	//cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	err := cmd.Start()
+	return err
+}
+
+func appendOpts(javaOptsVar string) string {
+	//just the value
+	val := strings.TrimLeft(javaOptsVar, JAVA_OPTS+"=")
+	val = strings.Trim(val, `"`)
+	result := val + " " + OH_MY_GOSH
+	return JAVA_OPTS + `=` + result
 }
 
 //ScriptList returns the list of scripts available in the framework
