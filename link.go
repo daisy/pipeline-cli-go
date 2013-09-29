@@ -113,7 +113,6 @@ func start(cnf Config) error {
 	path := filepath.FromSlash(cnf.ExecLineNix)
 	log.Printf("command path %v\n", path)
 	cmd := exec.Command(path)
-	//TODO: modify current env to append -Dgosh.args=--noi to JAVA_OPTS
 	cmd.Env = os.Environ()
 	found := false
 	for idx, env := range cmd.Env {
@@ -125,7 +124,6 @@ func start(cnf Config) error {
 	if !found {
 		cmd.Env = append(cmd.Env, appendOpts(JAVA_OPTS+"="))
 	}
-	log.Printf("Command %+v\n", cmd)
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = nil, nil, nil
 	//cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	err := cmd.Start()

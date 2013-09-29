@@ -92,3 +92,22 @@ func TestCliNonRequiredOptions(t *testing.T) {
 		t.Error("Non required option threw an error")
 	}
 }
+
+func TestPrintHelpErrors(t *testing.T) {
+	link := PipelineLink{pipeline: newPipelineTest(false)}
+	cli, err := NewCli("testprog", link)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	cli.AddScripts([]pipeline.Script{SCRIPT}, link, true)
+	//more than one parameter fail
+	err = printHelp(*cli, "one", "two")
+	if err == nil {
+		t.Error("Expected error (more than one param) is nil")
+	}
+	err = printHelp(*cli, "one")
+	if err == nil {
+		t.Error("Expected error (unknown command) is nil")
+	}
+
+}

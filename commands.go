@@ -42,7 +42,7 @@ func AddJobStatusCommand(cli *Cli, link PipelineLink) {
 		Data:    pipeline.Job{},
 		Verbose: false,
 	}
-	cmd := cli.AddCommand("status", "Returns the status of a job", func(command string, args ...string) error {
+	cmd := cli.AddCommand("status", "Returns the status of the job with id JOB_ID", func(command string, args ...string) error {
 		id, err := checkId(*lastId, command, args...)
 		if err != nil {
 			return err
@@ -188,10 +188,11 @@ func checkId(lastId bool, command string, args ...string) (id string, err error)
 }
 
 func addLastId(cmd *subcommand.Command, lastId *bool) {
-	cmd.AddSwitch("lastid", "l", "Get id from the last executed job", func(string, string) error {
+	cmd.AddSwitch("lastid", "l", "Get id from the last executed job instead of JOB_ID", func(string, string) error {
 		*lastId = true
 		return nil
 	})
+	cmd.Params = "[JOB_ID]"
 }
 
 //Calculates the absolute path in base of cwd and creates the directory
