@@ -121,6 +121,9 @@ func (p *PipelineTest) Results(id string) (data []byte, err error) {
 	p.resulted = true
 	return
 }
+func (p *PipelineTest) Log(id string) (data []byte, err error) {
+	return
+}
 func (p *PipelineTest) Jobs() (jobs pipeline.Jobs, err error) {
 	return
 }
@@ -293,7 +296,7 @@ func TestAppendOps(t *testing.T) {
 	}
 
 	res = appendOpts("JAVA_OPTS=\"-Dsomething -Dandsthelse\"")
-	javaOptsQuotes := "JAVA_OPTS=-Dsomething -Dandsthelse " + OH_MY_GOSH 
+	javaOptsQuotes := "JAVA_OPTS=-Dsomething -Dandsthelse " + OH_MY_GOSH
 	if javaOptsQuotes != res {
 		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "javaOptsQuotes ", javaOptsQuotes, res)
 	}

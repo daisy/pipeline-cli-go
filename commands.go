@@ -14,7 +14,8 @@ import (
 	"text/template"
 )
 
-var JobStatusTemplate = `
+const (
+	JobStatusTemplate = `
 Job Id: {{.Data.Id }}
 Status: {{.Data.Status}}
 {{if .Verbose}}Messages:
@@ -24,11 +25,12 @@ Status: {{.Data.Status}}
 {{end}}
 `
 
-var JobListTemplate = `
+	JobListTemplate = `
 Job Id          (Nicename)              [STATUS]
 
 {{range .}}{{.Id}}{{if .Nicename }}     ({{.Nicename}}){{end}}  [{{.Status}}]
 {{end}}`
+)
 
 //Convinience struct
 type printableJob struct {
@@ -127,6 +129,39 @@ func AddResultsCommand(cli *Cli, link PipelineLink) {
 	addLastId(cmd, lastId)
 }
 
+func AddLogCommand(cli *Cli, link PipelineLink) {
+	lastId := new(bool)
+	outputPath := ""
+	cmd := cli.AddCommand("log", "Stores the results from a job", func(command string, args ...string) error {
+		id, err := checkId(*lastId, command, args...)
+		if err != nil {
+			return err
+		}
+		data, err := link.Log(id)
+		if err != nil {
+			return err
+		}
+		outWriter := os.Stdout
+		if len(outputPath) > 0 {
+			file, err := os.Create(outputPath)
+			defer func() { file.Close() }()
+			if err != nil {
+				return err
+			}
+			outWriter = file
+		}
+		_, err = outWriter.Write(data)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	cmd.AddOption("output", "o", "Write the log lines into the file provided instead of printing it", func(name, file string) error {
+		outputPath = file
+		return nil
+	})
+	addLastId(cmd, lastId)
+}
 func AddHaltCommand(cli *Cli, link PipelineLink) {
 	cli.AddCommand("halt", "Stops the webservice", func(command string, args ...string) error {
 		key, err := loadKey()

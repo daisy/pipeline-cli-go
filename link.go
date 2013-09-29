@@ -27,6 +27,7 @@ type PipelineApi interface {
 	Job(string, int) (pipeline.Job, error)
 	DeleteJob(id string) (bool, error)
 	Results(id string) ([]byte, error)
+	Log(id string) ([]byte, error)
 	Jobs() (pipeline.Jobs, error)
 	Halt(key string) error
 }
@@ -170,6 +171,10 @@ func (p PipelineLink) Delete(jobId string) (ok bool, err error) {
 //Return the zipped results as a []byte
 func (p PipelineLink) Results(jobId string) (data []byte, err error) {
 	data, err = p.pipeline.Results(jobId)
+	return
+}
+func (p PipelineLink) Log(jobId string) (data []byte, err error) {
+	data, err = p.pipeline.Log(jobId)
 	return
 }
 func (p PipelineLink) Jobs() (jobs []pipeline.Job, err error) {
