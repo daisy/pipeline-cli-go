@@ -27,6 +27,7 @@ func getLastIdPath() string {
 //Represents the job request
 type JobRequest struct {
 	Script     string               //Script id to call
+	Nicename   string               //Job's nicename
 	Options    map[string][]string  //Options for the script
 	Inputs     map[string][]url.URL //Input ports for the script
 	Data       []byte               //Data to send with the job request
@@ -148,6 +149,11 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link PipelineLink, isLoca
 		command.AddOption("x-"+option.Name, "", option.Desc, optionFunc(jobRequest, basePath, option.Type)).Must(option.Required)
 	}
 
+	command.AddOption("nicename", "n", "Set job's nice name", func(name, nice string) error {
+		jExec.req.Nicename = nice
+
+		return nil
+	})
 	command.AddSwitch("quiet", "q", "Do not print the job's messages", func(string, string) error {
 		jExec.verbose = false
 		return nil

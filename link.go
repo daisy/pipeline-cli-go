@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+        "errors"
 )
 
 const (
@@ -19,6 +20,7 @@ const (
 
 //Convinience for testing
 type PipelineApi interface {
+	SetCredentials(string, string)
 	Alive() (alive pipeline.Alive, err error)
 	Scripts() (scripts pipeline.Scripts, err error)
 	Script(id string) (script pipeline.Script, err error)
@@ -42,8 +44,9 @@ type PipelineLink struct {
 }
 
 func NewLink(conf Config) (pLink *PipelineLink, err error) {
+
 	pLink = &PipelineLink{
-		pipeline: *pipeline.NewPipeline(conf.Url()),
+		pipeline: pipeline.NewPipeline(conf.Url()),
 		config:   conf,
 	}
 	//assure that the pipeline is up
@@ -51,6 +54,13 @@ func NewLink(conf Config) (pLink *PipelineLink, err error) {
 	err = bringUp(pLink)
 	if err != nil {
 		return nil, err
+	}
+	//set the credentials
+	if pLink.Authentication {
+		if !(len(conf.ClientKey) > 0 && len(conf.ClientSecret) > 0) {
+			return nil, errors.New("link: Authentication required but client_key and client_secret are not set. Please, check the configuration")
+		}
+		pLink.pipeline.SetCredentials(conf.ClientKey, conf.ClientSecret)
 	}
 	return
 }
@@ -256,7 +266,8 @@ func getAsyncMessages(p PipelineLink, jobId string, messages chan Message) {
 func jobRequestToPipeline(req JobRequest, p PipelineLink) (pReq pipeline.JobRequest, err error) {
 	href := p.pipeline.ScriptUrl(req.Script)
 	pReq = pipeline.JobRequest{
-		Script: pipeline.Script{Href: href},
+		Script:   pipeline.Script{Href: href},
+		Nicename: req.Nicename,
 	}
 	for name, values := range req.Inputs {
 		input := pipeline.Input{Name: name}

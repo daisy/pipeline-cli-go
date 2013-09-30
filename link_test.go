@@ -10,7 +10,8 @@ import (
 
 var (
 	JOB_REQUEST = JobRequest{
-		Script: "test",
+		Script:   "test",
+		Nicename: "nice",
 		Options: map[string][]string{
 			SCRIPT.Options[0].Name: []string{"file1.xml", "file2.xml"},
 			SCRIPT.Options[1].Name: []string{"true"},
@@ -67,6 +68,8 @@ func newPipelineTest(fail bool) *PipelineTest {
 	}
 }
 
+func (p PipelineTest) SetCredentials(key, secret string) {
+}
 func (p *PipelineTest) Alive() (alive pipeline.Alive, err error) {
 	if p.fail {
 		return alive, errors.New("Error")
@@ -205,6 +208,10 @@ func TestJobRequestToPipeline(t *testing.T) {
 	if req.Script.Href != SCRIPT.Id {
 		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", SCRIPT.Id, req.Script.Href)
 	}
+	if "nice" != req.Nicename {
+		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "nicename", "nice", req.Nicename)
+	}
+
 	if len(req.Inputs) != 2 {
 		t.Errorf("Bad input list len %v", len(req.Inputs))
 	}
@@ -301,3 +308,4 @@ func TestAppendOps(t *testing.T) {
 		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "javaOptsQuotes ", javaOptsQuotes, res)
 	}
 }
+
