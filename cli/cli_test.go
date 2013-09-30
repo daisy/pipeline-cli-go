@@ -111,3 +111,44 @@ func TestPrintHelpErrors(t *testing.T) {
 	}
 
 }
+
+func TestClientNew(t *testing.T) {
+	link := PipelineLink{pipeline: newPipelineTest(false)}
+	cli, err := NewCli("testprog", link)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	cli.AddNewClientCommand(link)
+	//Bad role
+	err = cli.Run([]string{"create", "-i", "paco", "-r", "PLUMBER", "-s", "sshh"})
+	if err == nil {
+		t.Error("Bad role didn't err")
+	}
+	err = cli.Run([]string{"create", "-r", "ADMIN", "-s", "sshh"})
+	if err == nil {
+		t.Error("No id didn't err")
+	}
+	err = cli.Run([]string{"create", "-r", "ADMIN", "-i", "paco"})
+	if err == nil {
+		t.Error("No no secret didn't err")
+	}
+}
+
+func TestClientDelete(t *testing.T) {
+	link := PipelineLink{pipeline: newPipelineTest(false)}
+	cli, err := NewCli("testprog", link)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	cli.AddDeleteClientCommand(link)
+	//Bad role
+	err = cli.Run([]string{"delete"})
+	if err == nil {
+		t.Error("Bad number of args didn't err")
+	}
+
+	err = cli.Run([]string{"delete", "uno", "due"})
+	if err == nil {
+		t.Error("Bad number of args didn't err")
+	}
+}

@@ -135,6 +135,21 @@ func (p *PipelineTest) Halt(key string) error {
 	return nil
 }
 
+func (p *PipelineTest) Clients() (c []pipeline.Client, err error) {
+	return
+}
+func (p *PipelineTest) NewClient(cIn pipeline.Client) (cOut pipeline.Client, err error) {
+	return
+}
+func (p *PipelineTest) DeleteClient(id string) (ok bool, err error) {
+	return
+}
+func (p *PipelineTest) Client(id string) (client pipeline.Client, err error) {
+	return
+}
+func (p *PipelineTest) ModifyClient(client pipeline.Client, id string) (c pipeline.Client, err error) {
+	return
+}
 func TestBringUp(t *testing.T) {
 	link := PipelineLink{pipeline: newPipelineTest(false)}
 	err := bringUp(&link)
@@ -308,4 +323,3 @@ func TestAppendOps(t *testing.T) {
 		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "javaOptsQuotes ", javaOptsQuotes, res)
 	}
 }
-

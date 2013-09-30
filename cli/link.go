@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
 	"log"
@@ -9,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-        "errors"
 )
 
 const (
@@ -32,6 +32,11 @@ type PipelineApi interface {
 	Log(id string) ([]byte, error)
 	Jobs() (pipeline.Jobs, error)
 	Halt(key string) error
+	Clients() (clients []pipeline.Client, err error)
+	NewClient(in pipeline.Client) (out pipeline.Client, err error)
+	ModifyClient(in pipeline.Client, id string) (out pipeline.Client, err error)
+	DeleteClient(id string) (ok bool, err error)
+	Client(id string) (out pipeline.Client, err error)
 }
 
 //Maintains some information about the pipeline client
@@ -196,8 +201,27 @@ func (p PipelineLink) Jobs() (jobs []pipeline.Job, err error) {
 	return
 }
 
+//Admin
 func (p PipelineLink) Halt(key string) error {
 	return p.pipeline.Halt(key)
+}
+
+func (p PipelineLink) Clients() (clients []pipeline.Client, err error) {
+	return p.pipeline.Clients()
+}
+
+func (p PipelineLink) NewClient(newClient pipeline.Client) (client pipeline.Client, err error) {
+	return p.pipeline.NewClient(newClient)
+}
+func (p PipelineLink) DeleteClient(id string) (ok bool, err error) {
+	return p.pipeline.DeleteClient(id)
+}
+func (p PipelineLink) Client(id string) (out pipeline.Client, err error) {
+	return p.pipeline.Client(id)
+}
+
+func (p PipelineLink) ModifyClient(data pipeline.Client, id string) (client pipeline.Client, err error) {
+	return p.pipeline.ModifyClient(data, id)
 }
 
 //Convience structure to handle message and errors from the communication with the pipelineApi

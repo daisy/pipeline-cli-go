@@ -12,10 +12,12 @@ const (
 	MAIN_HELP_TEMPLATE = `
 Usage {{.Name}} [GLOBAL_OPTIONS] command [COMMAND_OPTIONS] [PARAMS]
 
+{{if .Scripts}}
 Script commands:
 
         {{range .Scripts}}{{.Name}}             {{.Description}}
         {{end}}
+{{end}}
 General commands:
 
         {{range .StaticCommands}}{{.Name}}             {{.Description}}
