@@ -150,6 +150,9 @@ func (p *PipelineTest) Client(id string) (client pipeline.Client, err error) {
 func (p *PipelineTest) ModifyClient(client pipeline.Client, id string) (c pipeline.Client, err error) {
 	return
 }
+func (p *PipelineTest) Properties() (props []pipeline.Property, err error) {
+	return
+}
 func TestBringUp(t *testing.T) {
 	link := PipelineLink{pipeline: newPipelineTest(false)}
 	err := bringUp(&link)

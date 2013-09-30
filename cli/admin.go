@@ -22,6 +22,11 @@ Contact:        {{.Contact}}
 Secret:         ****
 
 `
+	TmplProperties = ` Name          Value           Bundle
+        
+{{range .}}{{.Name}}            {{.Value}}              {{.BundleName}}
+{{end}}
+`
 )
 
 func (c *Cli) AddClientListCommand(link PipelineLink) {
@@ -171,4 +176,20 @@ func (c *Cli) AddModifyClientCommand(link PipelineLink) {
 		return nil
 	})
 
+}
+
+func (c *Cli) AddPropertyListCommand(link PipelineLink) {
+	c.AddCommand("properties", "List the pipeline ws runtime properties ", func(command string, args ...string) error {
+		properties, err := link.pipeline.Properties()
+		if err != nil {
+			return err
+		}
+		tmpl, err := template.New("props").Parse(TmplProperties)
+		if err != nil {
+			return err
+		}
+		err = tmpl.Execute(os.Stdout, properties)
+
+		return nil
+	})
 }

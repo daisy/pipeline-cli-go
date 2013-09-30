@@ -42,6 +42,7 @@ func main() {
 	comm.AddDeleteClientCommand(*link)
 	comm.AddModifyClientCommand(*link)
 	comm.AddClientCommand(*link)
+	comm.AddPropertyListCommand(*link)
 
 	err = comm.Run(os.Args[1:])
 	if err != nil {

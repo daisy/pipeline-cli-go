@@ -37,6 +37,7 @@ type PipelineApi interface {
 	ModifyClient(in pipeline.Client, id string) (out pipeline.Client, err error)
 	DeleteClient(id string) (ok bool, err error)
 	Client(id string) (out pipeline.Client, err error)
+	Properties() (props []pipeline.Property, err error)
 }
 
 //Maintains some information about the pipeline client
@@ -222,6 +223,9 @@ func (p PipelineLink) Client(id string) (out pipeline.Client, err error) {
 
 func (p PipelineLink) ModifyClient(data pipeline.Client, id string) (client pipeline.Client, err error) {
 	return p.pipeline.ModifyClient(data, id)
+}
+func (p PipelineLink) Properties() (props []pipeline.Property, err error) {
+	return p.pipeline.Properties()
 }
 
 //Convience structure to handle message and errors from the communication with the pipelineApi
