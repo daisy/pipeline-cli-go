@@ -23,32 +23,104 @@ client_secret: supersecret
 timeout_seconds: 10
 #debug
 debug: true
+starting: true
 `
 	T_STRING = "Wrong %v\nexpected: %v\nresult:%v\n"
 	EXP      = map[string]interface{}{
 		"url":           "http://localhost:8181/ws/",
 		"host":          "http://localhost",
 		"port":          8181,
-		"ws_path":          "ws",
+		"ws_path":       "ws",
 		"ws_timeup":     25,
 		"unix":          "unix",
 		"windows":       "windows",
 		"client_key":    "clientid",
 		"client_secret": "supersecret",
-		"time_out":       10,
+		"time_out":      10,
+		"starting":      true,
 		"debug":         true,
 	}
 )
 
-func TestConfigCreation(t *testing.T) {
-	yalmStr := bytes.NewBufferString(YAML)
-	cnf, err := NewConfig(yalmStr)
+func TestDefault(t *testing.T) {
+	cnf := NewConfig()
 	var res interface{}
 	var test string
 
+	test = "host"
+	res = cnf.Host
+	if res != defaults[test] {
+		t.Errorf(T_STRING, test, defaults[test], res)
+	}
+
+	test = "port"
+	res = cnf.Port
+	if res != defaults[test] {
+		t.Errorf(T_STRING, test, defaults[test], res)
+	}
+
+	test = "ws_path"
+	res = cnf.Path
+	if res != defaults[test] {
+		t.Errorf(T_STRING, test, defaults[test], res)
+	}
+	test = WSTIMEUP
+	res = cnf.WSTimeUp
+	if res != defaults[test] {
+		t.Errorf(T_STRING, test, defaults[test], res)
+	}
+
+	test = EXECLINENIX
+	res = cnf.ExecLineNix
+	if res != defaults[test] {
+		t.Errorf(T_STRING, test, defaults[test], res)
+	}
+
+	test = EXCLINEWIN
+	res = cnf.ExecLineWin
+	if res != defaults[test] {
+		t.Errorf(T_STRING, test, defaults[test], res)
+	}
+
+	test = "client_key"
+	res = cnf.ClientKey
+	if res != defaults[test] {
+		t.Errorf(T_STRING, test, defaults[test], res)
+	}
+
+	test = "client_secret"
+	res = cnf.ClientSecret
+	if res != defaults[test] {
+		t.Errorf(T_STRING, test, defaults[test], res)
+	}
+
+	test = TIMEOUT
+	res = cnf.TimeOut
+	if res != defaults[test] {
+		t.Errorf(T_STRING, test, defaults[test], res)
+	}
+
+	test = "debug"
+	res = cnf.Debug
+	if res != defaults[test] {
+		t.Errorf(T_STRING, test, defaults[test], res)
+	}
+	test = "starting"
+	res = cnf.Debug
+	if res != defaults[test] {
+		t.Errorf(T_STRING, test, defaults[test], res)
+	}
+}
+
+func TestConfigYaml(t *testing.T) {
+	yalmStr := bytes.NewBufferString(YAML)
+	cnf := NewConfig()
+	err := cnf.FromYaml(yalmStr)
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
+	var res interface{}
+	var test string
 
 	test = "host"
 	res = cnf.Host
@@ -111,13 +183,9 @@ func TestConfigCreation(t *testing.T) {
 }
 
 func TestGetUrl(t *testing.T) {
-        yalmStr := bytes.NewBufferString(YAML)
-        cnf,err:=NewConfig(yalmStr)
-        if err!=nil{
-        t.Error("Unexpected error")
-        }
-        test:="url"
-        if cnf.Url()!=EXP[test]{
-        t.Errorf(T_STRING, test, EXP[test], cnf.Url())
-        }
+	cnf := NewConfig()
+	test := "url"
+	if cnf.Url() != EXP[test] {
+		t.Errorf(T_STRING, test, EXP[test], cnf.Url())
+	}
 }

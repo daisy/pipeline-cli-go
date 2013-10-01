@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bitbucket.org/kardianos/osext"
-	"bufio"
 	"fmt"
 	"github.com/daisy-consortium/pipeline-cli-go/cli"
 	"io/ioutil"
@@ -17,12 +15,9 @@ const (
 func main() {
 	log.SetFlags(log.Lshortfile)
 	// proper error handlign missing
-	cnf, err := loadConfig()
+	cnf := cli.NewConfig()
 	if !cnf.Debug {
 		log.SetOutput(ioutil.Discard)
-	}
-	if err != nil {
-		panic(fmt.Sprintf("Error loading configuaration file:\n\t%v\n", err))
 	}
 
 	link, err := cli.NewLink(cnf)
@@ -48,20 +43,4 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("Error:\n\t%v\n", err))
 	}
-}
-
-func loadConfig() (cnf cli.Config, err error) {
-	basePath, err := osext.ExecutableFolder()
-	if err != nil {
-		return
-	}
-
-	fd, err := os.Open(basePath + CONFIG_FILE)
-	defer fd.Close()
-	if err != nil {
-		return
-	}
-	r := bufio.NewReader(fd)
-	cnf, err = cli.NewConfig(r)
-	return
 }

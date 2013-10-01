@@ -14,7 +14,6 @@ const (
 	WSTIMEUP     = "ws_timeup"
 	EXECLINENIX  = "exec_line_nix"
 	EXCLINEWIN   = "exec_line_win"
-	LOCAL        = "local"
 	CLIENTKEY    = "client_key"
 	CLIENTSECRET = "client_secret"
 	TIMEOUT      = "timeout_seconds"
@@ -22,6 +21,21 @@ const (
 	STARTING     = "starting"
 	ERR_STR      = "Error parsing configuration: %v"
 )
+
+var defaults = map[string]interface{}{
+
+	HOST:         "http://localhost",
+	PORT:         8181,
+	PATH:         "ws",
+	WSTIMEUP:     25,
+	EXECLINENIX:  "",
+	EXCLINEWIN:   "",
+	CLIENTKEY:    "",
+	CLIENTSECRET: "",
+	TIMEOUT:      10,
+	DEBUG:        false,
+	STARTING:     false,
+}
 
 //Contains the items from the configuration
 //file
@@ -37,17 +51,32 @@ type Config struct {
 	ClientSecret string //Client secret for authorisation
 	TimeOut      int    //HTTP timeout
 	Debug        bool   //Start in debug mode
-	Starting     bool
+	Starting     bool   //Starts the ws in case it is not running
 }
 
-func NewConfig(r io.Reader) (conf Config, err error) {
+func NewConfig() *Config {
+	return &Config{
+
+		Host:         defaults[HOST].(string),
+		Port:         defaults[PORT].(int),
+		Path:         defaults[PATH].(string),
+		WSTimeUp:     defaults[WSTIMEUP].(int),
+		ExecLineNix:  defaults[EXECLINENIX].(string),
+		ExecLineWin:  defaults[EXCLINEWIN].(string),
+		ClientKey:    defaults[CLIENTKEY].(string),
+		ClientSecret: defaults[CLIENTSECRET].(string),
+		TimeOut:      defaults[TIMEOUT].(int),
+		Debug:        defaults[DEBUG].(bool),
+		Starting:     defaults[STARTING].(bool),
+	}
+}
+func (c *Config) FromYaml(r io.Reader) error {
 	node, err := yaml.Parse(r)
 	if err != nil {
-		return
+		return err
 	}
-	conf = Config{Starting: false}
-	err = nodeToConfig(node, &conf)
-	return
+	err = nodeToConfig(node, c)
+	return err
 }
 func (c Config) Url() string {
 	return fmt.Sprintf("%v:%v/%v/", c.Host, c.Port, c.Path)
@@ -87,11 +116,6 @@ func nodeToConfig(node yaml.Node, conf *Config) error {
 		return fmt.Errorf(ERR_STR, err)
 	}
 
-	conf.Local, err = file.GetBool(LOCAL)
-	if err != nil {
-		return fmt.Errorf(ERR_STR, err)
-	}
-
 	conf.ClientKey, err = file.Get(CLIENTKEY)
 	if err != nil {
 		return fmt.Errorf(ERR_STR, err)
@@ -108,6 +132,10 @@ func nodeToConfig(node yaml.Node, conf *Config) error {
 		return fmt.Errorf(ERR_STR, err)
 	}
 	conf.Debug, err = file.GetBool(DEBUG)
+	if err != nil {
+		return fmt.Errorf(ERR_STR, err)
+	}
+	conf.Debug, err = file.GetBool(STARTING)
 	if err != nil {
 		return fmt.Errorf(ERR_STR, err)
 	}
