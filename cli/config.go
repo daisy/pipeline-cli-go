@@ -19,6 +19,7 @@ const (
 	CLIENTSECRET = "client_secret"
 	TIMEOUT      = "timeout_seconds"
 	DEBUG        = "debug"
+	STARTING     = "starting"
 	ERR_STR      = "Error parsing configuration: %v"
 )
 
@@ -26,16 +27,17 @@ const (
 //file
 type Config struct {
 	Host         string //Framework host
-	Port         int  //Framerwork port
+	Port         int    //Framerwork port
 	Path         string //Framework path
-	WSTimeUp     int  //Time to wait till the framework comes up
+	WSTimeUp     int    //Time to wait till the framework comes up
 	ExecLineNix  string //pipeline executable line for *nix systems
 	ExecLineWin  string //pipeline executable line for windows systems
 	Local        bool   //Local mode if we want to bring the pipeline up
 	ClientKey    string //Client key for authorisation
 	ClientSecret string //Client secret for authorisation
-	TimeOut      int  //HTTP timeout
+	TimeOut      int    //HTTP timeout
 	Debug        bool   //Start in debug mode
+	Starting     bool
 }
 
 func NewConfig(r io.Reader) (conf Config, err error) {
@@ -43,12 +45,12 @@ func NewConfig(r io.Reader) (conf Config, err error) {
 	if err != nil {
 		return
 	}
-	conf = Config{}
+	conf = Config{Starting: false}
 	err = nodeToConfig(node, &conf)
 	return
 }
 func (c Config) Url() string {
-        return fmt.Sprintf("%v:%v/%v/",c.Host,c.Port,c.Path)
+	return fmt.Sprintf("%v:%v/%v/", c.Host, c.Port, c.Path)
 }
 func nodeToConfig(node yaml.Node, conf *Config) error {
 	var err error
@@ -58,8 +60,8 @@ func nodeToConfig(node yaml.Node, conf *Config) error {
 		return fmt.Errorf(ERR_STR, err)
 	}
 
-        aux, err := file.GetInt(PORT)
-        conf.Port=int(aux)
+	aux, err := file.GetInt(PORT)
+	conf.Port = int(aux)
 	if err != nil {
 		return fmt.Errorf(ERR_STR, err)
 	}
@@ -69,8 +71,8 @@ func nodeToConfig(node yaml.Node, conf *Config) error {
 		return fmt.Errorf(ERR_STR, err)
 	}
 
-        aux, err = file.GetInt(WSTIMEUP)
-	conf.WSTimeUp=int(aux)
+	aux, err = file.GetInt(WSTIMEUP)
+	conf.WSTimeUp = int(aux)
 	if err != nil {
 		return fmt.Errorf(ERR_STR, err)
 	}
@@ -100,8 +102,8 @@ func nodeToConfig(node yaml.Node, conf *Config) error {
 		return fmt.Errorf(ERR_STR, err)
 	}
 
-        aux, err = file.GetInt(TIMEOUT)
-	conf.TimeOut=int(aux)
+	aux, err = file.GetInt(TIMEOUT)
+	conf.TimeOut = int(aux)
 	if err != nil {
 		return fmt.Errorf(ERR_STR, err)
 	}

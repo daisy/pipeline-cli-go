@@ -43,13 +43,13 @@ type PipelineApi interface {
 //Maintains some information about the pipeline client
 type PipelineLink struct {
 	pipeline       PipelineApi //Allows access to the pipeline fwk
-	config         Config
+	config         *Config
 	Version        string //Framework version
 	Authentication bool   //Framework authentication
 	Mode           string //Framework mode
 }
 
-func NewLink(conf Config) (pLink *PipelineLink, err error) {
+func NewLink(conf *Config) (pLink *PipelineLink, err error) {
 
 	pLink = &PipelineLink{
 		pipeline: pipeline.NewPipeline(conf.Url()),
@@ -57,18 +57,21 @@ func NewLink(conf Config) (pLink *PipelineLink, err error) {
 	}
 	//assure that the pipeline is up
 
-	err = bringUp(pLink)
-	if err != nil {
-		return nil, err
+	return
+}
+
+func (p *PipelineLink) Init() error {
+	if err := bringUp(p); err != nil {
+		return err
 	}
 	//set the credentials
-	if pLink.Authentication {
-		if !(len(conf.ClientKey) > 0 && len(conf.ClientSecret) > 0) {
-			return nil, errors.New("link: Authentication required but client_key and client_secret are not set. Please, check the configuration")
+	if p.Authentication {
+		if !(len(p.config.ClientKey) > 0 && len(p.config.ClientSecret) > 0) {
+			return errors.New("link: Authentication required but client_key and client_secret are not set. Please, check the configuration")
 		}
-		pLink.pipeline.SetCredentials(conf.ClientKey, conf.ClientSecret)
+		p.pipeline.SetCredentials(p.config.ClientKey, p.config.ClientSecret)
 	}
-	return
+	return nil
 }
 
 //checks if the pipeline is up
@@ -77,32 +80,35 @@ func NewLink(conf Config) (pLink *PipelineLink, err error) {
 func bringUp(pLink *PipelineLink) error {
 	alive, err := pLink.pipeline.Alive()
 	if err != nil {
-		log.Println("Starting the fwk")
-		//launch the ws
-
-		err = start(pLink.config)
-		if err != nil {
-			log.Println("Error in start")
-			return err
-		}
-		//wait til it's up and running
-		timeOut := time.After(time.Duration(pLink.config.WSTimeUp) * time.Second)
-		//communication
-		aliveChan := make(chan pipeline.Alive)
-		fmt.Println("Launching the pipeline webservice...")
-		go wait(*pLink, aliveChan)
-		select {
-		case alive = <-aliveChan:
-			fmt.Println("The webservice is UP!")
-			log.Println("The ws seems to be up")
-			//keep on going
-		case <-timeOut:
-			log.Println("bringUp timed up")
-			err = fmt.Errorf("I have been waiting %v seconds for the WS to come up but it did not")
-			break
-		}
-		if err != nil {
-			return err
+		if pLink.config.Starting {
+			log.Println("Starting the fwk")
+			//launch the ws
+			err = start(*pLink.config)
+			if err != nil {
+				log.Println("Error in start")
+				return err
+			}
+			//wait til it's up and running
+			timeOut := time.After(time.Duration(pLink.config.WSTimeUp) * time.Second)
+			//communication
+			aliveChan := make(chan pipeline.Alive)
+			fmt.Println("Launching the pipeline webservice...")
+			go wait(*pLink, aliveChan)
+			select {
+			case alive = <-aliveChan:
+				fmt.Println("The webservice is UP!")
+				log.Println("The ws seems to be up")
+				//keep on going
+			case <-timeOut:
+				log.Println("bringUp timed up")
+				err = fmt.Errorf("I have been waiting %v seconds for the WS to come up but it did not")
+				break
+			}
+			if err != nil {
+				return err
+			}
+		} else {
+			return fmt.Errorf("Could not connect to the webservice and I'm not configured to start one\n\tError: %v", err.Error())
 		}
 	}
 	pLink.Version = alive.Version

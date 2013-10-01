@@ -52,7 +52,7 @@ var SCRIPT pipeline.Script = pipeline.Script{
 var in1, in2 = "tmp/dir1/file.xml", "tmp/dir2/file.xml"
 
 func TestCliAddScriptCommand(t *testing.T) {
-	link := PipelineLink{pipeline: newPipelineTest(false)}
+	link := PipelineLink{pipeline: newPipelineTest(false), config: &Config{Starting: false}}
 	cli, err := NewCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -64,7 +64,7 @@ func TestCliAddScriptCommand(t *testing.T) {
 }
 
 func TestCliAddCommand(t *testing.T) {
-	link := PipelineLink{pipeline: newPipelineTest(false)}
+	link := PipelineLink{pipeline: newPipelineTest(false), config: &Config{Starting: false}}
 	cli, err := NewCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -80,7 +80,7 @@ func TestCliAddCommand(t *testing.T) {
 }
 
 func TestCliNonRequiredOptions(t *testing.T) {
-	link := PipelineLink{pipeline: newPipelineTest(false)}
+	link := PipelineLink{pipeline: newPipelineTest(false), config: &Config{Starting: false}}
 	cli, err := NewCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -94,7 +94,7 @@ func TestCliNonRequiredOptions(t *testing.T) {
 }
 
 func TestPrintHelpErrors(t *testing.T) {
-	link := PipelineLink{pipeline: newPipelineTest(false)}
+	link := PipelineLink{pipeline: newPipelineTest(false), config: &Config{Starting: false}}
 	cli, err := NewCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -113,7 +113,7 @@ func TestPrintHelpErrors(t *testing.T) {
 }
 
 func TestClientNew(t *testing.T) {
-	link := PipelineLink{pipeline: newPipelineTest(false)}
+	link := PipelineLink{pipeline: newPipelineTest(false), config: &Config{Starting: false}}
 	cli, err := NewCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -135,7 +135,7 @@ func TestClientNew(t *testing.T) {
 }
 
 func TestClientDelete(t *testing.T) {
-	link := PipelineLink{pipeline: newPipelineTest(false)}
+	link := PipelineLink{pipeline: newPipelineTest(false), config: &Config{Starting: false}}
 	cli, err := NewCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")

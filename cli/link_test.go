@@ -51,20 +51,22 @@ var (
 )
 
 type PipelineTest struct {
-	fail         bool
-	count        int
-	deleted      bool
-	resulted     bool
-	backgrounded bool
+	fail           bool
+	count          int
+	deleted        bool
+	resulted       bool
+	backgrounded   bool
+	authentication bool
 }
 
 func newPipelineTest(fail bool) *PipelineTest {
 	return &PipelineTest{
-		fail:         fail,
-		count:        0,
-		deleted:      false,
-		resulted:     false,
-		backgrounded: false,
+		fail:           fail,
+		count:          0,
+		deleted:        false,
+		resulted:       false,
+		backgrounded:   false,
+		authentication: false,
 	}
 }
 
@@ -76,7 +78,7 @@ func (p *PipelineTest) Alive() (alive pipeline.Alive, err error) {
 	}
 	alive.Version = "test"
 	alive.Mode = "test"
-	alive.Authentication = true
+	alive.Authentication = p.authentication
 	return
 }
 
@@ -154,7 +156,9 @@ func (p *PipelineTest) Properties() (props []pipeline.Property, err error) {
 	return
 }
 func TestBringUp(t *testing.T) {
-	link := PipelineLink{pipeline: newPipelineTest(false)}
+	pipeline := newPipelineTest(false)
+	pipeline.authentication = true
+	link := PipelineLink{pipeline: pipeline, config: &Config{Starting: false}}
 	err := bringUp(&link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -173,7 +177,7 @@ func TestBringUp(t *testing.T) {
 }
 
 func TestBringUpFail(t *testing.T) {
-	link := PipelineLink{pipeline: newPipelineTest(true)}
+	link := PipelineLink{pipeline: newPipelineTest(true), config: &Config{}}
 	err := bringUp(&link)
 	if err == nil {
 		t.Error("Expected error is nil")

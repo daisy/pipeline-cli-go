@@ -58,7 +58,7 @@ func TestParseInputsBased(t *testing.T) {
 }
 
 func TestScriptToCommand(t *testing.T) {
-	link := PipelineLink{pipeline: newPipelineTest(false)}
+	link := PipelineLink{pipeline: newPipelineTest(false), config: &Config{Starting: false}}
 	cli, err := NewCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -90,7 +90,7 @@ func TestScriptToCommand(t *testing.T) {
 	}
 }
 func TestScriptToCommandNoLocalFail(t *testing.T) {
-	link := PipelineLink{pipeline: newPipelineTest(false)}
+	link := PipelineLink{pipeline: newPipelineTest(false), config: &Config{Starting: false}}
 	cli, err := NewCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -101,12 +101,12 @@ func TestScriptToCommandNoLocalFail(t *testing.T) {
 	}
 	//parser.Parse([]string{"test","--i-source","value"})
 	err = cli.Run([]string{"test", "-o", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
-        if err==nil{
-                t.Error("Expected error not thrown")
-        }
+	if err == nil {
+		t.Error("Expected error not thrown")
+	}
 }
 func TestCliRequiredOptions(t *testing.T) {
-	link := PipelineLink{pipeline: newPipelineTest(true)}
+	link := PipelineLink{pipeline: newPipelineTest(true), config: &Config{Starting: false}}
 	cli, err := NewCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -156,7 +156,7 @@ func TestGetLastIdErr(t *testing.T) {
 }
 
 func TestScriptNoOutput(t *testing.T) {
-	link := PipelineLink{pipeline: newPipelineTest(false)}
+	link := PipelineLink{pipeline: newPipelineTest(false), config: &Config{Starting: false}}
 	cli, err := NewCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")

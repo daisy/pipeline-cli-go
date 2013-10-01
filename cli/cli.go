@@ -57,6 +57,9 @@ func NewCli(name string, link PipelineLink) (cli *Cli, err error) {
 	cli.Parser.SetHelp("help", "Help description", func(help string, args ...string) error {
 		return printHelp(*cli, args...)
 	})
+	cli.OnCommand(func() error {
+		return link.Init()
+	})
 
 	return
 }
