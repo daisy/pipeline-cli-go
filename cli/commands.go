@@ -80,12 +80,9 @@ func AddDeleteCommand(cli *Cli, link PipelineLink) {
 		}
 		ok, err := link.Delete(id)
 		if err != nil {
-			//TODO subcommand functions to return errors
 			return err
-			println("error", err.Error())
 		}
 		if err != nil {
-			println("error", err.Error())
 			return err
 		}
 		if ok {

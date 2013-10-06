@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"github.com/kylelemons/go-gypsy/yaml"
 	"io"
+	"io/ioutil"
+	"log"
+	"os"
 )
 
 //Yaml file keys
@@ -13,7 +16,7 @@ const (
 	PATH         = "ws_path"
 	WSTIMEUP     = "ws_timeup"
 	EXECLINENIX  = "exec_line_nix"
-	EXCLINEWIN   = "exec_line_win"
+	EXECLINEWIN  = "exec_line_win"
 	CLIENTKEY    = "client_key"
 	CLIENTSECRET = "client_secret"
 	TIMEOUT      = "timeout_seconds"
@@ -22,14 +25,16 @@ const (
 	ERR_STR      = "Error parsing configuration: %v"
 )
 
-var defaults = map[string]interface{}{
+type Config map[string]interface{}
+
+var config = Config{
 
 	HOST:         "http://localhost",
 	PORT:         8181,
 	PATH:         "ws",
 	WSTIMEUP:     25,
 	EXECLINENIX:  "",
-	EXCLINEWIN:   "",
+	EXECLINEWIN:  "",
 	CLIENTKEY:    "",
 	CLIENTSECRET: "",
 	TIMEOUT:      10,
@@ -37,107 +42,111 @@ var defaults = map[string]interface{}{
 	STARTING:     false,
 }
 
-//Contains the items from the configuration
-//file
-type Config struct {
-	Host         string //Framework host
-	Port         int    //Framerwork port
-	Path         string //Framework path
-	WSTimeUp     int    //Time to wait till the framework comes up
-	ExecLineNix  string //pipeline executable line for *nix systems
-	ExecLineWin  string //pipeline executable line for windows systems
-	Local        bool   //Local mode if we want to bring the pipeline up
-	ClientKey    string //Client key for authorisation
-	ClientSecret string //Client secret for authorisation
-	TimeOut      int    //HTTP timeout
-	Debug        bool   //Start in debug mode
-	Starting     bool   //Starts the ws in case it is not running
-}
-
-func NewConfig() *Config {
-	return &Config{
-
-		Host:         defaults[HOST].(string),
-		Port:         defaults[PORT].(int),
-		Path:         defaults[PATH].(string),
-		WSTimeUp:     defaults[WSTIMEUP].(int),
-		ExecLineNix:  defaults[EXECLINENIX].(string),
-		ExecLineWin:  defaults[EXCLINEWIN].(string),
-		ClientKey:    defaults[CLIENTKEY].(string),
-		ClientSecret: defaults[CLIENTSECRET].(string),
-		TimeOut:      defaults[TIMEOUT].(int),
-		Debug:        defaults[DEBUG].(bool),
-		Starting:     defaults[STARTING].(bool),
+func copyConf() Config {
+	ret := make(Config)
+	for k, v := range config {
+		ret[k] = v
 	}
+	return ret
 }
-func (c *Config) FromYaml(r io.Reader) error {
+
+func GetConfig() Config {
+	return config
+}
+
+var config_descriptions = map[string]string{
+
+	HOST:         "Pipeline's webservice host",
+	PORT:         "Pipeline's webserivce port",
+	PATH:         "Pipeline's webservice path, as in http://daisy.org:8181/path",
+	WSTIMEUP:     "Time to wait until the webserivce starts in seconds",
+	EXECLINENIX:  "Pipeline webserivice executable path in unix-like systems",
+	EXECLINEWIN:  "Pipeline webserivice executable path in windows systems",
+	CLIENTKEY:    "Client key for authenticated requests",
+	CLIENTSECRET: "Client secrect for authenticated requests",
+	TIMEOUT:      "Http connection timeout in seconds",
+	DEBUG:        "Print debug messages. true or false. ",
+	STARTING:     "Start the webservice in the local computer if it is not running. true or false",
+}
+
+func (c Config) FromYaml(r io.Reader) error {
 	node, err := yaml.Parse(r)
 	if err != nil {
 		return err
 	}
-	err = nodeToConfig(node, c)
+	err = nodeToConfig(c, node)
 	return err
 }
-func (c Config) Url() string {
-	return fmt.Sprintf("%v:%v/%v/", c.Host, c.Port, c.Path)
+func (c Config) UpdateDebug() {
+	if !c[DEBUG].(bool) {
+		log.SetOutput(ioutil.Discard)
+	} else {
+		log.SetOutput(os.Stdout)
+	}
 }
-func nodeToConfig(node yaml.Node, conf *Config) error {
+
+func (c Config) Url() string {
+	return fmt.Sprintf("%v:%v/%v/", c[HOST], c[PORT], c[PATH])
+}
+
+func nodeToConfig(conf Config, node yaml.Node) error {
 	var err error
 	file := yaml.File{Root: node}
-	conf.Host, err = file.Get(HOST)
+	conf[HOST], err = file.Get(HOST)
 	if err != nil {
 		return fmt.Errorf(ERR_STR, err)
 	}
 
 	aux, err := file.GetInt(PORT)
-	conf.Port = int(aux)
 	if err != nil {
 		return fmt.Errorf(ERR_STR, err)
 	}
+	conf[PORT] = int(aux)
 
-	conf.Path, err = file.Get(PATH)
+	conf[PATH], err = file.Get(PATH)
 	if err != nil {
 		return fmt.Errorf(ERR_STR, err)
 	}
 
 	aux, err = file.GetInt(WSTIMEUP)
-	conf.WSTimeUp = int(aux)
+	conf[WSTIMEUP] = int(aux)
 	if err != nil {
 		return fmt.Errorf(ERR_STR, err)
 	}
 
-	conf.ExecLineNix, err = file.Get(EXECLINENIX)
+	conf[EXECLINENIX], err = file.Get(EXECLINENIX)
 	if err != nil {
 		return fmt.Errorf(ERR_STR, err)
 	}
 
-	conf.ExecLineWin, err = file.Get(EXCLINEWIN)
+	conf[EXECLINEWIN], err = file.Get(EXECLINEWIN)
 	if err != nil {
 		return fmt.Errorf(ERR_STR, err)
 	}
 
-	conf.ClientKey, err = file.Get(CLIENTKEY)
+	conf[CLIENTKEY], err = file.Get(CLIENTKEY)
 	if err != nil {
 		return fmt.Errorf(ERR_STR, err)
 	}
 
-	conf.ClientSecret, err = file.Get(CLIENTSECRET)
+	conf[CLIENTSECRET], err = file.Get(CLIENTSECRET)
 	if err != nil {
 		return fmt.Errorf(ERR_STR, err)
 	}
 
 	aux, err = file.GetInt(TIMEOUT)
-	conf.TimeOut = int(aux)
 	if err != nil {
 		return fmt.Errorf(ERR_STR, err)
 	}
-	conf.Debug, err = file.GetBool(DEBUG)
+	conf[TIMEOUT] = int(aux)
+	conf[DEBUG], err = file.GetBool(DEBUG)
 	if err != nil {
 		return fmt.Errorf(ERR_STR, err)
 	}
-	conf.Debug, err = file.GetBool(STARTING)
+	conf[DEBUG], err = file.GetBool(STARTING)
 	if err != nil {
 		return fmt.Errorf(ERR_STR, err)
 	}
+	conf.UpdateDebug()
 	return nil
 }

@@ -43,13 +43,13 @@ type PipelineApi interface {
 //Maintains some information about the pipeline client
 type PipelineLink struct {
 	pipeline       PipelineApi //Allows access to the pipeline fwk
-	config         *Config
+	config         Config
 	Version        string //Framework version
 	Authentication bool   //Framework authentication
 	Mode           string //Framework mode
 }
 
-func NewLink(conf *Config) (pLink *PipelineLink, err error) {
+func NewLink(conf Config) (pLink *PipelineLink, err error) {
 
 	pLink = &PipelineLink{
 		pipeline: pipeline.NewPipeline(conf.Url()),
@@ -61,17 +61,21 @@ func NewLink(conf *Config) (pLink *PipelineLink, err error) {
 }
 
 func (p *PipelineLink) Init() error {
+	log.Println("Initialising link")
 	if err := bringUp(p); err != nil {
 		return err
 	}
 	//set the credentials
 	if p.Authentication {
-		if !(len(p.config.ClientKey) > 0 && len(p.config.ClientSecret) > 0) {
+		if !(len(p.config[CLIENTKEY].(string)) > 0 && len(p.config[CLIENTSECRET].(string)) > 0) {
 			return errors.New("link: Authentication required but client_key and client_secret are not set. Please, check the configuration")
 		}
-		p.pipeline.SetCredentials(p.config.ClientKey, p.config.ClientSecret)
+		p.pipeline.SetCredentials(p.config[CLIENTKEY].(string), p.config[CLIENTSECRET].(string))
 	}
 	return nil
+}
+func (p PipelineLink) IsLocal() bool {
+	return p.Mode == "local" || p.Mode == "Local"
 }
 
 //checks if the pipeline is up
@@ -80,16 +84,16 @@ func (p *PipelineLink) Init() error {
 func bringUp(pLink *PipelineLink) error {
 	alive, err := pLink.pipeline.Alive()
 	if err != nil {
-		if pLink.config.Starting {
+		if pLink.config[STARTING].(bool) {
 			log.Println("Starting the fwk")
 			//launch the ws
-			err = start(*pLink.config)
+			err = start(pLink.config)
 			if err != nil {
 				log.Println("Error in start")
 				return err
 			}
 			//wait til it's up and running
-			timeOut := time.After(time.Duration(pLink.config.WSTimeUp) * time.Second)
+			timeOut := time.After(time.Duration(pLink.config[WSTIMEUP].(int)) * time.Second)
 			//communication
 			aliveChan := make(chan pipeline.Alive)
 			fmt.Println("Launching the pipeline webservice...")
@@ -111,6 +115,7 @@ func bringUp(pLink *PipelineLink) error {
 			return fmt.Errorf("Could not connect to the webservice and I'm not configured to start one\n\tError: %v", err.Error())
 		}
 	}
+	log.Println("Setting values")
 	pLink.Version = alive.Version
 	pLink.Mode = alive.Mode
 	pLink.Authentication = alive.Authentication
@@ -133,7 +138,7 @@ func wait(link PipelineLink, cAlive chan pipeline.Alive) {
 }
 
 func start(cnf Config) error {
-	path := filepath.FromSlash(cnf.ExecLineNix)
+	path := filepath.FromSlash(cnf[EXECLINENIX].(string))
 	log.Printf("command path %v\n", path)
 	cmd := exec.Command(path)
 	cmd.Env = os.Environ()

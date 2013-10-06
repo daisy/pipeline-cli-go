@@ -58,12 +58,16 @@ func TestParseInputsBased(t *testing.T) {
 }
 
 func TestScriptToCommand(t *testing.T) {
-	link := PipelineLink{pipeline: newPipelineTest(false), config: &Config{Starting: false}}
+	config := copyConf()
+	config[STARTING] = false
+	pipeline := newPipelineTest(false)
+	pipeline.mode = "remote"
+	link := &PipelineLink{pipeline: pipeline, config: config}
 	cli, err := NewCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	jobRequest, err := scriptToCommand(SCRIPT, cli, link, false)
+	jobRequest, err := scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -89,13 +93,18 @@ func TestScriptToCommand(t *testing.T) {
 		t.Errorf("Option test opt not set %v", jobRequest.Options["another-opt"][0])
 	}
 }
+
 func TestScriptToCommandNoLocalFail(t *testing.T) {
-	link := PipelineLink{pipeline: newPipelineTest(false), config: &Config{Starting: false}}
+
+	config[STARTING] = false
+	pipeline := newPipelineTest(false)
+	pipeline.mode = "remote"
+	link := &PipelineLink{pipeline: pipeline, config: config}
 	cli, err := NewCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	_, err = scriptToCommand(SCRIPT, cli, link, false)
+	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -106,12 +115,13 @@ func TestScriptToCommandNoLocalFail(t *testing.T) {
 	}
 }
 func TestCliRequiredOptions(t *testing.T) {
-	link := PipelineLink{pipeline: newPipelineTest(true), config: &Config{Starting: false}}
+	config[STARTING] = false
+	link := &PipelineLink{Mode: "local", pipeline: newPipelineTest(true), config: config}
 	cli, err := NewCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	_, err = scriptToCommand(SCRIPT, cli, link, false)
+	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -119,10 +129,6 @@ func TestCliRequiredOptions(t *testing.T) {
 	err = cli.Run([]string{"test", "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-another-opt", "true"})
 	if err == nil {
 		t.Errorf("Missing required option wasn't thrown")
-	}
-	err = cli.Run([]string{"./tmp/file", "--i-single", "./tmp/file2", "--x-another-opt", "true"})
-	if err == nil {
-		t.Errorf("Missing required input wasn't thrown")
 	}
 }
 
@@ -156,12 +162,13 @@ func TestGetLastIdErr(t *testing.T) {
 }
 
 func TestScriptNoOutput(t *testing.T) {
-	link := PipelineLink{pipeline: newPipelineTest(false), config: &Config{Starting: false}}
+	config[STARTING] = false
+	link := &PipelineLink{Mode: "local", pipeline: newPipelineTest(false), config: config}
 	cli, err := NewCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	_, err = scriptToCommand(SCRIPT, cli, link, false)
+	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -174,12 +181,12 @@ func TestScriptNoOutput(t *testing.T) {
 
 func TestScriptDefault(t *testing.T) {
 	pipeline := newPipelineTest(false)
-	link := PipelineLink{pipeline: pipeline}
+	link := &PipelineLink{Mode: "local", pipeline: pipeline}
 	cli, err := NewCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	_, err = scriptToCommand(SCRIPT, cli, link, true)
+	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -193,14 +200,15 @@ func TestScriptDefault(t *testing.T) {
 	}
 
 }
+
 func TestScriptBackground(t *testing.T) {
 	pipeline := newPipelineTest(false)
-	link := PipelineLink{pipeline: pipeline}
+	link := &PipelineLink{Mode: "local", pipeline: pipeline}
 	cli, err := NewCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	_, err = scriptToCommand(SCRIPT, cli, link, true)
+	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -223,12 +231,12 @@ func TestScriptBackground(t *testing.T) {
 
 func TestScriptPersistent(t *testing.T) {
 	pipeline := newPipelineTest(false)
-	link := PipelineLink{pipeline: pipeline}
+	link := &PipelineLink{Mode: "local", pipeline: pipeline}
 	cli, err := NewCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	_, err = scriptToCommand(SCRIPT, cli, link, true)
+	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}

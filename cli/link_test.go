@@ -57,6 +57,7 @@ type PipelineTest struct {
 	resulted       bool
 	backgrounded   bool
 	authentication bool
+	mode           string
 }
 
 func newPipelineTest(fail bool) *PipelineTest {
@@ -67,17 +68,19 @@ func newPipelineTest(fail bool) *PipelineTest {
 		resulted:       false,
 		backgrounded:   false,
 		authentication: false,
+		mode:           "local",
 	}
 }
 
 func (p PipelineTest) SetCredentials(key, secret string) {
 }
+
 func (p *PipelineTest) Alive() (alive pipeline.Alive, err error) {
 	if p.fail {
 		return alive, errors.New("Error")
 	}
 	alive.Version = "test"
-	alive.Mode = "test"
+	alive.Mode = p.mode
 	alive.Authentication = p.authentication
 	return
 }
@@ -158,7 +161,8 @@ func (p *PipelineTest) Properties() (props []pipeline.Property, err error) {
 func TestBringUp(t *testing.T) {
 	pipeline := newPipelineTest(false)
 	pipeline.authentication = true
-	link := PipelineLink{pipeline: pipeline, config: &Config{Starting: false}}
+	config[STARTING] = false
+	link := PipelineLink{pipeline: pipeline, config: config}
 	err := bringUp(&link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -167,7 +171,7 @@ func TestBringUp(t *testing.T) {
 	if link.Version != "test" {
 		t.Error("Version not set")
 	}
-	if link.Mode != "test" {
+	if link.Mode != "local" {
 		t.Error("Mode not set")
 	}
 
@@ -177,7 +181,7 @@ func TestBringUp(t *testing.T) {
 }
 
 func TestBringUpFail(t *testing.T) {
-	link := PipelineLink{pipeline: newPipelineTest(true), config: &Config{}}
+	link := PipelineLink{pipeline: newPipelineTest(true), config: config}
 	err := bringUp(&link)
 	if err == nil {
 		t.Error("Expected error is nil")
@@ -328,5 +332,21 @@ func TestAppendOps(t *testing.T) {
 	javaOptsQuotes := "JAVA_OPTS=-Dsomething -Dandsthelse " + OH_MY_GOSH
 	if javaOptsQuotes != res {
 		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "javaOptsQuotes ", javaOptsQuotes, res)
+	}
+}
+
+func TestIsLocal(t *testing.T) {
+	link := PipelineLink{Mode: "local"}
+	if !link.IsLocal() {
+		t.Errorf("Should be local %+v", link)
+	}
+
+	link = PipelineLink{Mode: "remote"}
+	if link.IsLocal() {
+		t.Errorf("Should not be local %+v", link)
+	}
+	link = PipelineLink{Mode: "test"}
+	if link.IsLocal() {
+		t.Errorf("Should not be local %+v", link)
 	}
 }

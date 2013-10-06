@@ -43,10 +43,10 @@ func newJobRequest() *JobRequest {
 }
 
 //Convinience method to add several scripts to a client
-func (c *Cli) AddScripts(scripts []pipeline.Script, link PipelineLink, isLocal bool) error {
+func (c *Cli) AddScripts(scripts []pipeline.Script, link *PipelineLink) error {
 
 	for _, s := range scripts {
-		if _, err := scriptToCommand(s, c, link, isLocal); err != nil {
+		if _, err := scriptToCommand(s, c, link); err != nil {
 			return err
 		}
 	}
@@ -55,7 +55,7 @@ func (c *Cli) AddScripts(scripts []pipeline.Script, link PipelineLink, isLocal b
 
 //Executes a job request
 type jobExecution struct {
-	link       PipelineLink
+	link       *PipelineLink
 	req        JobRequest
 	output     string
 	verbose    bool
@@ -122,10 +122,9 @@ func (j jobExecution) run() error {
 }
 
 //Adds the command and flags to be able to call the script to the cli
-func scriptToCommand(script pipeline.Script, cli *Cli, link PipelineLink, isLocal bool) (req JobRequest, err error) {
+func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req *JobRequest, err error) {
 	jobRequest := newJobRequest()
 	jobRequest.Script = script.Id
-	basePath := getBasePath(isLocal)
 	jobRequest.Background = false
 	jExec := jobExecution{
 		link:    link,
@@ -138,15 +137,15 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link PipelineLink, isLoca
 			return err
 		}
 		return nil
-	})
+	}, jobRequest)
 
 	for _, input := range script.Inputs {
-		command.AddOption("i-"+input.Name, "", input.Desc, inputFunc(jobRequest, basePath)).Must(true)
+		command.AddOption("i-"+input.Name, "", input.Desc, inputFunc(jobRequest, link)).Must(true)
 	}
 
 	for _, option := range script.Options {
 		//desc:=option.Desc+
-		command.AddOption("x-"+option.Name, "", option.Desc, optionFunc(jobRequest, basePath, option.Type)).Must(option.Required)
+		command.AddOption("x-"+option.Name, "", option.Desc, optionFunc(jobRequest, link, option.Type)).Must(option.Required)
 	}
 
 	command.AddOption("nicename", "n", "Set job's nice name", func(name, nice string) error {
@@ -172,43 +171,44 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link PipelineLink, isLoca
 		return nil
 	})
 
-	if !isLocal {
-		command.AddOption("data", "d", "Zip file containing the files to convert", func(name, path string) error {
-			file, err := os.Open(path)
-			defer func() {
-				err := file.Close()
-				if err != nil {
-					log.Printf("Error closing file %v :%v", path, err.Error())
-				}
-			}()
+	return jobRequest, nil
+}
+
+func (c *ScriptCommand) addDataOption() {
+	c.AddOption("data", "d", "Zip file containing the files to convert", func(name, path string) error {
+		file, err := os.Open(path)
+		defer func() {
+			err := file.Close()
 			if err != nil {
-				return err
+				log.Printf("Error closing file %v :%v", path, err.Error())
 			}
-			jExec.req.Data, err = ioutil.ReadAll(file)
-			log.Printf("data len %v\n", len(jExec.req.Data))
-			return nil
-		}).Must(true)
-	}
-	return *jobRequest, nil
+		}()
+		if err != nil {
+			return err
+		}
+		c.req.Data, err = ioutil.ReadAll(file)
+		log.Printf("data len %v\n", len(c.req.Data))
+		return nil
+	}).Must(true)
 }
 
 //Returns a function that fills the request info with the subcommand option name
 //and value
-func inputFunc(req *JobRequest, basePath string) func(string, string) error {
+func inputFunc(req *JobRequest, link *PipelineLink) func(string, string) error {
 	return func(name, value string) error {
 		var err error
-		req.Inputs[name[2:]], err = pathToUri(value, ",", basePath)
+		req.Inputs[name[2:]], err = pathToUri(value, ",", getBasePath(link.IsLocal()))
 		return err
 	}
 }
 
 //Returns a function that fills the request option with the subcommand option name
 //and value
-func optionFunc(req *JobRequest, basePath string, optionType string) func(string, string) error {
+func optionFunc(req *JobRequest, link *PipelineLink, optionType string) func(string, string) error {
 	return func(name, value string) error {
 		name = name[2:]
 		if optionType == "anyFileURI" || optionType == "anyDirURI" {
-			urls, err := pathToUri(value, ",", basePath)
+			urls, err := pathToUri(value, ",", getBasePath(link.IsLocal()))
 			if err != nil {
 				return err
 			}

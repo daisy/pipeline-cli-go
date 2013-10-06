@@ -10,11 +10,12 @@ import (
 
 func main() {
 	log.SetFlags(log.Lshortfile)
+	cnf := cli.GetConfig()
 	// proper error handlign missing
-	cnf := cli.NewConfig()
-	if !cnf.Debug {
-		log.SetOutput(ioutil.Discard)
-	}
+
+	//if !cnf[cli.DEBUG].(bool) {
+	log.SetOutput(ioutil.Discard)
+	//}
 
 	link, err := cli.NewLink(cnf)
 
@@ -22,7 +23,7 @@ func main() {
 		panic(fmt.Sprintf("Error connecting to the pipeline webservice:\n\t%v\n", err))
 	}
 
-	comm, err := cli.NewCli("dp2", *link)
+	comm, err := cli.NewCli("dp2", link)
 	if err != nil {
 		panic(fmt.Sprintf("Error creating client:\n\t%v\n", err))
 	}
@@ -30,7 +31,7 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("Error loading scripts:\n\t%v\n", err))
 	}
-	comm.AddScripts(scripts, *link, cnf.Local)
+	comm.AddScripts(scripts, link)
 
 	cli.AddJobStatusCommand(comm, *link)
 	cli.AddDeleteCommand(comm, *link)

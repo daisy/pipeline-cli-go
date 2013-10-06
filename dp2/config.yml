@@ -13,5 +13,6 @@ client_secret: supersecret
 #connection settings
 timeout_seconds: 10
 #debug
-debug: true
+debug: false
+starting: true
 

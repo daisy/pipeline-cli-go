@@ -3,7 +3,9 @@ package cli
 import (
 	"fmt"
 	"github.com/capitancambio/go-subcommand"
+	"log"
 	"os"
+	"strconv"
 	"strings"
 	"text/template"
 )
@@ -45,12 +47,17 @@ Options:
 //the help display
 type Cli struct {
 	*subcommand.Parser
-	Scripts        []*subcommand.Command
+	Scripts        []*ScriptCommand
 	StaticCommands []*subcommand.Command
 }
 
+type ScriptCommand struct {
+	*subcommand.Command
+	req *JobRequest
+}
+
 //Creates a new CLI with a name and pipeline link to perform queries
-func NewCli(name string, link PipelineLink) (cli *Cli, err error) {
+func NewCli(name string, link *PipelineLink) (cli *Cli, err error) {
 	cli = &Cli{
 		Parser: subcommand.NewParser(name),
 	}
@@ -58,16 +65,65 @@ func NewCli(name string, link PipelineLink) (cli *Cli, err error) {
 		return printHelp(*cli, args...)
 	})
 	cli.OnCommand(func() error {
-		return link.Init()
-	})
+		if err = link.Init(); err != nil {
+			return err
+		}
+		if !link.IsLocal() {
+			for _, cmd := range cli.Scripts {
 
+				cmd.addDataOption()
+			}
+		}
+		return nil
+	})
+	cli.addConfigOptions(link.config)
 	return
 }
 
+func (c *Cli) addConfigOptions(conf Config) {
+	//TODO make config a map instead of a struct?
+	for option, desc := range config_descriptions {
+		c.AddOption(option, "", fmt.Sprintf("%v (default %v)", desc, conf[option]), func(optName string, value string) error {
+			switch conf[optName].(type) {
+			case int:
+				val, err := strconv.Atoi(value)
+				if err != nil {
+					return fmt.Errorf("option %v must be a numeric value (found %v)", optName, value)
+				}
+				conf[optName] = val
+			case bool:
+				switch {
+				case value == "true":
+					conf[optName] = true
+				case value == "false":
+					conf[optName] = false
+				default:
+					return fmt.Errorf("option %v must be true or false (found %v)", optName, value)
+				}
+
+			case string:
+				conf[optName] = value
+
+			}
+			conf.UpdateDebug()
+			return nil
+		})
+	}
+
+	c.AddOption("file", "f", "Alternative configuration file", func(string, filePath string) error {
+		file, err := os.Open(filePath)
+		if err != nil {
+			log.Printf(err.Error())
+			return fmt.Errorf("File not found %v", filePath)
+		}
+		return conf.FromYaml(file)
+	})
+}
+
 //Adds the command to the cli and stores the it into the scripts list
-func (c *Cli) AddScriptCommand(name, desc string, fn func(string, ...string) error) *subcommand.Command {
+func (c *Cli) AddScriptCommand(name, desc string, fn func(string, ...string) error, request *JobRequest) *subcommand.Command {
 	cmd := c.Parser.AddCommand(name, desc, fn)
-	c.Scripts = append(c.Scripts, cmd)
+	c.Scripts = append(c.Scripts, &ScriptCommand{cmd, request})
 	return cmd
 }
 
@@ -80,6 +136,7 @@ func (c *Cli) AddCommand(name, desc string, fn func(string, ...string) error) *s
 
 //Runs the client
 func (c *Cli) Run(args []string) error {
+	//TODO: should I load a default file?
 	_, err := c.Parser.Parse(args)
 	return err
 }
