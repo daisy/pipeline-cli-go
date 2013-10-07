@@ -64,6 +64,7 @@ func TestScriptToCommand(t *testing.T) {
 	pipeline.mode = "remote"
 	link := &PipelineLink{pipeline: pipeline, config: config}
 	cli, err := NewCli("test", link)
+	cli.WithScripts = false
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -72,7 +73,7 @@ func TestScriptToCommand(t *testing.T) {
 		t.Error("Unexpected error")
 	}
 	//parser.Parse([]string{"test","--i-source","value"})
-	_, err = cli.Parse([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
+	err = cli.Run([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -104,6 +105,7 @@ func TestScriptToCommandNoLocalFail(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	cli.WithScripts = false
 	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -125,6 +127,7 @@ func TestCliRequiredOptions(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	cli.WithScripts = false
 	//parser.Parse([]string{"test","--i-source","value"})
 	err = cli.Run([]string{"test", "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-another-opt", "true"})
 	if err == nil {
@@ -168,6 +171,7 @@ func TestScriptNoOutput(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	cli.WithScripts = false
 	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -186,6 +190,7 @@ func TestScriptDefault(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	cli.WithScripts = false
 	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -212,6 +217,7 @@ func TestScriptBackground(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	cli.WithScripts = false
 	//parser.Parse([]string{"test","--i-source","value"})
 	err = cli.Run([]string{"test", "-b", "-o", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
 	if err != nil {
@@ -236,6 +242,7 @@ func TestScriptPersistent(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	cli.WithScripts = false
 	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
 		t.Error("Unexpected error")

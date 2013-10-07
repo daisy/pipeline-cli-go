@@ -58,6 +58,7 @@ type Cli struct {
 	*subcommand.Parser
 	Scripts        []*ScriptCommand      //pipeline scripts
 	StaticCommands []*subcommand.Command //commands which are always present
+	WithScripts    bool                  //Load the scripts once the configuration has been loaded. True by default
 }
 
 //Script commands have a job request associated
@@ -69,7 +70,8 @@ type ScriptCommand struct {
 //Creates a new CLI with a name and pipeline link to perform queries
 func NewCli(name string, link *PipelineLink) (cli *Cli, err error) {
 	cli = &Cli{
-		Parser: subcommand.NewParser(name),
+		Parser:      subcommand.NewParser(name),
+		WithScripts: true,
 	}
 	//set the help command
 	cli.setHelp()
@@ -80,6 +82,14 @@ func NewCli(name string, link *PipelineLink) (cli *Cli, err error) {
 		if err = link.Init(); err != nil {
 			return err
 		}
+		if cli.WithScripts {
+			scripts, err := link.Scripts()
+			if err != nil {
+				fmt.Printf("Error loading scripts:\n\t%v\n", err)
+				os.Exit(-1)
+			}
+			cli.AddScripts(scripts, link)
+		}
 		if !link.IsLocal() {
 			//it we are not in local mode we need to send the data
 			for _, cmd := range cli.Scripts {
@@ -87,6 +97,7 @@ func NewCli(name string, link *PipelineLink) (cli *Cli, err error) {
 				cmd.addDataOption()
 			}
 		}
+
 		return nil
 	})
 	//add config flags
@@ -109,6 +120,7 @@ func (c *Cli) setHelp() {
 func (c *Cli) addConfigOptions(conf Config) {
 	for option, desc := range config_descriptions {
 		c.AddOption(option, "", fmt.Sprintf("%v (default %v)", desc, conf[option]), func(optName string, value string) error {
+			log.Println("option:", optName, "value:", value)
 			switch conf[optName].(type) {
 			case int:
 				val, err := strconv.Atoi(value)

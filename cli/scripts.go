@@ -44,7 +44,6 @@ func newJobRequest() *JobRequest {
 
 //Convinience method to add several scripts to a client
 func (c *Cli) AddScripts(scripts []pipeline.Script, link *PipelineLink) error {
-
 	for _, s := range scripts {
 		if _, err := scriptToCommand(s, c, link); err != nil {
 			return err

@@ -89,7 +89,7 @@ func (p *PipelineTest) Scripts() (scripts pipeline.Scripts, err error) {
 	if p.fail {
 		return scripts, errors.New("Error")
 	}
-	return pipeline.Scripts{Href: "test", Scripts: []pipeline.Script{pipeline.Script{Id: "test"}, pipeline.Script{Id: "test"}}}, err
+	return pipeline.Scripts{Href: "test", Scripts: []pipeline.Script{pipeline.Script{Id: "test"}}}, err
 }
 
 func (p *PipelineTest) Script(id string) (script pipeline.Script, err error) {
@@ -194,10 +194,10 @@ func TestScripts(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	if len(list) != 2 {
+	if len(list) != 1 {
 		t.Error("Wrong list size")
 	}
-	res := list[1]
+	res := list[0]
 	exp := SCRIPT
 	if exp.Href != res.Href {
 		t.Errorf("Scripts decoding failed (Href)\nexpected %v \nresult %v", exp.Href, res.Href)

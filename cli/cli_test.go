@@ -90,10 +90,6 @@ func TestCliNonRequiredOptions(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	_, err = scriptToCommand(SCRIPT, cli, link)
-	if err != nil {
-		t.Error("Unexpected error")
-	}
 	//parser.Parse([]string{"test","--i-source","value"})
 	err = cli.Run([]string{"test", "-o", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml"})
 	if err != nil {
@@ -125,6 +121,7 @@ func TestClientNew(t *testing.T) {
 	config[STARTING] = false
 	link := &PipelineLink{pipeline: newPipelineTest(false), config: config}
 	cli, err := NewCli("testprog", link)
+	cli.WithScripts = false
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -138,6 +135,7 @@ func TestClientNew(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	cli.WithScripts = false
 	cli.AddNewClientCommand(*link)
 	err = cli.Run([]string{"create", "-r", "ADMIN", "-s", "sshh"})
 	if err == nil {
@@ -147,6 +145,7 @@ func TestClientNew(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	cli.WithScripts = false
 	cli.AddNewClientCommand(*link)
 	err = cli.Run([]string{"create", "-r", "ADMIN", "-i", "paco"})
 	if err == nil {
@@ -161,6 +160,7 @@ func TestClientDelete(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	cli.WithScripts = false
 	cli.AddDeleteClientCommand(*link)
 	//Bad role
 	err = cli.Run([]string{"delete"})
@@ -181,6 +181,7 @@ func TestConfigIntOptions(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	cli.WithScripts = false
 
 	err = cli.Run([]string{"--" + PORT, "harwich", "test"})
 	if err == nil {
@@ -203,6 +204,7 @@ func TestConfigBooleanOptions(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	cli.WithScripts = false
 
 	err = cli.Run([]string{"--" + DEBUG, "please", "test"})
 	if err == nil {
@@ -225,6 +227,7 @@ func TestConfigOptions(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	cli.WithScripts = false
 	exp := Config{
 		HOST:         "http://google.com",
 		PORT:         80,
@@ -271,6 +274,7 @@ func TestConfigFileDoesNotExists(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	cli.WithScripts = false
 	err = cli.Run([]string{"-f", "/tmp/theprobabilitythatthisfileactuallyexistsshouldbereallycloseto0",
 		"help",
 	})
@@ -300,6 +304,7 @@ func TestConfigFile(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	cli.WithScripts = false
 	err = cli.Run([]string{"-f", tmpFile.Name(),
 		"help",
 	})
