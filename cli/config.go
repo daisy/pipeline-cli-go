@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bitbucket.org/kardianos/osext"
 	"fmt"
 	"github.com/kylelemons/go-gypsy/yaml"
 	"io"
@@ -23,6 +24,7 @@ const (
 	DEBUG        = "debug"
 	STARTING     = "starting"
 	ERR_STR      = "Error parsing configuration: %v"
+	DEFAULT_FILE = "config.yml"
 )
 
 type Config map[string]interface{}
@@ -41,19 +43,6 @@ var config = Config{
 	DEBUG:        false,
 	STARTING:     false,
 }
-
-func copyConf() Config {
-	ret := make(Config)
-	for k, v := range config {
-		ret[k] = v
-	}
-	return ret
-}
-
-func GetConfig() Config {
-	return config
-}
-
 var config_descriptions = map[string]string{
 
 	HOST:         "Pipeline's webservice host",
@@ -67,6 +56,40 @@ var config_descriptions = map[string]string{
 	TIMEOUT:      "Http connection timeout in seconds",
 	DEBUG:        "Print debug messages. true or false. ",
 	STARTING:     "Start the webservice in the local computer if it is not running. true or false",
+}
+
+func copyConf() Config {
+	ret := make(Config)
+	for k, v := range config {
+		ret[k] = v
+	}
+	return ret
+}
+
+func NewConfig() Config {
+	cnf := copyConf()
+	if err := loadDefault(cnf); err != nil {
+		fmt.Println("Warning : no default configuration file found")
+		return copyConf()
+	}
+	return cnf
+}
+
+func loadDefault(cnf Config) error {
+	folder, err := osext.ExecutableFolder()
+	if err != nil {
+		return err
+	}
+	file, err := os.Open(folder + string(os.PathSeparator) + DEFAULT_FILE)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	err = cnf.FromYaml(file)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c Config) FromYaml(r io.Reader) error {
@@ -143,7 +166,7 @@ func nodeToConfig(conf Config, node yaml.Node) error {
 	if err != nil {
 		return fmt.Errorf(ERR_STR, err)
 	}
-	conf[DEBUG], err = file.GetBool(STARTING)
+	conf[STARTING], err = file.GetBool(STARTING)
 	if err != nil {
 		return fmt.Errorf(ERR_STR, err)
 	}

@@ -3,19 +3,14 @@ package main
 import (
 	"fmt"
 	"github.com/daisy-consortium/pipeline-cli-go/cli"
-	"io/ioutil"
 	"log"
 	"os"
 )
 
 func main() {
 	log.SetFlags(log.Lshortfile)
-	cnf := cli.GetConfig()
+	cnf := cli.NewConfig()
 	// proper error handlign missing
-
-	//if !cnf[cli.DEBUG].(bool) {
-	log.SetOutput(ioutil.Discard)
-	//}
 
 	link, err := cli.NewLink(cnf)
 
