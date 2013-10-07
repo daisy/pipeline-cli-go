@@ -8,17 +8,12 @@ import (
 	"os"
 )
 
-const (
-	CONFIG_FILE = "config.yml"
-)
-
 func main() {
 	log.SetFlags(log.Lshortfile)
+	cnf := cli.GetConfig()
 	// proper error handlign missing
-	cnf := cli.NewConfig()
-	if !cnf.Debug {
-		log.SetOutput(ioutil.Discard)
-	}
+	log.SetOutput(ioutil.Discard)
+	// proper error handlign missing
 
 	link, err := cli.NewLink(cnf)
 
@@ -26,7 +21,7 @@ func main() {
 		panic(fmt.Sprintf("Error connecting to the pipeline webservice:\n\t%v\n", err))
 	}
 
-	comm, err := cli.NewCli("dp2admin", *link)
+	comm, err := cli.NewCli("dp2admin", link)
 	if err != nil {
 		panic(fmt.Sprintf("Error creating client:\n\t%v\n", err))
 	}
