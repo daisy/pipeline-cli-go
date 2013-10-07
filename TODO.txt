@@ -4,3 +4,4 @@
  * Improve the yaml parsing library to trim the strings, now it crashes if there is a space at the end of the config item
  * FIXME in scripts.go
  * Version command
+ * Make sure that all the config items are correctly propagated (timeout is now ignored)
