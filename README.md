@@ -6,19 +6,32 @@ How to build
 ------------
 1. Install golang from the [official site](http://golang.org/doc/install). If you'll be creating distributions of the cli please install from the [sources](http://golang.org/doc/install/source)
 2. Create a go source directory:
-        mkdir ~/src/golibs/
-        cd ~/src/golibs/
-        export GOPATH=~/src/golibs:$GOPATH
+
+```
+        $ mkdir ~/src/golibs/
+        $ cd ~/src/golibs/
+        $ export GOPATH=~/src/golibs:$GOPATH
+```
+
 3. Install dependencies:
+
+
         go get github.com/capitancambio/go-subcommand
         go get github.com/kylelemons/go-gypsy/yaml
         go get github.com/daisy-consortium/pipeline-clientlib-go
         go get bitbucket.org/kardianos/osext
         go get github.com/daisy-consortium/pipeline-cli-go
-4. The building process will create two executables, dp2 and dp2admin in the bin/ folder: 
+        
+        
+4. The building process will create two executables, dp2 and dp2admin in the bin/ folder:
+
+
         go install github.com/daisy-consortium/pipeline-cli-go/dp2
         go install github.com/daisy-consortium/pipeline-cli-go/dp2admin
+        
 5. Copy the default configuration file to the same directory as the binaries:
+
+
         cp src/github.com/daisy-consortium/pipeline-cli-go/dp2/config.yml bin/
 
 How to build and distribute using maven
@@ -26,6 +39,7 @@ How to build and distribute using maven
 In order to allow the go client play nice with the rest of the pipeline ecosystem a maven build process is provided, although right now it only works on linux and mac systems ( You should be able to make it work using cygwin though).
 
 Follow the previous instructions till step 2. installing go from the sources. 
+
         cd src/github.com/daisy-consortium/pipeline-cli-go/
         mvn clean install
 
@@ -33,6 +47,8 @@ You can find in the target/bin directory all the binaries from windows,mac and l
 
 Usage
 -----
+
+```
 Usage dp2 [GLOBAL_OPTIONS] command [COMMAND_OPTIONS] [PARAMS]
 
 
@@ -61,11 +77,14 @@ General commands:
 
 List of global options:                 dp2 help -g
 Detailed help for a single command:     dp2 help COMMAND
+```
 
 Configuration
 -------------
 
 Modify the settings in the file config.yml or alternatively use the global witches:
+
+```
 Global Options:
        --host [HOST]    Pipeline's webservice host (default http://localhost)
        --port [PORT]    Pipeline's webserivce port (default 8181)
@@ -79,4 +98,4 @@ Global Options:
        --ws_timeup [WS_TIMEUP]  Time to wait until the webserivce starts in seconds (default 25)
        --client_key [CLIENT_KEY]        Client key for authenticated requests (default clientid)
        -f,--file [FILE]        Alternative configuration file
-
+```
