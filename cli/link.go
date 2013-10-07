@@ -18,7 +18,7 @@ const (
 	OH_MY_GOSH = "-Dgosh.args=--noi"
 )
 
-//Convinience for testing
+//Convinience for testing, propably move to pipeline-clientlib-go
 type PipelineApi interface {
 	SetCredentials(string, string)
 	SetUrl(string)
