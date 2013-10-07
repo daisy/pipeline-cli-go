@@ -11,7 +11,8 @@ local: true
 client_key: clientid
 client_secret: supersecret
 #connection settings
-timeout_seconds: 10
+timeout: 10
 #debug
 debug: false
+starting: true
 

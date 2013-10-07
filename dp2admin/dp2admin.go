@@ -15,12 +15,13 @@ func main() {
 	link, err := cli.NewLink(cnf)
 
 	if err != nil {
-		panic(fmt.Sprintf("Error connecting to the pipeline webservice:\n\t%v\n", err))
+		fmt.Printf("Error connecting to the pipeline webservice:\n\t%v\n", err)
+		os.Exit(-1)
 	}
 
 	comm, err := cli.NewCli("dp2admin", link)
 	if err != nil {
-		panic(fmt.Sprintf("Error creating client:\n\t%v\n", err))
+		fmt.Printf("Error creating client:\n\t%v\n", err)
 	}
 
 	cli.AddHaltCommand(comm, *link)
@@ -33,6 +34,6 @@ func main() {
 
 	err = comm.Run(os.Args[1:])
 	if err != nil {
-		panic(fmt.Sprintf("Error:\n\t%v\n", err))
+		fmt.Printf("Error:\n\t%v\n", err)
 	}
 }
