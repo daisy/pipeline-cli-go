@@ -81,6 +81,7 @@ func NewConfig() Config {
 	cnf := copyConf()
 	if err := loadDefault(cnf); err != nil {
 		fmt.Println("Warning : no default configuration file found")
+		log.Println(err.Error())
 		return copyConf()
 	}
 	return cnf
