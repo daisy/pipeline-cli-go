@@ -33,21 +33,50 @@ You can find in the target/bin directory all the binaries from windows,mac and l
 
 Usage
 -----
+Usage dp2 [GLOBAL_OPTIONS] command [COMMAND_OPTIONS] [PARAMS]
 
+
+Script commands:
+
+        zedai-to-epub3             Transforms a ZedAI (DAISY 4 XML) document into an EPUB 3 publication.
+        dtbook-to-zedai             Transforms DTBook XML into ZedAI XML.
+        dtbook-to-html             Transforms DTBook XML into HTML.
+        nimas-fileset-validator             Validate a NIMAS Fileset. Supports inclusion of MathML.
+        zedai-to-html             Transforms ZedAI XML (ANSI/NISO Z39.98-2012 Authoring and Interchange) into HTML.
+        daisy3-to-epub3             Transforms a DAISY 3 publication into an EPUB 3 publication.
+        html-to-epub3             Transforms an (X)HTML document into an EPUB 3 publication.
+        dtbook-to-epub3             Converts multiple dtbooks to epub3 format
+        daisy202-to-epub3             Transforms a DAISY 2.02 publication into an EPUB3 publication.
+        dtbook-validator             Validates DTBook documents. Supports inclusion of MathML.
+        
+
+General commands:
+
+        status             Returns the status of the job with id JOB_ID
+        delete             Removes a job from the pipeline
+        results             Stores the results from a job
+        jobs             Returns the list of jobs present in the server
+        log             Stores the results from a job
+        halt             Stops the webservice
+
+List of global options:                 dp2 help -g
+Detailed help for a single command:     dp2 help COMMAND
 
 Configuration
 -------------
 
 Modify the settings in the file config.yml or alternatively use the global witches:
+Global Options:
+       --host [HOST]    Pipeline's webservice host (default http://localhost)
+       --port [PORT]    Pipeline's webserivce port (default 8181)
+       --exec_line_win [EXEC_LINE_WIN]  Pipeline webserivice executable path in windows systems (default )
+       --debug [DEBUG]  Print debug messages. true or false.  (default false)
+       --ws_path [WS_PATH]      Pipeline's webservice path, as in http://daisy.org:8181/path (default ws)
+       --exec_line_nix [EXEC_LINE_NIX]  Pipeline webserivice executable path in unix-like systems (default /home/javi/bin/pipeline2)
+       --client_secret [CLIENT_SECRET]  Client secrect for authenticated requests (default supersecret)
+       --timeout [TIMEOUT]      Http connection timeout in seconds (default 10)
+       --starting [STARTING]    Start the webservice in the local computer if it is not running. true or false (default false)
+       --ws_timeup [WS_TIMEUP]  Time to wait until the webserivce starts in seconds (default 25)
+       --client_key [CLIENT_KEY]        Client key for authenticated requests (default clientid)
+       -f,--file [FILE]        Alternative configuration file
 
-	--client_secret VALUE        Client secret  default(supersecret)
-	--timeout_seconds VALUE      Connection timeout default(100)
-	--authenticate VALUE         If true will send the authenticated url's to the ws default(false)
-	--ws_timeup VALUE            Time in seconds to wait for the ws to start (if in local mode)  default(60)
-	--local VALUE                CLI mode, true is local, false is remote (must be coherent with the ws instance)  default(true)
-	--host VALUE                 Host name  default(http://localhost)
-	--port VALUE                 Port number default(8181)
-	--client_key VALUE           Client key default(clientkey)
-	--exec_line VALUE            Path to the pipeline2 script  default(../bin/pipeline2)
-	--debug VALUE                If true debug messages are printed on the terminal default(false)
-	--ws_path VALUE              Path to the ws (as in http://host/ws_path)  default(ws)
