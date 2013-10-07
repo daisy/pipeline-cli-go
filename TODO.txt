@@ -1,0 +1,5 @@
+
+ * Better error reporting, now too techie
+ * Cosmetic improvements to help (try to tab everyting in one level)
+ * Improve the yaml parsing library to trim the strings, now it crashes if there is a space at the end of the config item
+ * FIXME in scripts.go
