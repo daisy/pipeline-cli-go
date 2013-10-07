@@ -110,11 +110,11 @@ func TestPrintHelpErrors(t *testing.T) {
 	}
 	cli.AddScripts([]pipeline.Script{SCRIPT}, link)
 	//more than one parameter fail
-	err = printHelp(*cli, "one", "two")
+	err = printHelp(*cli, false, "one", "two")
 	if err == nil {
 		t.Error("Expected error (more than one param) is nil")
 	}
-	err = printHelp(*cli, "one")
+	err = printHelp(*cli, false, "one")
 	if err == nil {
 		t.Error("Expected error (unknown command) is nil")
 	}

@@ -33,9 +33,18 @@ Detailed help for a single command:     {{.Name}} help COMMAND
 Usage: {{.Parent.Name}} [GLOBAL_OPTIONS] {{.Name}} [OPTIONS]  {{ .Params }}
 
 {{.Description}}
-
+{{if .Flags}}
 Options:
 {{range .Flags }}       {{.}}
+{{end}}
+{{end}}
+
+`
+
+	GLOBAL_OPTIONS_TEMPLATE = `
+
+Global Options:
+{{range .Flags}}       {{.}}
 {{end}}
 
 `
@@ -47,10 +56,11 @@ Options:
 //the help display
 type Cli struct {
 	*subcommand.Parser
-	Scripts        []*ScriptCommand
-	StaticCommands []*subcommand.Command
+	Scripts        []*ScriptCommand      //pipeline scripts
+	StaticCommands []*subcommand.Command //commands which are always present
 }
 
+//Script commands have a job request associated
 type ScriptCommand struct {
 	*subcommand.Command
 	req *JobRequest
@@ -61,14 +71,17 @@ func NewCli(name string, link *PipelineLink) (cli *Cli, err error) {
 	cli = &Cli{
 		Parser: subcommand.NewParser(name),
 	}
-	cli.Parser.SetHelp("help", "Help description", func(help string, args ...string) error {
-		return printHelp(*cli, args...)
-	})
+	//set the help command
+	cli.setHelp()
+	//when the first command is processed
+	//initialise the link so we take into account the
+	//global configuration flags
 	cli.OnCommand(func() error {
 		if err = link.Init(); err != nil {
 			return err
 		}
 		if !link.IsLocal() {
+			//it we are not in local mode we need to send the data
 			for _, cmd := range cli.Scripts {
 
 				cmd.addDataOption()
@@ -76,12 +89,24 @@ func NewCli(name string, link *PipelineLink) (cli *Cli, err error) {
 		}
 		return nil
 	})
+	//add config flags
 	cli.addConfigOptions(link.config)
 	return
 }
 
+//Sets the help function
+func (c *Cli) setHelp() {
+	globals := false
+	c.Parser.SetHelp("help", "Help description", func(help string, args ...string) error {
+		return printHelp(*c, globals, args...)
+	}).AddSwitch("globals", "g", "Show global options", func(string, string) error {
+		globals = true
+		return nil
+	})
+}
+
+//Adds the configuration global options to the parser
 func (c *Cli) addConfigOptions(conf Config) {
-	//TODO make config a map instead of a struct?
 	for option, desc := range config_descriptions {
 		c.AddOption(option, "", fmt.Sprintf("%v (default %v)", desc, conf[option]), func(optName string, value string) error {
 			switch conf[optName].(type) {
@@ -109,7 +134,7 @@ func (c *Cli) addConfigOptions(conf Config) {
 			return nil
 		})
 	}
-
+	//alternative configuration file
 	c.AddOption("file", "f", "Alternative configuration file", func(string, filePath string) error {
 		file, err := os.Open(filePath)
 		if err != nil {
@@ -136,14 +161,22 @@ func (c *Cli) AddCommand(name, desc string, fn func(string, ...string) error) *s
 
 //Runs the client
 func (c *Cli) Run(args []string) error {
-	//TODO: should I load a default file?
 	_, err := c.Parser.Parse(args)
 	return err
 }
 
 //prints the help
-func printHelp(cli Cli, args ...string) error {
-	if len(args) == 0 {
+func printHelp(cli Cli, globals bool, args ...string) error {
+	if globals {
+		tmpl, err := template.New("globals").Parse(GLOBAL_OPTIONS_TEMPLATE)
+		if err != nil {
+			//this is serious stuff panic!!
+			println(err.Error())
+			panic("Error compiling globals template")
+		}
+		tmpl.Execute(os.Stdout, cli)
+
+	} else if len(args) == 0 {
 		tmpl, err := template.New("mainHelp").Parse(MAIN_HELP_TEMPLATE)
 		if err != nil {
 			//this is serious stuff panic!!
@@ -186,10 +219,4 @@ func printHelp(cli Cli, args ...string) error {
 //}
 //}
 //return max
-//}
-
-//func (c *Cli) addScript(script pipeline.Script) error {
-//command, err := scriptToCommand(c, script)
-//c.Scripts = append(c.Scripts, command)
-//return err
 //}
