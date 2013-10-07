@@ -60,6 +60,8 @@ type PipelineTest struct {
 	mode           string
 }
 
+func (p PipelineTest) SetUrl(string) {
+}
 func newPipelineTest(fail bool) *PipelineTest {
 	return &PipelineTest{
 		fail:           fail,

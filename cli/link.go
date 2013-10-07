@@ -21,6 +21,7 @@ const (
 //Convinience for testing
 type PipelineApi interface {
 	SetCredentials(string, string)
+	SetUrl(string)
 	Alive() (alive pipeline.Alive, err error)
 	Scripts() (scripts pipeline.Scripts, err error)
 	Script(id string) (script pipeline.Script, err error)
@@ -62,6 +63,7 @@ func NewLink(conf Config) (pLink *PipelineLink, err error) {
 
 func (p *PipelineLink) Init() error {
 	log.Println("Initialising link")
+	p.pipeline.SetUrl(p.config.Url())
 	if err := bringUp(p); err != nil {
 		return err
 	}
