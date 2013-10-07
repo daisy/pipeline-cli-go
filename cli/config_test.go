@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"bitbucket.org/kardianos/osext"
 	"bytes"
+	"os"
 	"testing"
 )
 
@@ -20,7 +22,7 @@ local: true
 client_key: clientid
 client_secret: supersecret
 #connection settings
-timeout_seconds: 10
+timeout: 10
 #debug
 debug: true
 starting: true
@@ -32,76 +34,81 @@ starting: true
 		"port":          9999,
 		"ws_path":       "ws",
 		"ws_timeup":     10,
-		"unix":          "unix",
-		"windows":       "windows",
+		"exec_line_nix": "unix",
+		"exec_line_win": "windows",
 		"client_key":    "clientid",
 		"client_secret": "supersecret",
-		"time_out":      10,
+		"timeout":       10,
 		"starting":      true,
 		"debug":         true,
 	}
 )
 
-func tCompareToExp(cnf Config, t *testing.T) {
+func tCompareCnfs(one, exp Config, t *testing.T) {
 	var res interface{}
 	var test string
-	test = "host"
-	res = cnf[HOST]
-	if res != EXP[test] {
-		t.Errorf(T_STRING, test, EXP[test], res)
+	test = HOST
+	res = one[test]
+	if res != exp[test] {
+		t.Errorf(T_STRING, test, exp[test], res)
 	}
 
-	test = "port"
-	res = cnf[PORT]
-	if res != EXP[test] {
-		t.Errorf(T_STRING, test, EXP[test], res)
+	test = PORT
+	res = one[PORT]
+	if res != exp[test] {
+		t.Errorf(T_STRING, test, exp[test], res)
 	}
 
-	test = "ws_path"
-	res = cnf[PATH]
-	if res != EXP[test] {
-		t.Errorf(T_STRING, test, EXP[test], res)
+	test = PATH
+	res = one[PATH]
+	if res != exp[test] {
+		t.Errorf(T_STRING, test, exp[test], res)
 	}
-	test = "ws_timeup"
-	res = cnf[WSTIMEUP]
-	if res != EXP[test] {
-		t.Errorf(T_STRING, test, EXP[test], res)
-	}
-
-	test = "unix"
-	res = cnf[EXECLINENIX]
-	if res != EXP[test] {
-		t.Errorf(T_STRING, test, EXP[test], res)
+	test = WSTIMEUP
+	res = one[WSTIMEUP]
+	if res != exp[test] {
+		t.Errorf(T_STRING, test, exp[test], res)
 	}
 
-	test = "windows"
-	res = cnf[EXECLINEWIN]
-	if res != EXP[test] {
-		t.Errorf(T_STRING, test, EXP[test], res)
+	test = EXECLINENIX
+	res = one[EXECLINENIX]
+	if res != exp[test] {
+		t.Errorf(T_STRING, test, exp[test], res)
 	}
 
-	test = "client_key"
-	res = cnf[CLIENTKEY]
-	if res != EXP[test] {
-		t.Errorf(T_STRING, test, EXP[test], res)
+	test = EXECLINEWIN
+	res = one[EXECLINEWIN]
+	if res != exp[test] {
+		t.Errorf(T_STRING, test, exp[test], res)
 	}
 
-	test = "client_secret"
-	res = cnf[CLIENTSECRET]
-	if res != EXP[test] {
-		t.Errorf(T_STRING, test, EXP[test], res)
+	test = CLIENTKEY
+	res = one[CLIENTKEY]
+	if res != exp[test] {
+		t.Errorf(T_STRING, test, exp[test], res)
 	}
 
-	test = "time_out"
-	res = cnf[TIMEOUT]
-	if res != EXP[test] {
-		t.Errorf(T_STRING, test, EXP[test], res)
+	test = CLIENTSECRET
+	res = one[CLIENTSECRET]
+	if res != exp[test] {
+		t.Errorf(T_STRING, test, exp[test], res)
 	}
 
-	test = "debug"
-	res = cnf[DEBUG]
-	if res != EXP[test] {
-		t.Errorf(T_STRING, test, EXP[test], res)
+	test = TIMEOUT
+	res = one[TIMEOUT]
+	if res != exp[test] {
+		t.Errorf(T_STRING, test, exp[test], res)
+	}
+
+	test = DEBUG
+	res = one[DEBUG]
+	if res != exp[test] {
+		t.Errorf(T_STRING, test, exp[test], res)
+	}
+	test = STARTING
+	res = one[test]
+	if res != exp[test] {
+		t.Errorf(T_STRING, test, exp[test], res)
 	}
 }
 func TestConfigYaml(t *testing.T) {
@@ -111,14 +118,39 @@ func TestConfigYaml(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
-	tCompareToExp(cnf, t)
+	tCompareCnfs(cnf, EXP, t)
 
 }
 
-func TestGetUrl(t *testing.T) {
+func TestConfigGetUrl(t *testing.T) {
 	cnf := copyConf()
 	test := "url"
 	if cnf.Url() != EXP[test] {
 		t.Errorf(T_STRING, test, EXP[test], cnf.Url())
 	}
+}
+func TestNewConfig(t *testing.T) {
+	//this should crash and give the default config impl
+	cnf := NewConfig()
+	tCompareCnfs(cnf, copyConf(), t)
+
+}
+func TestNewConfigDefaultFile(t *testing.T) {
+	folder, err := osext.ExecutableFolder()
+	println(folder)
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	file, err := os.Create(folder + string(os.PathSeparator) + DEFAULT_FILE)
+	_, err = file.WriteString(YAML)
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	err = file.Close()
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+
+	cnf := NewConfig()
+	tCompareCnfs(cnf, EXP, t)
 }

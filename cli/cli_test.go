@@ -306,6 +306,6 @@ func TestConfigFile(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
-	tCompareToExp(res, t)
+	tCompareCnfs(res, EXP, t)
 
 }
