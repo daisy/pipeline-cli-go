@@ -11,6 +11,10 @@ import (
 )
 
 const (
+	VERSION = "2.0.0-alpha"
+)
+
+const (
 	MAIN_HELP_TEMPLATE = `
 Usage {{.Name}} [GLOBAL_OPTIONS] command [COMMAND_OPTIONS] [PARAMS]
 
