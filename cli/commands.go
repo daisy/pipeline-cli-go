@@ -30,6 +30,12 @@ Job Id          (Nicename)              [STATUS]
 
 {{range .}}{{.Id}}{{if .Nicename }}     ({{.Nicename}}){{end}}  [{{.Status}}]
 {{end}}`
+
+	VersionTemplate = `
+Client version:                 {{.CliVersion}}         
+Pipeline version:               {{.Version}}
+Pipeline authentication:        {{.Authentication}}
+`
 )
 
 //Convinience struct
@@ -204,6 +210,26 @@ func AddJobsCommand(cli *Cli, link PipelineLink) {
 		return nil
 	})
 }
+
+func AddVersionCommand(cli *Cli, link *PipelineLink) {
+	cli.AddCommand("version", "Prints the version and authentication information", func(command string, args ...string) error {
+		type Version struct {
+			*PipelineLink
+			CliVersion string
+		}
+
+		tmpl, err := template.New("version").Parse(VersionTemplate)
+		if err != nil {
+			return err
+		}
+
+		ver := Version{link, VERSION}
+		err = tmpl.Execute(os.Stdout, ver)
+		return nil
+
+	})
+}
+
 func checkId(lastId bool, command string, args ...string) (id string, err error) {
 	if len(args) != 1 && !lastId {
 		return id, fmt.Errorf("Command %v needs a job id")
