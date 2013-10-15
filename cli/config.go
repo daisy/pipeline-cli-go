@@ -3,9 +3,9 @@ package cli
 import (
 	"bitbucket.org/kardianos/osext"
 	"fmt"
-	"github.com/kylelemons/go-gypsy/yaml"
 	"io"
 	"io/ioutil"
+	"launchpad.net/goyaml"
 	"log"
 	"os"
 )
@@ -107,11 +107,11 @@ func loadDefault(cnf Config) error {
 
 //Loads the contents of the yaml file into the configuration
 func (c Config) FromYaml(r io.Reader) error {
-	node, err := yaml.Parse(r)
+	bytes, err := ioutil.ReadAll(r)
 	if err != nil {
 		return err
 	}
-	err = nodeToConfig(c, node)
+	err = goyaml.Unmarshal(bytes, c)
 	return err
 }
 
@@ -131,64 +131,64 @@ func (c Config) Url() string {
 }
 
 //Configuration loading from the yaml node
-func nodeToConfig(conf Config, node yaml.Node) error {
-	var err error
-	file := yaml.File{Root: node}
-	conf[HOST], err = file.Get(HOST)
-	if err != nil {
-		return fmt.Errorf(ERR_STR, err)
-	}
+//func nodeToConfig(conf Config, node yaml.Node) error {
+//var err error
+//file := yaml.File{Root: node}
+//conf[HOST], err = file.Get(HOST)
+//if err != nil {
+//return fmt.Errorf(ERR_STR, err)
+//}
 
-	aux, err := file.GetInt(PORT)
-	if err != nil {
-		return fmt.Errorf(ERR_STR, err)
-	}
-	conf[PORT] = int(aux)
+//aux, err := file.GetInt(PORT)
+//if err != nil {
+//return fmt.Errorf(ERR_STR, err)
+//}
+//conf[PORT] = int(aux)
 
-	conf[PATH], err = file.Get(PATH)
-	if err != nil {
-		return fmt.Errorf(ERR_STR, err)
-	}
+//conf[PATH], err = file.Get(PATH)
+//if err != nil {
+//return fmt.Errorf(ERR_STR, err)
+//}
 
-	aux, err = file.GetInt(WSTIMEUP)
-	conf[WSTIMEUP] = int(aux)
-	if err != nil {
-		return fmt.Errorf(ERR_STR, err)
-	}
+//aux, err = file.GetInt(WSTIMEUP)
+//conf[WSTIMEUP] = int(aux)
+//if err != nil {
+//return fmt.Errorf(ERR_STR, err)
+//}
 
-	conf[EXECLINENIX], err = file.Get(EXECLINENIX)
-	if err != nil {
-		return fmt.Errorf(ERR_STR, err)
-	}
+//conf[EXECLINENIX], err = file.Get(EXECLINENIX)
+//if err != nil {
+//return fmt.Errorf(ERR_STR, err)
+//}
 
-	conf[EXECLINEWIN], err = file.Get(EXECLINEWIN)
-	if err != nil {
-		return fmt.Errorf(ERR_STR, err)
-	}
+//conf[EXECLINEWIN], err = file.Get(EXECLINEWIN)
+//if err != nil {
+//return fmt.Errorf(ERR_STR, err)
+//}
 
-	conf[CLIENTKEY], err = file.Get(CLIENTKEY)
-	if err != nil {
-		return fmt.Errorf(ERR_STR, err)
-	}
+//conf[CLIENTKEY], err = file.Get(CLIENTKEY)
+//if err != nil {
+//return fmt.Errorf(ERR_STR, err)
+//}
 
-	conf[CLIENTSECRET], err = file.Get(CLIENTSECRET)
-	if err != nil {
-		return fmt.Errorf(ERR_STR, err)
-	}
+//conf[CLIENTSECRET], err = file.Get(CLIENTSECRET)
+//if err != nil {
+//return fmt.Errorf(ERR_STR, err)
+//}
 
-	aux, err = file.GetInt(TIMEOUT)
-	if err != nil {
-		return fmt.Errorf(ERR_STR, err)
-	}
-	conf[TIMEOUT] = int(aux)
-	conf[DEBUG], err = file.GetBool(DEBUG)
-	if err != nil {
-		return fmt.Errorf(ERR_STR, err)
-	}
-	conf[STARTING], err = file.GetBool(STARTING)
-	if err != nil {
-		return fmt.Errorf(ERR_STR, err)
-	}
-	conf.UpdateDebug()
-	return nil
-}
+//aux, err = file.GetInt(TIMEOUT)
+//if err != nil {
+//return fmt.Errorf(ERR_STR, err)
+//}
+//conf[TIMEOUT] = int(aux)
+//conf[DEBUG], err = file.GetBool(DEBUG)
+//if err != nil {
+//return fmt.Errorf(ERR_STR, err)
+//}
+//conf[STARTING], err = file.GetBool(STARTING)
+//if err != nil {
+//return fmt.Errorf(ERR_STR, err)
+//}
+//conf.UpdateDebug()
+//return nil
+//}

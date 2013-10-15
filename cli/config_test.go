@@ -24,7 +24,7 @@ client_secret: supersecret
 #connection settings
 timeout: 10
 #debug
-debug: true
+debug: true 
 starting: true
 `
 	T_STRING = "Wrong %v\nexpected: %v\nresult:%v\n"
