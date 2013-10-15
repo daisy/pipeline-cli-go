@@ -17,7 +17,7 @@ How to build
 
 
         go get github.com/capitancambio/go-subcommand
-        go get github.com/kylelemons/go-gypsy/yaml
+        go get launchpad.net/goyaml
         go get github.com/daisy-consortium/pipeline-clientlib-go
         go get bitbucket.org/kardianos/osext
         go get github.com/daisy-consortium/pipeline-cli-go
