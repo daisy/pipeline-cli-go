@@ -21,7 +21,7 @@ pushd target > /dev/null
 export GOPATH=$PWD
 echo "Fetching deps..."
 go get github.com/capitancambio/go-subcommand
-go get github.com/kylelemons/go-gypsy/yaml
+go get launchpad.net/goyaml 
 go get github.com/daisy-consortium/pipeline-clientlib-go
 go get bitbucket.org/kardianos/osext
 echo "Testing..."
