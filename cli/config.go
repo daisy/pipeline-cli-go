@@ -112,6 +112,10 @@ func (c Config) FromYaml(r io.Reader) error {
 		return err
 	}
 	err = goyaml.Unmarshal(bytes, c)
+	if err != nil {
+		return err
+	}
+	c.UpdateDebug()
 	return err
 }
 
