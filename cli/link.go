@@ -47,7 +47,7 @@ type PipelineLink struct {
 	config         Config
 	Version        string //Framework version
 	Authentication bool   //Framework authentication
-	Mode           string //Framework mode
+	FsAllow        bool   //Framework mode
 }
 
 func NewLink(conf Config) (pLink *PipelineLink, err error) {
@@ -77,7 +77,7 @@ func (p *PipelineLink) Init() error {
 	return nil
 }
 func (p PipelineLink) IsLocal() bool {
-	return p.Mode == "local" || p.Mode == "Local"
+	return p.FsAllow
 }
 
 //checks if the pipeline is up
@@ -119,7 +119,7 @@ func bringUp(pLink *PipelineLink) error {
 	}
 	log.Println("Setting values")
 	pLink.Version = alive.Version
-	pLink.Mode = alive.Mode
+	pLink.FsAllow = alive.FsAllow
 	pLink.Authentication = alive.Authentication
 	return nil
 }

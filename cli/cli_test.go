@@ -85,7 +85,7 @@ func TestCliAddCommand(t *testing.T) {
 
 func TestCliNonRequiredOptions(t *testing.T) {
 	config[STARTING] = false
-	link := &PipelineLink{Mode: "local", pipeline: newPipelineTest(false), config: config}
+	link := &PipelineLink{FsAllow: true, pipeline: newPipelineTest(false), config: config}
 	cli, err := NewCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")

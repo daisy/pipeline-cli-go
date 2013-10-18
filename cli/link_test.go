@@ -57,7 +57,7 @@ type PipelineTest struct {
 	resulted       bool
 	backgrounded   bool
 	authentication bool
-	mode           string
+	fsallow        bool
 }
 
 func (p PipelineTest) SetUrl(string) {
@@ -70,7 +70,7 @@ func newPipelineTest(fail bool) *PipelineTest {
 		resulted:       false,
 		backgrounded:   false,
 		authentication: false,
-		mode:           "local",
+		fsallow:        true,
 	}
 }
 
@@ -82,7 +82,7 @@ func (p *PipelineTest) Alive() (alive pipeline.Alive, err error) {
 		return alive, errors.New("Error")
 	}
 	alive.Version = "test"
-	alive.Mode = p.mode
+	alive.FsAllow = p.fsallow
 	alive.Authentication = p.authentication
 	return
 }
@@ -173,7 +173,7 @@ func TestBringUp(t *testing.T) {
 	if link.Version != "test" {
 		t.Error("Version not set")
 	}
-	if link.Mode != "local" {
+	if link.FsAllow != true {
 		t.Error("Mode not set")
 	}
 
@@ -338,16 +338,12 @@ func TestAppendOps(t *testing.T) {
 }
 
 func TestIsLocal(t *testing.T) {
-	link := PipelineLink{Mode: "local"}
+	link := PipelineLink{FsAllow: true}
 	if !link.IsLocal() {
 		t.Errorf("Should be local %+v", link)
 	}
 
-	link = PipelineLink{Mode: "remote"}
-	if link.IsLocal() {
-		t.Errorf("Should not be local %+v", link)
-	}
-	link = PipelineLink{Mode: "test"}
+	link = PipelineLink{FsAllow: false}
 	if link.IsLocal() {
 		t.Errorf("Should not be local %+v", link)
 	}
