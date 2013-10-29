@@ -1,6 +1,4 @@
-
  * Better error reporting, now too techie
- * Cosmetic improvements to help (try to tab everyting in one level)
- * Improve the yaml parsing library to trim the strings, now it crashes if there is a space at the end of the config item
  * FIXME in scripts.go
  * Make sure that all the config items are correctly propagated (timeout is now ignored)
+ * Fix help so we get the flags always in the same order
