@@ -48,7 +48,7 @@ Options:
 	GLOBAL_OPTIONS_TEMPLATE = `
 
 Global Options:
-{{range .Flags}}       {{.}}
+{{range .Flags }}       {{flagAligner .FlagStringPrefix}} {{.Description}}
 {{end}}
 
 `
@@ -184,7 +184,10 @@ func (c *Cli) Run(args []string) error {
 //prints the help
 func printHelp(cli Cli, globals bool, args ...string) error {
 	if globals {
-		tmpl, err := template.New("globals").Parse(GLOBAL_OPTIONS_TEMPLATE)
+		funcMap := template.FuncMap{
+			"flagAligner": flagAligner(cli.Flags()),
+		}
+		tmpl, err := template.New("globals").Funcs(funcMap).Parse(GLOBAL_OPTIONS_TEMPLATE)
 		if err != nil {
 			//this is serious stuff panic!!
 			println(err.Error())
