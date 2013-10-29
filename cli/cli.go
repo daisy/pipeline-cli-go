@@ -21,12 +21,12 @@ Usage {{.Name}} [GLOBAL_OPTIONS] command [COMMAND_OPTIONS] [PARAMS]
 {{if .Scripts}}
 Script commands:
 
-        {{range .Scripts}}{{aligner .Name }} {{.Description}}
+        {{range .Scripts}}{{commandAligner .Name }} {{.Description}}
         {{end}}
 {{end}}
 General commands:
 
-        {{range .StaticCommands}}{{aligner .Name}} {{.Description}}
+        {{range .StaticCommands}}{{commandAligner .Name}} {{.Description}}
         {{end}}
 
 List of global options:                 {{.Name}} help -g
@@ -39,7 +39,7 @@ Usage: {{.Parent.Name}} [GLOBAL_OPTIONS] {{.Name}} [OPTIONS]  {{ .Params }}
 {{.Description}}
 {{if .Flags}}
 Options:
-{{range .Flags }}       {{.}}
+{{range .Flags }}       {{flagAligner .FlagStringPrefix}} {{.Description}}
 {{end}}
 {{end}}
 
@@ -194,7 +194,7 @@ func printHelp(cli Cli, globals bool, args ...string) error {
 
 	} else if len(args) == 0 {
 		funcMap := template.FuncMap{
-			"aligner": aligner(cli.Scripts),
+			"commandAligner": commandAligner(cli.Scripts),
 		}
 		tmpl, err := template.New("mainHelp").Funcs(funcMap).Parse(MAIN_HELP_TEMPLATE)
 		if err != nil {
@@ -213,10 +213,7 @@ func printHelp(cli Cli, globals bool, args ...string) error {
 			return fmt.Errorf("help: command %v not found ", args[0])
 		}
 		funcMap := template.FuncMap{
-			"upper": strings.ToUpper,
-			"isOption": func(flag subcommand.Flag) bool {
-				return flag.Type == subcommand.Option
-			},
+			"flagAligner": flagAligner(cmd.Flags()),
 		}
 		tmpl, err := template.New("commandHelp").Funcs(funcMap).Parse(COMMAND_HELP_TEMPLATE)
 		if err != nil {
@@ -230,13 +227,28 @@ func printHelp(cli Cli, globals bool, args ...string) error {
 	return nil
 }
 
-func aligner(scripts []*ScriptCommand) func(string) string {
+func commandAligner(scripts []*ScriptCommand) func(string) string {
 	longest := getLongestName(scripts)
 	return func(name string) string {
 		return fmt.Sprintf("%s%s", name, strings.Repeat(" ", longest-len(name)+4))
 	}
 }
 
+func flagAligner(flags []subcommand.Flag) func(string) string {
+	longest := getLongestFlag(flags)
+	return func(name string) string {
+		return fmt.Sprintf("%s%s", name, strings.Repeat(" ", longest-len(name)+4))
+	}
+}
+func getLongestFlag(flags []subcommand.Flag) int {
+	max := -1
+	for _, f := range flags {
+		if max < len(f.FlagStringPrefix()) {
+			max = len(f.FlagStringPrefix())
+		}
+	}
+	return max
+}
 func getLongestName(scripts []*ScriptCommand) int {
 	max := -1
 	for _, s := range scripts {
