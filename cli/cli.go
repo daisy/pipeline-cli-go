@@ -21,12 +21,12 @@ Usage {{.Name}} [GLOBAL_OPTIONS] command [COMMAND_OPTIONS] [PARAMS]
 {{if .Scripts}}
 Script commands:
 
-        {{range .Scripts}}{{.Name}}             {{.Description}}
+        {{range .Scripts}}{{aligner .Name }} {{.Description}}
         {{end}}
 {{end}}
 General commands:
 
-        {{range .StaticCommands}}{{.Name}}             {{.Description}}
+        {{range .StaticCommands}}{{aligner .Name}} {{.Description}}
         {{end}}
 
 List of global options:                 {{.Name}} help -g
@@ -193,7 +193,10 @@ func printHelp(cli Cli, globals bool, args ...string) error {
 		tmpl.Execute(os.Stdout, cli)
 
 	} else if len(args) == 0 {
-		tmpl, err := template.New("mainHelp").Parse(MAIN_HELP_TEMPLATE)
+		funcMap := template.FuncMap{
+			"aligner": aligner(cli.Scripts),
+		}
+		tmpl, err := template.New("mainHelp").Funcs(funcMap).Parse(MAIN_HELP_TEMPLATE)
 		if err != nil {
 			//this is serious stuff panic!!
 			println(err.Error())
@@ -227,12 +230,19 @@ func printHelp(cli Cli, globals bool, args ...string) error {
 	return nil
 }
 
-//func getLongestName(scripts []*subcommand.Command) int {
-//max := -1
-//for _, s := range scripts {
-//if max < len(s.Name) {
-//max = len(s.Name)
-//}
-//}
-//return max
-//}
+func aligner(scripts []*ScriptCommand) func(string) string {
+	longest := getLongestName(scripts)
+	return func(name string) string {
+		return fmt.Sprintf("%s%s", name, strings.Repeat(" ", longest-len(name)+4))
+	}
+}
+
+func getLongestName(scripts []*ScriptCommand) int {
+	max := -1
+	for _, s := range scripts {
+		if max < len(s.Name) {
+			max = len(s.Name)
+		}
+	}
+	return max
+}
