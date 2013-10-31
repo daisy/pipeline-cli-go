@@ -82,7 +82,7 @@ func NewCli(name string, link *PipelineLink) (cli *Cli, err error) {
 	//when the first command is processed
 	//initialise the link so we take into account the
 	//global configuration flags
-	cli.OnCommand(func() error {
+	cli.PostFlags(func() error {
 		if err = link.Init(); err != nil {
 			return err
 		}
