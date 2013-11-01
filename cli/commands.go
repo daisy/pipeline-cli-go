@@ -232,7 +232,7 @@ func AddVersionCommand(cli *Cli, link *PipelineLink) {
 
 func checkId(lastId bool, command string, args ...string) (id string, err error) {
 	if len(args) != 1 && !lastId {
-		return id, fmt.Errorf("Command %v needs a job id")
+		return id, fmt.Errorf("Command %v needs a job id", command)
 	}
 	//got it from file
 	if lastId {
