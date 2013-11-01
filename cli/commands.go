@@ -250,7 +250,7 @@ func addLastId(cmd *subcommand.Command, lastId *bool) {
 		*lastId = true
 		return nil
 	})
-	cmd.Params = "[JOB_ID]"
+	cmd.SetArity(-1, "[JOB_ID]")
 }
 
 //Calculates the absolute path in base of cwd and creates the directory

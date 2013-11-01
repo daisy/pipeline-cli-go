@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
 	"os"
-	"strings"
 	"text/template"
 )
 
@@ -86,9 +85,6 @@ func (c *Cli) AddNewClientCommand(link PipelineLink) {
 
 func (c *Cli) AddDeleteClientCommand(link PipelineLink) {
 	c.AddCommand("delete", "Deletes a client", func(command string, args ...string) error {
-		if err := checkParams(1, args...); err != nil {
-			return err
-		}
 		id := args[0]
 		_, err := link.pipeline.DeleteClient(id)
 		if err != nil {
@@ -96,22 +92,12 @@ func (c *Cli) AddDeleteClientCommand(link PipelineLink) {
 		}
 		fmt.Printf("Client %v deleted\n", id)
 		return nil
-	}).Params = "CLIENT_ID"
+	}).SetArity(1, "CLIENT_ID")
 }
 
-func checkParams(expected int, args ...string) error {
-	if len(args) != 1 {
-		return fmt.Errorf("Bad number of paramters : %v (len %v)", strings.Join(args, " "), len(args))
-
-	}
-	return nil
-}
 func (c *Cli) AddClientCommand(link PipelineLink) {
 
 	c.AddCommand("client", "Prints the detailed client inforamtion", func(command string, args ...string) error {
-		if err := checkParams(1, args...); err != nil {
-			return err
-		}
 		id := args[0]
 		client, err := link.pipeline.Client(id)
 		if err != nil {
@@ -122,14 +108,11 @@ func (c *Cli) AddClientCommand(link PipelineLink) {
 			return err
 		}
 		return tmpl.Execute(os.Stdout, client)
-	}).Params = "CLIENT_ID"
+	}).SetArity(1, "CLIENT_ID")
 }
 func (c *Cli) AddModifyClientCommand(link PipelineLink) {
 	client := &pipeline.Client{}
 	cmd := c.AddCommand("modify", "Modifies a client", func(command string, args ...string) error {
-		if err := checkParams(1, args...); err != nil {
-			return err
-		}
 		id := args[0]
 		client.Id = id
 		old, err := link.pipeline.Client(id)
@@ -156,8 +139,7 @@ func (c *Cli) AddModifyClientCommand(link PipelineLink) {
 		fmt.Println("Client successfully modified")
 		err = tmpl.Execute(os.Stdout, res)
 		return nil
-	})
-	cmd.Params = "CLIENT_ID"
+	}).SetArity(1, "CLIENT_ID")
 	cmd.AddOption("secret", "s", "Client secret", func(string, value string) error {
 		client.Secret = value
 		return nil

@@ -34,7 +34,7 @@ Detailed help for a single command:     {{.Name}} help COMMAND
 `
 	//TODO: Check if required options to write/ignore []
 	COMMAND_HELP_TEMPLATE = `
-Usage: {{.Parent.Name}} [GLOBAL_OPTIONS] {{.Name}} [OPTIONS]  {{ .Params }}
+Usage: {{.Parent.Name}} [GLOBAL_OPTIONS] {{.Name}} [OPTIONS]  {{ .Arity.Description}}
 
 {{.Description}}
 {{if .Flags}}
