@@ -246,6 +246,10 @@ func pathToUri(paths string, separator string, basePath string) (urls []url.URL,
 	var urlBase *url.URL
 
 	if basePath != "" {
+		if string(basePath[0])!="/"{
+			//for windows path to build a proper url
+			basePath="/"+basePath
+		}
 		urlBase, err = url.Parse("file:" + basePath)
 	}
 	if err != nil {
