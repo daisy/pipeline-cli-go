@@ -88,9 +88,6 @@ func AddDeleteCommand(cli *Cli, link PipelineLink) {
 		if err != nil {
 			return err
 		}
-		if err != nil {
-			return err
-		}
 		if ok {
 			fmt.Printf("Job %v removed\n", id)
 		}
@@ -109,9 +106,6 @@ func AddResultsCommand(cli *Cli, link PipelineLink) {
 			return err
 		}
 		data, err := link.Results(id)
-		if err != nil {
-			return err
-		}
 		if err != nil {
 			return err
 		}
