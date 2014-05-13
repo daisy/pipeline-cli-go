@@ -160,6 +160,9 @@ func (p *PipelineTest) ModifyClient(client pipeline.Client, id string) (c pipeli
 func (p *PipelineTest) Properties() (props []pipeline.Property, err error) {
 	return
 }
+func (p *PipelineTest) Sizes() (sizes pipeline.JobSizes, err error) {
+	return
+}
 func TestBringUp(t *testing.T) {
 	pipeline := newPipelineTest(false)
 	pipeline.authentication = true
