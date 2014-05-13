@@ -1,11 +1,13 @@
 package cli
 
+//TODO get rid of link methods that just bypass the to the pipeline
 import (
 	//"github.com/capitancambio/go-subcommand"
 	"fmt"
-	"github.com/daisy-consortium/pipeline-clientlib-go"
 	"os"
 	"text/template"
+
+	"github.com/daisy-consortium/pipeline-clientlib-go"
 )
 
 const (
@@ -25,6 +27,12 @@ Secret:         ****
         
 {{range .}}{{.Name}}            {{.Value}}              {{.BundleName}}
 {{end}}
+`
+	TmplSizes = `JobId                 		Context Size    Output Size    Log Size    Total Size
+
+{{range .}}{{.Id}}   {{format .Context}}    {{format .Output}}    {{format .Log}}    {{ total . | format}}
+{{end}}
+
 `
 )
 
@@ -174,4 +182,45 @@ func (c *Cli) AddPropertyListCommand(link PipelineLink) {
 
 		return nil
 	})
+}
+
+func (c *Cli) AddSizesCommand(link PipelineLink) {
+	list := false
+	unitFormatter := func(size int) string {
+		return fmt.Sprintf("%d", size)
+	}
+	cmd := c.AddCommand("sizes", "Prits the total size or a detailed list of job data stored in the server", func(command string, args ...string) error {
+		sizes, err := link.Sizes()
+		if err != nil {
+			return err
+		}
+		if !list {
+			fmt.Printf("Total %s\n", unitFormatter(sizes.Total))
+		} else {
+			funcMap := template.FuncMap{
+				"format": unitFormatter,
+				"total": func(size pipeline.JobSize) int {
+					return size.Context + size.Output + size.Log
+				},
+			}
+			tmpl, err := template.New("sizes").Funcs(funcMap).Parse(TmplSizes)
+			if err != nil {
+				return err
+			}
+			err = tmpl.Execute(os.Stdout, sizes.JobSizes)
+		}
+
+		return nil
+	})
+	cmd.AddSwitch("list", "l", "Displays a detailed list rather than the total size", func(string, string) error {
+		list = true
+		return nil
+	})
+	cmd.AddSwitch("human", "h", "Use a more human readable size (megabytes)", func(string, string) error {
+		unitFormatter = func(size int) string {
+			return fmt.Sprintf("%.4fM", float64(size)/(1048576))
+		}
+		return nil
+	})
+
 }

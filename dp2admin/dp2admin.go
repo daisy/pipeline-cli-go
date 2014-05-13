@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/daisy-consortium/pipeline-cli-go/cli"
 	"log"
 	"os"
+
+	"github.com/daisy-consortium/pipeline-cli-go/cli"
 )
 
 func main() {
@@ -32,6 +33,7 @@ func main() {
 	comm.AddModifyClientCommand(*link)
 	comm.AddClientCommand(*link)
 	comm.AddPropertyListCommand(*link)
+	comm.AddSizesCommand(*link)
 
 	err = comm.Run(os.Args[1:])
 	if err != nil {
