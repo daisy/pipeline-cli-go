@@ -2,12 +2,13 @@ package cli
 
 import (
 	"fmt"
-	"github.com/capitancambio/go-subcommand"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 	"text/template"
+
+	"github.com/capitancambio/go-subcommand"
 )
 
 const (
@@ -175,6 +176,28 @@ func (c *Cli) AddCommand(name, desc string, fn func(string, ...string) error) *s
 	return cmd
 }
 
+//convinience function to gather all the command names
+func (c Cli) mergeCommands() []string {
+	names := make([]string, 0, len(c.StaticCommands)+len(c.Scripts))
+	for _, cmd := range c.StaticCommands {
+		names = append(names, cmd.Name)
+	}
+	for _, script := range c.Scripts {
+		names = append(names, script.Name)
+	}
+
+	return names
+}
+
+//convinience function to gather all the command names
+func flagsToStrings(flags []subcommand.Flag) []string {
+	names := make([]string, 0, len(flags))
+	for _, flag := range flags {
+		names = append(names, flag.FlagStringPrefix())
+	}
+	return names
+}
+
 //Runs the client
 func (c *Cli) Run(args []string) error {
 	_, err := c.Parser.Parse(args)
@@ -185,7 +208,7 @@ func (c *Cli) Run(args []string) error {
 func printHelp(cli Cli, globals bool, args ...string) error {
 	if globals {
 		funcMap := template.FuncMap{
-			"flagAligner": flagAligner(cli.Flags()),
+			"flagAligner": aligner(flagsToStrings(cli.Flags())),
 		}
 		tmpl, err := template.New("globals").Funcs(funcMap).Parse(GLOBAL_OPTIONS_TEMPLATE)
 		if err != nil {
@@ -197,7 +220,7 @@ func printHelp(cli Cli, globals bool, args ...string) error {
 
 	} else if len(args) == 0 {
 		funcMap := template.FuncMap{
-			"commandAligner": commandAligner(cli.Scripts),
+			"commandAligner": aligner(cli.mergeCommands()),
 		}
 		tmpl, err := template.New("mainHelp").Funcs(funcMap).Parse(MAIN_HELP_TEMPLATE)
 		if err != nil {
@@ -216,7 +239,7 @@ func printHelp(cli Cli, globals bool, args ...string) error {
 			return fmt.Errorf("help: command %v not found ", args[0])
 		}
 		funcMap := template.FuncMap{
-			"flagAligner": flagAligner(cmd.Flags()),
+			"flagAligner": aligner(flagsToStrings(cmd.Flags())),
 		}
 		tmpl, err := template.New("commandHelp").Funcs(funcMap).Parse(COMMAND_HELP_TEMPLATE)
 		if err != nil {
@@ -230,33 +253,18 @@ func printHelp(cli Cli, globals bool, args ...string) error {
 	return nil
 }
 
-func commandAligner(scripts []*ScriptCommand) func(string) string {
-	longest := getLongestName(scripts)
+func aligner(names []string) func(string) string {
+	longest := getLongestName(names)
 	return func(name string) string {
 		return fmt.Sprintf("%s%s", name, strings.Repeat(" ", longest-len(name)+4))
 	}
 }
 
-func flagAligner(flags []subcommand.Flag) func(string) string {
-	longest := getLongestFlag(flags)
-	return func(name string) string {
-		return fmt.Sprintf("%s%s", name, strings.Repeat(" ", longest-len(name)+4))
-	}
-}
-func getLongestFlag(flags []subcommand.Flag) int {
+func getLongestName(name []string) int {
 	max := -1
-	for _, f := range flags {
-		if max < len(f.FlagStringPrefix()) {
-			max = len(f.FlagStringPrefix())
-		}
-	}
-	return max
-}
-func getLongestName(scripts []*ScriptCommand) int {
-	max := -1
-	for _, s := range scripts {
-		if max < len(s.Name) {
-			max = len(s.Name)
+	for _, s := range name {
+		if max < len(s) {
+			max = len(s)
 		}
 	}
 	return max
