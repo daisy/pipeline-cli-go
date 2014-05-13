@@ -1,16 +1,17 @@
 package cli
 
 import (
-	"bitbucket.org/kardianos/osext"
 	"errors"
 	"fmt"
-	"github.com/daisy-consortium/pipeline-clientlib-go"
 	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"bitbucket.org/kardianos/osext"
+	"github.com/daisy-consortium/pipeline-clientlib-go"
 )
 
 //set the last id path
