@@ -8,3 +8,15 @@ coverage.*
 
 #ctags files
 tags
+#bins
+dp2/dp2
+dp2admin/dp2admin
+
+#mvn targe
+target
+
+#lastid files
+.lastid
+
+#samples dir
+samples
