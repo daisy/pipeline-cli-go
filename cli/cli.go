@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -64,6 +65,7 @@ type Cli struct {
 	Scripts        []*ScriptCommand      //pipeline scripts
 	StaticCommands []*subcommand.Command //commands which are always present
 	WithScripts    bool                  //Load the scripts once the configuration has been loaded. True by default
+	Output         io.Writer             //writer where to dump the output
 }
 
 //Script commands have a job request associated
@@ -77,6 +79,7 @@ func NewCli(name string, link *PipelineLink) (cli *Cli, err error) {
 	cli = &Cli{
 		Parser:      subcommand.NewParser(name),
 		WithScripts: true,
+		Output:      os.Stdout,
 	}
 	//set the help command
 	cli.setHelp()

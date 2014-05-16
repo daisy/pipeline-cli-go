@@ -2,11 +2,12 @@ package cli
 
 import (
 	//"github.com/capitancambio/go-subcommand"
-	"github.com/daisy-consortium/pipeline-clientlib-go"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"testing"
+
+	"github.com/daisy-consortium/pipeline-clientlib-go"
 )
 
 var SCRIPT pipeline.Script = pipeline.Script{
@@ -53,10 +54,20 @@ var SCRIPT pipeline.Script = pipeline.Script{
 
 var in1, in2 = "tmp/dir1/file.xml", "tmp/dir2/file.xml"
 
+func makeCli(name string, link *PipelineLink) (*Cli, error) {
+
+	cli, err := NewCli(name, link)
+	if err != nil {
+		return nil, err
+	}
+	cli.Output = ioutil.Discard
+	return cli, err
+}
+
 func TestCliAddScriptCommand(t *testing.T) {
 	config[STARTING] = false
 	link := &PipelineLink{pipeline: newPipelineTest(false), config: config}
-	cli, err := NewCli("testprog", link)
+	cli, err := makeCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -69,7 +80,7 @@ func TestCliAddScriptCommand(t *testing.T) {
 func TestCliAddCommand(t *testing.T) {
 	config[STARTING] = false
 	link := &PipelineLink{pipeline: newPipelineTest(false), config: config}
-	cli, err := NewCli("testprog", link)
+	cli, err := makeCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -86,7 +97,7 @@ func TestCliAddCommand(t *testing.T) {
 func TestCliNonRequiredOptions(t *testing.T) {
 	config[STARTING] = false
 	link := &PipelineLink{FsAllow: true, pipeline: newPipelineTest(false), config: config}
-	cli, err := NewCli("testprog", link)
+	cli, err := makeCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -100,7 +111,7 @@ func TestCliNonRequiredOptions(t *testing.T) {
 func TestPrintHelpErrors(t *testing.T) {
 	config[STARTING] = false
 	link := &PipelineLink{pipeline: newPipelineTest(false), config: config}
-	cli, err := NewCli("testprog", link)
+	cli, err := makeCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -120,7 +131,7 @@ func TestPrintHelpErrors(t *testing.T) {
 func TestClientNew(t *testing.T) {
 	config[STARTING] = false
 	link := &PipelineLink{pipeline: newPipelineTest(false), config: config}
-	cli, err := NewCli("testprog", link)
+	cli, err := makeCli("testprog", link)
 	cli.WithScripts = false
 	if err != nil {
 		t.Error("Unexpected error")
@@ -131,7 +142,7 @@ func TestClientNew(t *testing.T) {
 	if err == nil {
 		t.Error("Bad role didn't err")
 	}
-	cli, err = NewCli("testprog", link)
+	cli, err = makeCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -141,7 +152,7 @@ func TestClientNew(t *testing.T) {
 	if err == nil {
 		t.Error("No id didn't err")
 	}
-	cli, err = NewCli("testprog", link)
+	cli, err = makeCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -156,7 +167,7 @@ func TestClientNew(t *testing.T) {
 func TestClientDelete(t *testing.T) {
 	config[STARTING] = false
 	link := &PipelineLink{pipeline: newPipelineTest(false), config: config}
-	cli, err := NewCli("testprog", link)
+	cli, err := makeCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -177,7 +188,7 @@ func TestClientDelete(t *testing.T) {
 func TestConfigIntOptions(t *testing.T) {
 	res := copyConf()
 	link := &PipelineLink{pipeline: newPipelineTest(false), config: res}
-	cli, err := NewCli("testprog", link)
+	cli, err := makeCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -200,7 +211,7 @@ func TestConfigIntOptions(t *testing.T) {
 func TestConfigBooleanOptions(t *testing.T) {
 	res := copyConf()
 	link := &PipelineLink{pipeline: newPipelineTest(false), config: res}
-	cli, err := NewCli("testprog", link)
+	cli, err := makeCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -223,7 +234,7 @@ func TestConfigBooleanOptions(t *testing.T) {
 func TestConfigOptions(t *testing.T) {
 	res := copyConf()
 	link := &PipelineLink{pipeline: newPipelineTest(false), config: res}
-	cli, err := NewCli("testprog", link)
+	cli, err := makeCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -270,7 +281,7 @@ func TestConfigFileDoesNotExists(t *testing.T) {
 
 	res := copyConf()
 	link := &PipelineLink{pipeline: newPipelineTest(false), config: res}
-	cli, err := NewCli("testprog", link)
+	cli, err := makeCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -300,7 +311,7 @@ func TestConfigFile(t *testing.T) {
 	}
 	res := copyConf()
 	link := &PipelineLink{pipeline: newPipelineTest(false), config: res}
-	cli, err := NewCli("testprog", link)
+	cli, err := makeCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}

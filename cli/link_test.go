@@ -60,9 +60,13 @@ type PipelineTest struct {
 	authentication bool
 	fsallow        bool
 	call           string
+	val            interface{}
 }
 
 func (p PipelineTest) SetUrl(string) {
+}
+func (p *PipelineTest) SetVal(v interface{}) {
+	p.val = v
 }
 func newPipelineTest(fail bool) *PipelineTest {
 	return &PipelineTest{
@@ -176,6 +180,11 @@ func (p *PipelineTest) Sizes() (sizes pipeline.JobSizes, err error) {
 }
 func (p *PipelineTest) Queue() (queue []pipeline.QueueJob, err error) {
 	p.call = "queue"
+	if p.fail {
+		return queue, errors.New("Error")
+	} else if p.val != nil {
+		return p.val.([]pipeline.QueueJob), nil
+	}
 	return
 }
 func TestBringUp(t *testing.T) {

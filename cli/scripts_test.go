@@ -63,7 +63,7 @@ func TestScriptToCommand(t *testing.T) {
 	pipeline := newPipelineTest(false)
 	pipeline.fsallow = false
 	link := &PipelineLink{pipeline: pipeline, config: config}
-	cli, err := NewCli("test", link)
+	cli, err := makeCli("test", link)
 	cli.WithScripts = false
 	if err != nil {
 		t.Error("Unexpected error")
@@ -101,7 +101,7 @@ func TestScriptToCommandNoLocalFail(t *testing.T) {
 	pipeline := newPipelineTest(false)
 	pipeline.fsallow = false
 	link := &PipelineLink{pipeline: pipeline, config: config}
-	cli, err := NewCli("test", link)
+	cli, err := makeCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -119,7 +119,7 @@ func TestScriptToCommandNoLocalFail(t *testing.T) {
 func TestCliRequiredOptions(t *testing.T) {
 	config[STARTING] = false
 	link := &PipelineLink{FsAllow: true, pipeline: newPipelineTest(true), config: config}
-	cli, err := NewCli("test", link)
+	cli, err := makeCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -167,7 +167,7 @@ func TestGetLastIdErr(t *testing.T) {
 func TestScriptNoOutput(t *testing.T) {
 	config[STARTING] = false
 	link := &PipelineLink{FsAllow: true, pipeline: newPipelineTest(false), config: config}
-	cli, err := NewCli("test", link)
+	cli, err := makeCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -186,7 +186,7 @@ func TestScriptNoOutput(t *testing.T) {
 func TestScriptDefault(t *testing.T) {
 	pipeline := newPipelineTest(false)
 	link := &PipelineLink{FsAllow: true, pipeline: pipeline}
-	cli, err := NewCli("test", link)
+	cli, err := makeCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -209,7 +209,7 @@ func TestScriptDefault(t *testing.T) {
 func TestScriptBackground(t *testing.T) {
 	pipeline := newPipelineTest(false)
 	link := &PipelineLink{FsAllow: true, pipeline: pipeline}
-	cli, err := NewCli("test", link)
+	cli, err := makeCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -238,7 +238,7 @@ func TestScriptBackground(t *testing.T) {
 func TestScriptPersistent(t *testing.T) {
 	pipeline := newPipelineTest(false)
 	link := &PipelineLink{FsAllow: true, pipeline: pipeline}
-	cli, err := NewCli("test", link)
+	cli, err := makeCli("test", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
