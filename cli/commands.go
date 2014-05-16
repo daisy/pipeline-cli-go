@@ -258,20 +258,11 @@ func AddJobsCommand(cli *Cli, link PipelineLink) {
 }
 
 func AddQueueCommand(cli *Cli, link PipelineLink) {
-
-	cli.AddCommand("queue", "Shows the execution queue and the job's priorities. ",
-		func(command string, args ...string) error {
-			jobs, err := link.Queue()
-			if err != nil {
-				return err
-			}
-			tmpl, err := template.New("queue").Parse(QueueTemplate)
-			if err != nil {
-				return err
-			}
-			err = tmpl.Execute(cli.Output, jobs)
-			return nil
-		})
+	fn := func(...interface{}) (interface{}, error) {
+		return link.Queue()
+	}
+	NewCommandBuilder("queue", "Shows the execution queue and the job's priorities. ").
+		withCall(fn).withTemplate(QueueTemplate).build(cli)
 }
 
 func AddMoveUpCommand(cli *Cli, link PipelineLink) {

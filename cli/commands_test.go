@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"text/template"
 
 	"github.com/daisy-consortium/pipeline-clientlib-go"
 )
@@ -168,9 +169,8 @@ func TestBuilderCommandWithId(t *testing.T) {
 	}
 }
 
-func TestQueueCommand(t *testing.T) {
+func TestQueueTemplate(t *testing.T) {
 	//Todo make a mechanism to mock return values from the link
-	pipe := newPipelineTest(false)
 	queue := []pipeline.QueueJob{
 		pipeline.QueueJob{
 			Id:               "job1",
@@ -181,17 +181,13 @@ func TestQueueCommand(t *testing.T) {
 			TimeStamp:        1400237879517,
 		},
 	}
-	pipe.SetVal(queue)
-	link := PipelineLink{pipeline: pipe}
-	cli, err := NewCli("test", &link)
+	tmpl, err := template.New("queue").Parse(QueueTemplate)
 	if err != nil {
-		t.Errorf("Unexpected error")
+		t.Errorf("Unexpected error %v", err)
 	}
 	buf := make([]byte, 0)
 	w := bytes.NewBuffer(buf)
-	cli.Output = w
-	AddQueueCommand(cli, link)
-	cli.Run([]string{"queue"})
+	err = tmpl.Execute(w, queue)
 	reader := bufio.NewScanner(w)
 	reader.Scan() //discard the header line
 	reader.Scan()
@@ -211,5 +207,4 @@ func TestQueueCommand(t *testing.T) {
 			t.Errorf("Error in displayed data %v!=%v", vals[idx], expected[idx])
 		}
 	}
-
 }
