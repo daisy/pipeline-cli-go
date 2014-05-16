@@ -42,6 +42,8 @@ type PipelineApi interface {
 	Properties() (props []pipeline.Property, err error)
 	Sizes() (sizes pipeline.JobSizes, err error)
 	Queue() ([]pipeline.QueueJob, error)
+	MoveUp(id string) ([]pipeline.QueueJob, error)
+	MoveDown(id string) ([]pipeline.QueueJob, error)
 }
 
 //Maintains some information about the pipeline client
@@ -249,6 +251,12 @@ func (p PipelineLink) Sizes() (sizes pipeline.JobSizes, err error) {
 
 func (p PipelineLink) Queue() (queue []pipeline.QueueJob, err error) {
 	return p.pipeline.Queue()
+}
+func (p PipelineLink) MoveUp(id string) (queue []pipeline.QueueJob, err error) {
+	return p.pipeline.MoveUp(id)
+}
+func (p PipelineLink) MoveDown(id string) (queue []pipeline.QueueJob, err error) {
+	return p.pipeline.MoveDown(id)
 }
 
 //Convience structure to handle message and errors from the communication with the pipelineApi

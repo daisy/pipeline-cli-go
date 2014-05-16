@@ -48,38 +48,85 @@ type printableJob struct {
 	Data    pipeline.Job
 	Verbose bool
 }
+type call func(...interface{}) (interface{}, error)
+type CommandBuilder struct {
+	name     string
+	desc     string
+	linkCall call
+	template string
+}
 
-func AddJobStatusCommand(cli *Cli, link PipelineLink) {
+func NewCommandBuilder(name, desc string) *CommandBuilder {
+	return &CommandBuilder{name: name, desc: desc}
+}
+
+func (c *CommandBuilder) withCall(fn call) *CommandBuilder {
+	c.linkCall = fn
+	return c
+}
+
+func (c *CommandBuilder) withTemplate(template string) *CommandBuilder {
+	c.template = template
+	return c
+}
+
+func (c *CommandBuilder) build(cli *Cli) (cmd *subcommand.Command) {
+	return cli.AddCommand(c.name, c.desc, func(string, ...string) error {
+		data, err := c.linkCall()
+		tmpl, err := template.New("template").Parse(c.template)
+		if err != nil {
+			return err
+		}
+		err = tmpl.Execute(cli.Output, data)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+}
+func (c *CommandBuilder) buildWithId(cli *Cli) (cmd *subcommand.Command) {
 	lastId := new(bool)
-	printable := &printableJob{
-		Data:    pipeline.Job{},
-		Verbose: false,
-	}
-	cmd := cli.AddCommand("status", "Returns the status of the job with id JOB_ID", func(command string, args ...string) error {
+	cmd = cli.AddCommand(c.name, c.desc, func(command string, args ...string) error {
 		id, err := checkId(*lastId, command, args...)
 		if err != nil {
 			return err
 		}
-		job, err := link.Job(id)
+		data, err := c.linkCall(id)
+		tmpl, err := template.New("template").Parse(c.template)
 		if err != nil {
 			return err
 		}
-		tmpl, err := template.New("status").Parse(JobStatusTemplate)
-		if err != nil {
-			return err
-		}
-		printable.Data = job
-		err = tmpl.Execute(os.Stdout, printable)
+		err = tmpl.Execute(cli.Output, data)
 		if err != nil {
 			return err
 		}
 		return nil
 	})
+
+	addLastId(cmd, lastId)
+	return
+}
+func AddJobStatusCommand(cli *Cli, link PipelineLink) {
+	printable := &printableJob{
+		Data:    pipeline.Job{},
+		Verbose: false,
+	}
+	fn := func(args ...interface{}) (interface{}, error) {
+		job, err := link.Job(args[0].(string))
+		if err != nil {
+			return nil, err
+		}
+		printable.Data = job
+		return printable, nil
+	}
+	cmd := NewCommandBuilder("status", "Returns the status of the job with id JOB_ID").
+		withCall(fn).withTemplate(JobStatusTemplate).
+		buildWithId(cli)
+
 	cmd.AddSwitch("verbose", "v", "Prints the job's messages", func(swtich, nop string) error {
 		printable.Verbose = true
 		return nil
 	})
-	addLastId(cmd, lastId)
 }
 
 func AddDeleteCommand(cli *Cli, link PipelineLink) {
@@ -227,23 +274,21 @@ func AddQueueCommand(cli *Cli, link PipelineLink) {
 		})
 }
 
+func AddMoveUpCommand(cli *Cli, link PipelineLink) {
+
+}
+
+type Version struct {
+	*PipelineLink
+	CliVersion string
+}
+
 func AddVersionCommand(cli *Cli, link *PipelineLink) {
-	cli.AddCommand("version", "Prints the version and authentication information", func(command string, args ...string) error {
-		type Version struct {
-			*PipelineLink
-			CliVersion string
-		}
+	NewCommandBuilder("version", "Prints the version and authentication information").
+		withCall(func(...interface{}) (interface{}, error) {
+		return Version{link, VERSION}, nil
+	}).withTemplate(VersionTemplate).build(cli)
 
-		tmpl, err := template.New("version").Parse(VersionTemplate)
-		if err != nil {
-			return err
-		}
-
-		ver := Version{link, VERSION}
-		err = tmpl.Execute(os.Stdout, ver)
-		return nil
-
-	})
 }
 
 func checkId(lastId bool, command string, args ...string) (id string, err error) {

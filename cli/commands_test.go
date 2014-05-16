@@ -83,6 +83,91 @@ func TestDumpFiles(t *testing.T) {
 
 }
 
+func TestBuilderCommandConfig(t *testing.T) {
+	pipe := newPipelineTest(false)
+	link := PipelineLink{pipeline: pipe}
+	cmdBuilder := NewCommandBuilder("name", "desc")
+	fn := func(...interface{}) (interface{}, error) { return link.Queue() }
+	cmdBuilder.withCall(fn)
+	cmdBuilder.withTemplate(QueueTemplate)
+	if cmdBuilder.linkCall == nil {
+		t.Errorf("Function is not set")
+	}
+	if cmdBuilder.template != QueueTemplate {
+		t.Errorf("Template is not set")
+	}
+
+}
+
+func TestBuilderCommand(t *testing.T) {
+	pipe := newPipelineTest(false)
+	link := PipelineLink{pipeline: pipe}
+	link.Version = "1"
+
+	cmdBuilder := NewCommandBuilder("version", "ver")
+	fn := func(...interface{}) (interface{}, error) {
+		return Version{&link, VERSION}, nil
+	}
+	cmdBuilder.withCall(fn)
+	cmdBuilder.withTemplate(VersionTemplate)
+	cli, err := makeCli("test", &link)
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	buf := make([]byte, 0)
+	w := bytes.NewBuffer(buf)
+	cli.Output = w
+
+	cmdBuilder.build(cli)
+	err = cli.Run([]string{"version"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+
+	if w.Len() == 0 {
+		t.Errorf("Template didn't execute")
+	}
+}
+func TestBuilderCommandWithId(t *testing.T) {
+	pipe := newPipelineTest(false)
+
+	link := PipelineLink{pipeline: pipe}
+	link.Version = "1"
+
+	printable := &printableJob{
+		Data:    pipeline.Job{},
+		Verbose: false,
+	}
+	cmdBuilder := NewCommandBuilder("status", "gets the status")
+	fn := func(args ...interface{}) (interface{}, error) {
+		job, err := link.Job(args[0].(string))
+		if err != nil {
+			return nil, err
+		}
+		printable.Data = job
+		return printable, nil
+	}
+	cmdBuilder.withCall(fn)
+	cmdBuilder.withTemplate(JobStatusTemplate)
+	cli, err := makeCli("test", &link)
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	buf := make([]byte, 0)
+	w := bytes.NewBuffer(buf)
+	cli.Output = w
+
+	cmdBuilder.buildWithId(cli)
+	err = cli.Run([]string{"status", "id"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+
+	if w.Len() == 0 {
+		t.Errorf("Template didn't execute")
+	}
+}
+
 func TestQueueCommand(t *testing.T) {
 	//Todo make a mechanism to mock return values from the link
 	pipe := newPipelineTest(false)

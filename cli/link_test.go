@@ -187,6 +187,25 @@ func (p *PipelineTest) Queue() (queue []pipeline.QueueJob, err error) {
 	}
 	return
 }
+
+func (p *PipelineTest) MoveUp(id string) (queue []pipeline.QueueJob, err error) {
+	p.call = "moveup"
+	if p.fail {
+		return queue, errors.New("Error")
+	} else if p.val != nil {
+		return p.val.([]pipeline.QueueJob), nil
+	}
+	return
+}
+func (p *PipelineTest) MoveDown(id string) (queue []pipeline.QueueJob, err error) {
+	p.call = "movedown"
+	if p.fail {
+		return queue, errors.New("Error")
+	} else if p.val != nil {
+		return p.val.([]pipeline.QueueJob), nil
+	}
+	return
+}
 func TestBringUp(t *testing.T) {
 	pipeline := newPipelineTest(false)
 	pipeline.authentication = true
@@ -381,5 +400,21 @@ func TestQueue(t *testing.T) {
 	link.Queue()
 	if getCall(link) != "queue" {
 		t.Errorf("The pipeline queue was not called")
+	}
+}
+
+func TestMoveUp(t *testing.T) {
+	link := PipelineLink{pipeline: newPipelineTest(false)}
+	link.MoveUp("id")
+	if getCall(link) != "moveup" {
+		t.Errorf("moveup was not called")
+	}
+}
+
+func TestMoveDown(t *testing.T) {
+	link := PipelineLink{pipeline: newPipelineTest(false)}
+	link.MoveDown("id")
+	if getCall(link) != "movedown" {
+		t.Errorf("movedown was not called")
 	}
 }
