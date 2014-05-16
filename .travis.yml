@@ -1,10 +1,18 @@
 language: go
 go:
- - tip
+        - tip
 
 install:
- - go get github.com/capitancambio/go-subcommand
- - go get launchpad.net/goyaml
- - go get github.com/daisy-consortium/pipeline-clientlib-go
- - go get bitbucket.org/kardianos/osext
+        - go get github.com/capitancambio/go-subcommand
+        - go get launchpad.net/goyaml
+        - go get github.com/daisy-consortium/pipeline-clientlib-go
+        - go get bitbucket.org/kardianos/osext
+        - go get code.google.com/p/go.tools/cmd/cover
+        - go get github.com/modocache/gover
+        - go get github.com/mattn/goveralls
+        - go build github.com/mattn/goveralls
 
+script:
+        - go test -covermode=count -coverprofile=profile.cov ./cli
+        - ls $HOME/gopath
+        - $HOME/gopath/bin/goveralls -coverprofile=profile.cov -service=travis-ci
