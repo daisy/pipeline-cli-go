@@ -2,10 +2,15 @@ package cli
 
 import (
 	"archive/zip"
+	"bufio"
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/daisy-consortium/pipeline-clientlib-go"
 )
 
 var files = []struct {
@@ -73,6 +78,52 @@ func TestDumpFiles(t *testing.T) {
 	for _, f := range files {
 		if !visited[filepath.Clean(f.Name)] {
 			t.Errorf("%v was not visited", filepath.Clean(f.Name))
+		}
+	}
+
+}
+
+func TestQueueCommand(t *testing.T) {
+	//Todo make a mechanism to mock return values from the link
+	pipe := newPipelineTest(false)
+	queue := []pipeline.QueueJob{
+		pipeline.QueueJob{
+			Id:               "job1",
+			ClientPriority:   "high",
+			JobPriority:      "low",
+			ComputedPriority: 1.555555,
+			RelativeTime:     0.577777,
+			TimeStamp:        1400237879517,
+		},
+	}
+	pipe.SetVal(queue)
+	link := PipelineLink{pipeline: pipe}
+	cli, err := NewCli("test", &link)
+	if err != nil {
+		t.Errorf("Unexpected error")
+	}
+	buf := make([]byte, 0)
+	w := bytes.NewBuffer(buf)
+	cli.Output = w
+	AddQueueCommand(cli, link)
+	cli.Run([]string{"queue"})
+	reader := bufio.NewScanner(w)
+	reader.Scan() //discard the header line
+	reader.Scan()
+	reader.Text()
+	line := reader.Text()
+	vals := strings.Split(line, "\t")
+	expected := []string{
+		queue[0].Id,
+		fmt.Sprintf("%.2f", queue[0].ComputedPriority),
+		queue[0].JobPriority,
+		queue[0].ClientPriority,
+		fmt.Sprintf("%.2f", queue[0].RelativeTime),
+		fmt.Sprintf("%d", queue[0].TimeStamp),
+	}
+	for idx, _ := range vals {
+		if vals[idx] != expected[idx] {
+			t.Errorf("Error in displayed data %v!=%v", vals[idx], expected[idx])
 		}
 	}
 

@@ -5,13 +5,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/capitancambio/go-subcommand"
-	"github.com/daisy-consortium/pipeline-clientlib-go"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"text/template"
+
+	"github.com/capitancambio/go-subcommand"
+	"github.com/daisy-consortium/pipeline-clientlib-go"
 )
 
 const (
@@ -36,6 +37,10 @@ Client version:                 {{.CliVersion}}
 Pipeline version:               {{.Version}}
 Pipeline authentication:        {{.Authentication}}
 `
+
+	QueueTemplate = `Job Id 			Priority	Job P.	 Client P.	Rel.Time.	 Since
+{{range .}}{{.Id}}	{{.ComputedPriority | printf "%.2f"}}	{{.JobPriority}}	{{.ClientPriority}}	{{.RelativeTime | printf "%.2f"}}	{{.TimeStamp}}
+{{end}}`
 )
 
 //Convinience struct
@@ -203,6 +208,23 @@ func AddJobsCommand(cli *Cli, link PipelineLink) {
 		err = tmpl.Execute(os.Stdout, jobs)
 		return nil
 	})
+}
+
+func AddQueueCommand(cli *Cli, link PipelineLink) {
+
+	cli.AddCommand("queue", "Shows the execution queue and the job's priorities. ",
+		func(command string, args ...string) error {
+			jobs, err := link.Queue()
+			if err != nil {
+				return err
+			}
+			tmpl, err := template.New("queue").Parse(QueueTemplate)
+			if err != nil {
+				return err
+			}
+			err = tmpl.Execute(cli.Output, jobs)
+			return nil
+		})
 }
 
 func AddVersionCommand(cli *Cli, link *PipelineLink) {

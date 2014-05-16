@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/daisy-consortium/pipeline-cli-go/cli"
 	"log"
 	"os"
+
+	"github.com/daisy-consortium/pipeline-cli-go/cli"
 )
 
 func main() {
@@ -31,6 +32,7 @@ func main() {
 	cli.AddResultsCommand(comm, *link)
 	cli.AddJobsCommand(comm, *link)
 	cli.AddLogCommand(comm, *link)
+	cli.AddQueueCommand(comm, *link)
 	cli.AddHaltCommand(comm, *link)
 	cli.AddVersionCommand(comm, link)
 
