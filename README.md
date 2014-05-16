@@ -1,6 +1,6 @@
 Command-Line Interface for the DAISY Pipeline 2 (Golang)
 =======================================================
-[![Build Status](https://travis-ci.org/daisy/pipeline-cli-go.png?branch=master)](https://travis-ci.org/daisy/pipeline-cli-go)
+[![Build Status](https://travis-ci.org/daisy/pipeline-cli-go.png?branch=master)](https://travis-ci.org/daisy/pipeline-cli-go) [![Coverage Status](https://img.shields.io/coveralls/daisy/pipeline-cli-go.svg)](https://coveralls.io/r/daisy/pipeline-cli-go?branch=master)
 
 How to build
 ------------
