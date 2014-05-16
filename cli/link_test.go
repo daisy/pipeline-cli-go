@@ -3,9 +3,10 @@ package cli
 import (
 	"errors"
 	"fmt"
-	"github.com/daisy-consortium/pipeline-clientlib-go"
 	"net/url"
 	"testing"
+
+	"github.com/daisy-consortium/pipeline-clientlib-go"
 )
 
 var (
@@ -58,6 +59,7 @@ type PipelineTest struct {
 	backgrounded   bool
 	authentication bool
 	fsallow        bool
+	call           string
 }
 
 func (p PipelineTest) SetUrl(string) {
@@ -71,7 +73,16 @@ func newPipelineTest(fail bool) *PipelineTest {
 		backgrounded:   false,
 		authentication: false,
 		fsallow:        true,
+		call:           "",
 	}
+}
+
+func getCall(l PipelineLink) string {
+	return l.pipeline.(*PipelineTest).Call()
+}
+func (p PipelineTest) Call() string {
+	return p.call
+
 }
 
 func (p PipelineTest) SetCredentials(key, secret string) {
@@ -161,6 +172,10 @@ func (p *PipelineTest) Properties() (props []pipeline.Property, err error) {
 	return
 }
 func (p *PipelineTest) Sizes() (sizes pipeline.JobSizes, err error) {
+	return
+}
+func (p *PipelineTest) Queue() (queue []pipeline.QueueJob, err error) {
+	p.call = "queue"
 	return
 }
 func TestBringUp(t *testing.T) {
@@ -349,5 +364,13 @@ func TestIsLocal(t *testing.T) {
 	link = PipelineLink{FsAllow: false}
 	if link.IsLocal() {
 		t.Errorf("Should not be local %+v", link)
+	}
+}
+
+func TestQueue(t *testing.T) {
+	link := PipelineLink{pipeline: newPipelineTest(false)}
+	link.Queue()
+	if getCall(link) != "queue" {
+		t.Errorf("The pipeline queue was not called")
 	}
 }

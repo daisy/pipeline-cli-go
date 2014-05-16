@@ -3,13 +3,14 @@ package cli
 import (
 	"errors"
 	"fmt"
-	"github.com/daisy-consortium/pipeline-clientlib-go"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/daisy-consortium/pipeline-clientlib-go"
 )
 
 const (
@@ -40,6 +41,7 @@ type PipelineApi interface {
 	Client(id string) (out pipeline.Client, err error)
 	Properties() (props []pipeline.Property, err error)
 	Sizes() (sizes pipeline.JobSizes, err error)
+	Queue() ([]pipeline.QueueJob, error)
 }
 
 //Maintains some information about the pipeline client
@@ -243,6 +245,10 @@ func (p PipelineLink) Properties() (props []pipeline.Property, err error) {
 }
 func (p PipelineLink) Sizes() (sizes pipeline.JobSizes, err error) {
 	return p.pipeline.Sizes()
+}
+
+func (p PipelineLink) Queue() (queue []pipeline.QueueJob, err error) {
+	return p.pipeline.Queue()
 }
 
 //Convience structure to handle message and errors from the communication with the pipelineApi
