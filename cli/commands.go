@@ -140,19 +140,21 @@ func AddLogCommand(cli *Cli, link PipelineLink) {
 		return nil
 	})
 }
+
 func AddHaltCommand(cli *Cli, link PipelineLink) {
-	cli.AddCommand("halt", "Stops the webservice", func(command string, args ...string) error {
+	fn := func(...interface{}) (val interface{}, err error) {
 		key, err := loadKey()
 		if err != nil {
-			return err
+			return nil, fmt.Errorf("Coudn't open key file: %s", err.Error())
 		}
 		err = link.Halt(key)
 		if err != nil {
-			return err
+			return
 		}
-		fmt.Println("The webservice has been halted")
-		return nil
-	})
+		cli.Printf("The webservice has been halted\n")
+		return
+	}
+	newCommandBuilder("halt", "Stops the webservice").withCall(fn).build(cli)
 }
 
 func AddJobsCommand(cli *Cli, link PipelineLink) {

@@ -328,3 +328,71 @@ func TestDeleteCommandError(t *testing.T) {
 		t.Errorf("Expected error not propagated")
 	}
 }
+
+//Checks the call to the pipeline link and the output when sending the halt signal
+func TestHaltCommand(t *testing.T) {
+	//create fake key
+	backup := keyFile
+	defer func() {
+		keyFile = backup
+	}()
+	keyFile = "fakeKey"
+	file, err := createKeyFile(keyFile, "key")
+	defer os.Remove(file.Name())
+	//keep on with the command testing
+	cli, link, _ := makeReturningCli(nil, t)
+	r := overrideOutput(cli)
+	AddHaltCommand(cli, link)
+	err = cli.Run([]string{"halt"})
+	if err != nil {
+		t.Errorf("Unexpected error running cli %v", err)
+	}
+	if getCall(link) != HALT_CALL {
+		t.Errorf("Halt wasn't called")
+	}
+	expected := "The webservice has been halted\n"
+	result := string(r.Bytes())
+	if expected != result {
+		t.Errorf("The halt message is not correct '%s'!='%s'", expected, result)
+	}
+}
+
+//Checks the call to the pipeline link and the output when sending the halt signal and the key file wasn't found
+func TestHaltCommandNoKeyFile(t *testing.T) {
+	//create fake key
+	backup := keyFile
+	defer func() {
+		keyFile = backup
+	}()
+	keyFile = "keythatdoesntexist!"
+	//keep on with the command testing
+	cli, link, _ := makeReturningCli(nil, t)
+	AddHaltCommand(cli, link)
+	err := cli.Run([]string{"halt"})
+	if err == nil {
+		t.Errorf("Expected error about key file not found not found")
+	}
+}
+
+//Checks the call to the pipeline link and the output when sending the halt signal and the link returns an err
+func TestHaltCommandError(t *testing.T) {
+	//create fake key
+	backup := keyFile
+	defer func() {
+		keyFile = backup
+	}()
+	keyFile = "fakeKey"
+	file, err := createKeyFile(keyFile, "key")
+	defer os.Remove(file.Name())
+	//keep on with the command testing
+	cli, link, p := makeReturningCli(nil, t)
+	p.failOnCall = HALT_CALL
+	AddHaltCommand(cli, link)
+	err = cli.Run([]string{"halt"})
+	if getCall(link) != HALT_CALL {
+		t.Errorf("Halt wasn't called")
+	}
+	if err == nil {
+		t.Errorf("Expected error about the link failing not returned")
+	}
+}

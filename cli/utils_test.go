@@ -72,24 +72,33 @@ func TestDumpFiles(t *testing.T) {
 
 }
 
+//Creates a fake key file
+func createKeyFile(keyFile, key string) (file *os.File, err error) {
+	path := filepath.Join(os.TempDir(), keyFile)
+	file, err = os.Create(path)
+	if err != nil {
+		return
+	}
+	_, err = file.Write([]byte(key))
+	if err != nil {
+		return
+	}
+	if file.Close() != nil {
+		return
+	}
+	return
+}
+
 //Test that the key is correctly loaded
 func TestLoadKey(t *testing.T) {
 	backup := keyFile
 	defer func() {
 		keyFile = backup
 	}()
-	keyFile = "fakeKey"
 	expected := "dondeestanlasllavesmatarile"
-	path := filepath.Join(os.TempDir(), keyFile)
-	file, err := os.Create(path)
+	keyFile = "fakeKey"
+	file, err := createKeyFile(keyFile, expected)
 	defer os.Remove(file.Name())
-	if err != nil {
-		t.Errorf("Unexpected error opening file%v", err)
-	}
-	file.Write([]byte(expected))
-	if file.Close() != nil {
-		t.Errorf("Unexpected error closing file%v", err)
-	}
 	key, err := loadKey()
 	if err != nil {
 		t.Errorf("Unexpected error loading key %v", err)

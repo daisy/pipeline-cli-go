@@ -18,6 +18,7 @@ const (
 	LOG_CALL      = "log"
 	JOB_CALL      = "job"
 	DELETE_CALL   = "delete"
+	HALT_CALL     = "halt"
 )
 
 //Sets the output of the cli to a bytes.Buffer
@@ -198,7 +199,9 @@ func (p *PipelineTest) Jobs() (jobs pipeline.Jobs, err error) {
 }
 
 func (p *PipelineTest) Halt(key string) error {
-	return nil
+	p.call = HALT_CALL
+	_, err := p.mockCall()
+	return err
 }
 
 func (p *PipelineTest) Clients() (c []pipeline.Client, err error) {
