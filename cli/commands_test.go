@@ -102,8 +102,8 @@ func TestDumpFiles(t *testing.T) {
 
 }
 
+//Tests the command and checks that the output is correct
 func TestQueueCommand(t *testing.T) {
-	//Todo make a mechanism to mock return values from the link
 	pipe := newPipelineTest(false)
 	pipe.val = queue
 	link := PipelineLink{pipeline: pipe}
@@ -125,27 +125,8 @@ func TestQueueCommand(t *testing.T) {
 		t.Errorf("Queue template doesn't match (%q,%s)\n%s", queueLine, line, message)
 	}
 }
-func TestQueueCommandError(t *testing.T) {
-	//Todo make a mechanism to mock return values from the link
-	pipe := newPipelineTest(false)
-	pipe.val = queue
-	pipe.failOnCall = QUEUE_CALL
-	link := PipelineLink{pipeline: pipe}
-	cli, err := makeCli("test", &link)
-	if err != nil {
-		t.Errorf("Unexpected error %v", err)
-	}
-	AddQueueCommand(cli, link)
-	err = cli.Run([]string{"queue"})
-	if getCall(link) != QUEUE_CALL {
-		t.Errorf("Queue wasn't called")
-	}
-	if err == nil {
-		t.Errorf("Expected error is nil")
-	}
 
-}
-
+//Tests that the move up command links to the pipeline and checks the output format
 func TestMoveUpCommand(t *testing.T) {
 	pipe := newPipelineTest(false)
 	pipe.val = queue
@@ -169,6 +150,8 @@ func TestMoveUpCommand(t *testing.T) {
 		t.Errorf("Queue template doesn't match (%q,%s)\n%s", queueLine, line, message)
 	}
 }
+
+//Tests that the move down command links to the pipeline and checks the output format
 func TestMoveDownCommand(t *testing.T) {
 	pipe := newPipelineTest(false)
 	pipe.val = queue
@@ -190,5 +173,44 @@ func TestMoveDownCommand(t *testing.T) {
 
 	if ok, line, message := checkTableLine(r, "\t", queueLine); !ok {
 		t.Errorf("Queue template doesn't match (%q,%s)\n%s", queueLine, line, message)
+	}
+}
+
+//Tests that the version command links to the pipeline and checks the output format
+func TestVersionCommand(t *testing.T) {
+	pipe := newPipelineTest(false)
+	link := PipelineLink{pipeline: pipe}
+	link.Version = "2.0.0-test"
+	cli, err := makeCli("test", &link)
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	r := overrideOutput(cli)
+	AddVersionCommand(cli, link)
+
+	err = cli.Run([]string{"version"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	values := checkMapLikeOutput(r)
+	if val, ok := values["Client version"]; ok {
+		//this is set by a constant, just check there is
+		//a value
+		if len(val) == 0 {
+			t.Errorf("Client version is empty")
+		}
+
+	} else {
+		t.Errorf("Client version not present")
+	}
+
+	if val, ok := values["Pipeline version"]; !ok || val != "2.0.0-test" {
+		t.Errorf("Pipeline version '2.0.0-test'!='%s'", val)
+
+	}
+
+	if val, ok := values["Pipeline authentication"]; !ok || val != "false" {
+		t.Errorf("Pipeline authentication'false'!=%s", val)
+
 	}
 }

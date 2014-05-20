@@ -47,6 +47,19 @@ func checkTableLine(r io.Reader, separator string, values []string) (ok bool, li
 	return true, line, ""
 }
 
+//returns a map containing the key and values according to text lines separated by :, ignores lines that do not contain paired values
+func checkMapLikeOutput(r io.Reader) map[string]string {
+	reader := bufio.NewScanner(r)
+	values := make(map[string]string)
+	for reader.Scan() {
+		pair := strings.Split(reader.Text(), ":")
+		if len(pair) == 2 {
+			values[strings.Trim(pair[0], " ")] = strings.Trim(pair[1], " ")
+		} //else ignroe
+	}
+	return values
+}
+
 //Pipeline Mock
 type PipelineTest struct {
 	fail           bool
