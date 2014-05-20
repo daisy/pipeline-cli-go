@@ -61,6 +61,7 @@ func makeCli(name string, link *PipelineLink) (*Cli, error) {
 		return nil, err
 	}
 	cli.Output = ioutil.Discard
+	cli.WithScripts = false
 	return cli, err
 }
 
@@ -71,6 +72,7 @@ func TestCliAddScriptCommand(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	cli.WithScripts = true
 	cli.AddScriptCommand("test", "", func(string, ...string) error { return nil }, nil)
 	if cli.Scripts[0].Name != "test" {
 		t.Error("Add script is not adding scripts to the list")
@@ -98,6 +100,7 @@ func TestCliNonRequiredOptions(t *testing.T) {
 	config[STARTING] = false
 	link := &PipelineLink{FsAllow: true, pipeline: newPipelineTest(false), config: config}
 	cli, err := makeCli("testprog", link)
+	cli.WithScripts = true
 	if err != nil {
 		t.Error("Unexpected error")
 	}
