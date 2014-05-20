@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"testing"
 
 	"github.com/daisy-consortium/pipeline-clientlib-go"
@@ -288,4 +289,71 @@ func TestLogCommandWritingError(t *testing.T) {
 	if err == nil {
 		t.Errorf("Exepected error not returned")
 	}
+}
+
+//Checks the call to the pipeline link and the output with the status command
+func TestJobStatusCommand(t *testing.T) {
+	//as mocking logic is more complex for jobs
+	//expected := JOB_1
+	cli, link, _ := makeReturningCli(nil, t)
+	r := overrideOutput(cli)
+	AddJobStatusCommand(cli, link)
+	err := cli.Run([]string{"status", "id"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if getCall(link) != JOB_CALL {
+		t.Errorf("moveup wasn't called")
+	}
+
+	values := checkMapLikeOutput(r)
+	if id, ok := values["Job Id"]; !ok || id != JOB_1.Id {
+		t.Errorf("Id doesn't match %s!=%s", JOB_1.Id, id)
+	}
+	if status, ok := values["Status"]; !ok || status != JOB_1.Status {
+		t.Errorf("Status doesn't match %s!=%s", JOB_1.Status, status)
+	}
+	if _, ok := values["Messages"]; ok {
+		t.Errorf("I said to shut up! but I can see some msgs")
+	}
+}
+
+//Checks that we get messages when using the verbose flag
+func TestVerboseJobStatusCommand(t *testing.T) {
+	//as mocking logic is more complex for jobs
+	//expected := JOB_1
+	cli, link, _ := makeReturningCli(nil, t)
+	r := overrideOutput(cli)
+	AddJobStatusCommand(cli, link)
+	err := cli.Run([]string{"status", "-v", "id"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if getCall(link) != JOB_CALL {
+		t.Errorf("moveup wasn't called")
+	}
+	exp := regexp.MustCompile("\\(\\d+\\)\\[\\w+\\]\\s+\\w+")
+	matches := exp.FindAll(r.Bytes(), -1)
+	if len(matches) != 2 {
+		t.Errorf("The messages weren't printed output:\n%s", string(string(r.Bytes())))
+	}
+
+}
+
+//Checks that the error is propagated when the link errors when calling status
+func TestJobStatusCommandError(t *testing.T) {
+	//as mocking logic is more complex for jobs
+	//expected := JOB_1
+	cli, link, p := makeReturningCli(nil, t)
+	p.failOnCall = JOB_CALL
+	overrideOutput(cli)
+	AddJobStatusCommand(cli, link)
+	err := cli.Run([]string{"status", "id"})
+	if getCall(link) != JOB_CALL {
+		t.Errorf("moveup wasn't called")
+	}
+	if err == nil {
+		t.Errorf("Expected error not propagated")
+	}
+
 }

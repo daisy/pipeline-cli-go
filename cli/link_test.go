@@ -32,10 +32,12 @@ var (
 			pipeline.Message{
 				Sequence: 1,
 				Content:  "Message 1",
+				Level:    "INFO",
 			},
 			pipeline.Message{
 				Sequence: 2,
 				Content:  "Message 2",
+				Level:    "DEBUG",
 			},
 		},
 	}
@@ -45,6 +47,7 @@ var (
 			pipeline.Message{
 				Sequence: 3,
 				Content:  "Message 3",
+				Level:    "WARN",
 			},
 		},
 	}

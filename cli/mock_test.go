@@ -16,6 +16,7 @@ const (
 	MOVEUP_CALL   = "moveup"
 	MOVEDOWN_CALL = "movedown"
 	LOG_CALL      = "log"
+	JOB_CALL      = "job"
 )
 
 //Sets the output of the cli to a bytes.Buffer
@@ -148,6 +149,11 @@ func (p *PipelineTest) ScriptUrl(id string) string {
 }
 
 func (p *PipelineTest) Job(id string, msgSeq int) (job pipeline.Job, err error) {
+	p.call = JOB_CALL
+	_, err = p.mockCall()
+	if err != nil {
+		return
+	}
 	if p.fail {
 		return job, errors.New("Error")
 	}
