@@ -207,6 +207,12 @@ func (c *Cli) Run(args []string) error {
 	return err
 }
 
+//Prints using the client output
+func (c *Cli) Printf(format string, vals ...interface{}) {
+	fmt.Fprintf(c.Output, format, vals...)
+	fmt.Fprintln(c.Output)
+}
+
 //prints the help
 func printHelp(cli Cli, globals bool, args ...string) error {
 	if globals {
