@@ -264,8 +264,8 @@ func TestScriptPersistent(t *testing.T) {
 	if pipeline.count == 0 {
 		t.Error("Persistent job did not gather several times its status from the server")
 	}
-	if !pipeline.resulted {
-		t.Error("Persistent job did not gather its results")
+	if getCall(*link) != RESULTS_CALL {
+		t.Errorf("Persistent job did not gather its results")
 	}
 
 }

@@ -19,6 +19,7 @@ const (
 	JOB_CALL      = "job"
 	DELETE_CALL   = "delete"
 	HALT_CALL     = "halt"
+	RESULTS_CALL  = "results"
 )
 
 //Sets the output of the cli to a bytes.Buffer
@@ -183,7 +184,11 @@ func (p *PipelineTest) DeleteJob(id string) (ok bool, err error) {
 }
 
 func (p *PipelineTest) Results(id string) (data []byte, err error) {
-	p.resulted = true
+	p.call = RESULTS_CALL
+	ret, err := p.mockCall()
+	if ret != nil {
+		return ret.([]byte), err
+	}
 	return
 }
 func (p *PipelineTest) Log(id string) (data []byte, err error) {

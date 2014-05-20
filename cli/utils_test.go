@@ -8,6 +8,14 @@ import (
 	"testing"
 )
 
+var files = []struct {
+	Name, Body string
+}{
+	{"readme.txt", "This archive contains some text files."},
+	{"fold1/gopher.txt", "Gopher names:\nGeorge\nGeoffrey\nGonzo"},
+	{"fold1/fold2/todo.txt", "Get animal handling licence.\nWrite more examples."},
+}
+
 //Creates a new zip file to test the dump function
 func createZipFile(t *testing.T) []byte {
 	// Create a buffer to write our archive to.

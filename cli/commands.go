@@ -96,7 +96,7 @@ func AddResultsCommand(cli *Cli, link PipelineLink) {
 			return err
 		}
 
-		fmt.Printf("Results stored into %v\n", path)
+		cli.Printf("Results stored into %v\n", path)
 
 		return nil
 	})

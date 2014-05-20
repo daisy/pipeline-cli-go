@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"regexp"
 	"testing"
 
@@ -11,14 +12,6 @@ import (
 )
 
 var (
-	files = []struct {
-		Name, Body string
-	}{
-		{"readme.txt", "This archive contains some text files."},
-		{"fold1/gopher.txt", "Gopher names:\nGeorge\nGeoffrey\nGonzo"},
-		{"fold1/fold2/todo.txt", "Get animal handling licence.\nWrite more examples."},
-	}
-
 	queue = []pipeline.QueueJob{
 		pipeline.QueueJob{
 			Id:               "job1",
@@ -395,4 +388,76 @@ func TestHaltCommandError(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected error about the link failing not returned")
 	}
+}
+
+//Checks that results link entry has been called and data has been stored
+func TestResultsCommand(t *testing.T) {
+	data := createZipFile(t)
+	cli, link, _ := makeReturningCli(data, t)
+	r := overrideOutput(cli)
+	AddResultsCommand(cli, link)
+	dir, err := ioutil.TempDir("", "cli_")
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	defer os.Remove(dir)
+	err = cli.Run([]string{"results", "-o", dir, "id"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if getCall(link) != RESULTS_CALL {
+		t.Errorf("results wasn't called")
+	}
+	files := 0
+	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			files += 1
+		}
+		return nil
+
+	})
+	if files != 3 {
+		t.Errorf("Wrong number of files %d!=%d", files, 3)
+	}
+
+	msg := string(r.Bytes())
+	expected := fmt.Sprintf("Results stored into %v\n", dir)
+	if msg != expected {
+		t.Errorf("Got the wrong message '%s'!='%s'", expected, msg)
+	}
+
+}
+
+//Checks that results link entry has been called but the error of wrong zip data is returned
+func TestResultsCommandBadZipFormat(t *testing.T) {
+	data := []byte("i'm not a zip file")
+	cli, link, _ := makeReturningCli(data, t)
+	//r := overrideOutput(cli)
+	AddResultsCommand(cli, link)
+	err := cli.Run([]string{"results", "-o", "/whatever", "id"})
+	if getCall(link) != RESULTS_CALL {
+		t.Errorf("results wasn't called")
+	}
+	if err == nil {
+		t.Errorf("Expected zip error not thrown")
+	}
+
+}
+
+//Checks that results link entry has been called but returned an error
+func TestResultsCommandError(t *testing.T) {
+	data := createZipFile(t)
+	cli, link, pipe := makeReturningCli(data, t)
+	pipe.failOnCall = RESULTS_CALL
+
+	//r := overrideOutput(cli)
+	AddResultsCommand(cli, link)
+	err := cli.Run([]string{"results", "-o", "/whatever", "id"})
+	if getCall(link) != RESULTS_CALL {
+		t.Errorf("results wasn't called")
+	}
+	if err == nil {
+		t.Errorf("Expected ws error not returned ")
+	}
+
 }
