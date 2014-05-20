@@ -17,6 +17,7 @@ const (
 	MOVEDOWN_CALL = "movedown"
 	LOG_CALL      = "log"
 	JOB_CALL      = "job"
+	DELETE_CALL   = "delete"
 )
 
 //Sets the output of the cli to a bytes.Buffer
@@ -172,6 +173,11 @@ func (p *PipelineTest) JobRequest(newJob pipeline.JobRequest, data []byte) (job 
 
 func (p *PipelineTest) DeleteJob(id string) (ok bool, err error) {
 	p.deleted = true
+	p.call = DELETE_CALL
+	ret, err := p.mockCall()
+	if ret != nil {
+		return ret.(bool), err
+	}
 	return
 }
 

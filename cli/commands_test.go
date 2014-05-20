@@ -221,7 +221,7 @@ func TestLogCommand(t *testing.T) {
 		t.Errorf("Unexpected error %v", err)
 	}
 	if getCall(link) != LOG_CALL {
-		t.Errorf("moveup wasn't called")
+		t.Errorf("log wasn't called")
 	}
 
 	result := string(r.Bytes())
@@ -246,7 +246,7 @@ func TestLogCommandWithOutputFile(t *testing.T) {
 		t.Errorf("Unexpected error %v", err)
 	}
 	if getCall(link) != LOG_CALL {
-		t.Errorf("moveup wasn't called")
+		t.Errorf("log wasn't called")
 	}
 
 	contents, err := ioutil.ReadAll(file)
@@ -270,7 +270,7 @@ func TestLogCommandError(t *testing.T) {
 	AddLogCommand(cli, link)
 	err := cli.Run([]string{"log", "id"})
 	if getCall(link) != LOG_CALL {
-		t.Errorf("moveup wasn't called")
+		t.Errorf("log wasn't called")
 	}
 	if err == nil {
 		t.Errorf("Exepected error not returned")
@@ -284,7 +284,7 @@ func TestLogCommandWritingError(t *testing.T) {
 	AddLogCommand(cli, link)
 	err := cli.Run([]string{"log", "id"})
 	if getCall(link) != LOG_CALL {
-		t.Errorf("moveup wasn't called")
+		t.Errorf("log wasn't called")
 	}
 	if err == nil {
 		t.Errorf("Exepected error not returned")
@@ -303,7 +303,7 @@ func TestJobStatusCommand(t *testing.T) {
 		t.Errorf("Unexpected error %v", err)
 	}
 	if getCall(link) != JOB_CALL {
-		t.Errorf("moveup wasn't called")
+		t.Errorf("status wasn't called")
 	}
 
 	values := checkMapLikeOutput(r)
@@ -330,7 +330,7 @@ func TestVerboseJobStatusCommand(t *testing.T) {
 		t.Errorf("Unexpected error %v", err)
 	}
 	if getCall(link) != JOB_CALL {
-		t.Errorf("moveup wasn't called")
+		t.Errorf("status wasn't called")
 	}
 	exp := regexp.MustCompile("\\(\\d+\\)\\[\\w+\\]\\s+\\w+")
 	matches := exp.FindAll(r.Bytes(), -1)
@@ -350,10 +350,46 @@ func TestJobStatusCommandError(t *testing.T) {
 	AddJobStatusCommand(cli, link)
 	err := cli.Run([]string{"status", "id"})
 	if getCall(link) != JOB_CALL {
-		t.Errorf("moveup wasn't called")
+		t.Errorf("status wasn't called")
 	}
 	if err == nil {
 		t.Errorf("Expected error not propagated")
 	}
 
+}
+
+//Checks the call to the pipeline link and the output when deleting a job
+func TestDeleteCommand(t *testing.T) {
+
+	cli, link, _ := makeReturningCli(true, t)
+	r := overrideOutput(cli)
+	AddDeleteCommand(cli, link)
+	err := cli.Run([]string{"delete", "%id"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if getCall(link) != DELETE_CALL {
+		t.Errorf("delete wasn't called")
+	}
+	expected := "Job %id removed from the server\n"
+	result := string(r.Bytes())
+	if expected != result {
+		t.Errorf("The message is not correct '%s'!='%s'", expected, result)
+	}
+
+}
+
+//Checks the call to the pipeline link and the output when deleting a job
+func TestDeleteCommandError(t *testing.T) {
+
+	cli, link, p := makeReturningCli(false, t)
+	p.failOnCall = DELETE_CALL
+	AddDeleteCommand(cli, link)
+	err := cli.Run([]string{"delete", "%id"})
+	if getCall(link) != DELETE_CALL {
+		t.Errorf("delete wasn't called")
+	}
+	if err == nil {
+		t.Errorf("Expected error not propagated")
+	}
 }

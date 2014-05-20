@@ -36,7 +36,7 @@ Pipeline authentication:        {{.Authentication}}
 {{end}}`
 )
 
-//Convinience struct
+//Convinience struct for printing jobs
 type printableJob struct {
 	Data    pipeline.Job
 	Verbose bool
@@ -66,23 +66,16 @@ func AddJobStatusCommand(cli *Cli, link PipelineLink) {
 }
 
 func AddDeleteCommand(cli *Cli, link PipelineLink) {
-	lastId := new(bool)
-	cmd := cli.AddCommand("delete", "Removes a job from the pipeline", func(command string, args ...string) error {
-		id, err := checkId(*lastId, command, args...)
-		if err != nil {
-			return err
-		}
+	fn := func(args ...interface{}) (interface{}, error) {
+		id := args[0].(string)
 		ok, err := link.Delete(id)
-		if err != nil {
-			return err
+		if err == nil && ok {
+			cli.Printf("Job %v removed from the server\n", id)
 		}
-		if ok {
-			fmt.Printf("Job %v removed\n", id)
-		}
-
-		return nil
-	})
-	addLastId(cmd, lastId)
+		return ok, err
+	}
+	newCommandBuilder("delete", "Removes a job from the pipeline").
+		withCall(fn).buildWithId(cli)
 }
 
 func AddResultsCommand(cli *Cli, link PipelineLink) {
