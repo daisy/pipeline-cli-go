@@ -115,37 +115,37 @@ func AddResultsCommand(cli *Cli, link PipelineLink) {
 }
 
 func AddLogCommand(cli *Cli, link PipelineLink) {
-	lastId := new(bool)
 	outputPath := ""
-	cmd := cli.AddCommand("log", "Stores the results from a job", func(command string, args ...string) error {
-		id, err := checkId(*lastId, command, args...)
+	fn := func(vals ...interface{}) (ret interface{}, err error) {
+		data, err := link.Log(vals[0].(string))
 		if err != nil {
-			return err
+			return
 		}
-		data, err := link.Log(id)
-		if err != nil {
-			return err
-		}
-		outWriter := os.Stdout
+		outWriter := cli.Output
 		if len(outputPath) > 0 {
 			file, err := os.Create(outputPath)
-			defer func() { file.Close() }()
+			defer func() {
+				cli.Printf("Log written to %s", file.Name())
+				file.Close()
+			}()
 			if err != nil {
-				return err
+				return ret, err
 			}
 			outWriter = file
 		}
 		_, err = outWriter.Write(data)
 		if err != nil {
-			return err
+			return
 		}
-		return nil
-	})
+		return
+	}
+	cmd := newCommandBuilder("log", "Stores the results from a job").
+		withCall(fn).buildWithId(cli)
+
 	cmd.AddOption("output", "o", "Write the log lines into the file provided instead of printing it", func(name, file string) error {
 		outputPath = file
 		return nil
 	})
-	addLastId(cmd, lastId)
 }
 func AddHaltCommand(cli *Cli, link PipelineLink) {
 	cli.AddCommand("halt", "Stops the webservice", func(command string, args ...string) error {

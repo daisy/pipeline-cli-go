@@ -15,6 +15,7 @@ const (
 	QUEUE_CALL    = "queue"
 	MOVEUP_CALL   = "moveup"
 	MOVEDOWN_CALL = "movedown"
+	LOG_CALL      = "log"
 )
 
 //Sets the output of the cli to a bytes.Buffer
@@ -58,6 +59,13 @@ func checkMapLikeOutput(r io.Reader) map[string]string {
 		} //else ignroe
 	}
 	return values
+}
+
+type FailingWriter struct {
+}
+
+func (f FailingWriter) Write([]byte) (int, error) {
+	return 0, errors.New("writing error")
 }
 
 //Pipeline Mock
@@ -166,6 +174,11 @@ func (p *PipelineTest) Results(id string) (data []byte, err error) {
 	return
 }
 func (p *PipelineTest) Log(id string) (data []byte, err error) {
+	p.call = LOG_CALL
+	ret, err := p.mockCall()
+	if ret != nil {
+		return ret.([]byte), err
+	}
 	return
 }
 func (p *PipelineTest) Jobs() (jobs pipeline.Jobs, err error) {

@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -104,16 +105,10 @@ func TestDumpFiles(t *testing.T) {
 
 //Tests the command and checks that the output is correct
 func TestQueueCommand(t *testing.T) {
-	pipe := newPipelineTest(false)
-	pipe.val = queue
-	link := PipelineLink{pipeline: pipe}
-	cli, err := makeCli("test", &link)
-	if err != nil {
-		t.Errorf("Unexpected error %v", err)
-	}
+	cli, link, _ := makeReturningCli(queue, t)
 	r := overrideOutput(cli)
 	AddQueueCommand(cli, link)
-	err = cli.Run([]string{"queue"})
+	err := cli.Run([]string{"queue"})
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -128,17 +123,11 @@ func TestQueueCommand(t *testing.T) {
 
 //Tests that the move up command links to the pipeline and checks the output format
 func TestMoveUpCommand(t *testing.T) {
-	pipe := newPipelineTest(false)
-	pipe.val = queue
-	link := PipelineLink{pipeline: pipe}
-	cli, err := makeCli("test", &link)
-	if err != nil {
-		t.Errorf("Unexpected error %v", err)
-	}
+	cli, link, _ := makeReturningCli(queue, t)
 	r := overrideOutput(cli)
 	AddMoveUpCommand(cli, link)
 
-	err = cli.Run([]string{"moveup", "id"})
+	err := cli.Run([]string{"moveup", "id"})
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -153,17 +142,11 @@ func TestMoveUpCommand(t *testing.T) {
 
 //Tests that the move down command links to the pipeline and checks the output format
 func TestMoveDownCommand(t *testing.T) {
-	pipe := newPipelineTest(false)
-	pipe.val = queue
-	link := PipelineLink{pipeline: pipe}
-	cli, err := makeCli("test", &link)
-	if err != nil {
-		t.Errorf("Unexpected error %v", err)
-	}
+	cli, link, _ := makeReturningCli(queue, t)
 	r := overrideOutput(cli)
 	AddMoveDownCommand(cli, link)
 
-	err = cli.Run([]string{"movedown", "id"})
+	err := cli.Run([]string{"movedown", "id"})
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -212,5 +195,97 @@ func TestVersionCommand(t *testing.T) {
 	if val, ok := values["Pipeline authentication"]; !ok || val != "false" {
 		t.Errorf("Pipeline authentication'false'!=%s", val)
 
+	}
+}
+
+func makeReturningCli(val interface{}, t *testing.T) (*Cli, PipelineLink, *PipelineTest) {
+	pipe := newPipelineTest(false)
+	pipe.val = val
+	link := PipelineLink{pipeline: pipe}
+	cli, err := makeCli("test", &link)
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	return cli, link, pipe
+}
+
+//Checks the call to the pipeline link and the output
+func TestLogCommand(t *testing.T) {
+	expected := []byte("Oh my log!")
+	cli, link, _ := makeReturningCli(expected, t)
+	r := overrideOutput(cli)
+	AddLogCommand(cli, link)
+	err := cli.Run([]string{"log", "id"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if getCall(link) != LOG_CALL {
+		t.Errorf("moveup wasn't called")
+	}
+
+	result := string(r.Bytes())
+	if result != string(expected) {
+		t.Errorf("Log error %s!=%s", string(expected), result)
+	}
+}
+
+//Checks the call to the pipeline link and the output
+func TestLogCommandWithOutputFile(t *testing.T) {
+	expected := []byte("Oh my log!")
+	cli, link, _ := makeReturningCli(expected, t)
+	r := overrideOutput(cli)
+	AddLogCommand(cli, link)
+	file, err := ioutil.TempFile("", "cli_")
+	defer os.Remove(file.Name())
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	err = cli.Run([]string{"log", "-o", file.Name(), "id"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if getCall(link) != LOG_CALL {
+		t.Errorf("moveup wasn't called")
+	}
+
+	contents, err := ioutil.ReadAll(file)
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	result := string(contents)
+	if result != string(expected) {
+		t.Errorf("Log error %s!=%s", string(expected), result)
+	}
+	if r.Len() == 0 {
+		t.Errorf("We haven't informed the user that we wrote the file somewhere")
+	}
+}
+
+//Tests the log command when an error is returned by the
+//link
+func TestLogCommandError(t *testing.T) {
+	cli, link, pipe := makeReturningCli(nil, t)
+	pipe.failOnCall = LOG_CALL
+	AddLogCommand(cli, link)
+	err := cli.Run([]string{"log", "id"})
+	if getCall(link) != LOG_CALL {
+		t.Errorf("moveup wasn't called")
+	}
+	if err == nil {
+		t.Errorf("Exepected error not returned")
+	}
+}
+
+//Tests the log command when there is a writing error
+func TestLogCommandWritingError(t *testing.T) {
+	cli, link, _ := makeReturningCli(nil, t)
+	cli.Output = FailingWriter{}
+	AddLogCommand(cli, link)
+	err := cli.Run([]string{"log", "id"})
+	if getCall(link) != LOG_CALL {
+		t.Errorf("moveup wasn't called")
+	}
+	if err == nil {
+		t.Errorf("Exepected error not returned")
 	}
 }
