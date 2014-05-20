@@ -79,32 +79,24 @@ func AddDeleteCommand(cli *Cli, link PipelineLink) {
 }
 
 func AddResultsCommand(cli *Cli, link PipelineLink) {
-	lastId := new(bool)
 	outputPath := ""
-	cmd := cli.AddCommand("results", "Stores the results from a job", func(command string, args ...string) error {
-		id, err := checkId(*lastId, command, args...)
+	cmd := newCommandBuilder("results", "Stores the results from a job").
+		withCall(func(args ...interface{}) (v interface{}, err error) {
+		data, err := link.Results(args[0].(string))
 		if err != nil {
-			return err
+			return
 		}
-		data, err := link.Results(id)
-		if err != nil {
-			return err
-		}
-
 		path, err := zippedDataToFolder(data, outputPath)
 		if err != nil {
-			return err
+			return
 		}
-
 		cli.Printf("Results stored into %v\n", path)
-
-		return nil
-	})
+		return
+	}).buildWithId(cli)
 	cmd.AddOption("output", "o", "Directory where to store the results", func(name, folder string) error {
 		outputPath = folder
 		return nil
 	}).Must(true)
-	addLastId(cmd, lastId)
 }
 
 func AddLogCommand(cli *Cli, link PipelineLink) {
