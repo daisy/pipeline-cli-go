@@ -67,9 +67,9 @@ func AddDeleteCommand(cli *Cli, link PipelineLink) {
 		id := args[0]
 		ok, err := link.Delete(id)
 		if err == nil && ok {
-			cli.Printf("Job %v removed from the server\n", id)
+			return fmt.Sprintf("Job %v removed from the server\n", id), err
 		}
-		return ok, err
+		return "", err
 	}
 	newCommandBuilder("delete", "Removes a job from the pipeline").
 		withCall(fn).buildWithId(cli)
@@ -87,8 +87,8 @@ func AddResultsCommand(cli *Cli, link PipelineLink) {
 		if err != nil {
 			return
 		}
-		cli.Printf("Results stored into %v\n", path)
-		return
+
+		return fmt.Sprintf("Results stored into %v\n", path), err
 	}).buildWithId(cli)
 	cmd.AddOption("output", "o", "Directory where to store the results", func(name, folder string) error {
 		outputPath = folder
@@ -106,8 +106,8 @@ func AddLogCommand(cli *Cli, link PipelineLink) {
 		outWriter := cli.Output
 		if len(outputPath) > 0 {
 			file, err := os.Create(outputPath)
+			ret = fmt.Sprintf("Log written to %s\n", file.Name())
 			defer func() {
-				cli.Printf("Log written to %s", file.Name())
 				file.Close()
 			}()
 			if err != nil {
@@ -116,10 +116,7 @@ func AddLogCommand(cli *Cli, link PipelineLink) {
 			outWriter = file
 		}
 		_, err = outWriter.Write(data)
-		if err != nil {
-			return
-		}
-		return
+		return ret, err
 	}
 	cmd := newCommandBuilder("log", "Stores the results from a job").
 		withCall(fn).buildWithId(cli)
@@ -140,8 +137,7 @@ func AddHaltCommand(cli *Cli, link PipelineLink) {
 		if err != nil {
 			return
 		}
-		cli.Printf("The webservice has been halted\n")
-		return
+		return fmt.Sprintf("The webservice has been halted\n"), err
 	}
 	newCommandBuilder("halt", "Stops the webservice").withCall(fn).build(cli)
 }
