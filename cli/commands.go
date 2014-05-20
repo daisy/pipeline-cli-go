@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"os"
-	"text/template"
 
 	"github.com/daisy-consortium/pipeline-clientlib-go"
 )
@@ -19,10 +18,8 @@ Status: {{.Data.Status}}
 {{end}}
 `
 
-	JobListTemplate = `
-Job Id          (Nicename)              [STATUS]
-
-{{range .}}{{.Id}}{{if .Nicename }}     ({{.Nicename}}){{end}}  [{{.Status}}]
+	JobListTemplate = `Job Id          (Nicename)              [STATUS]
+{{range .}}{{.Id}}{{if .Nicename }}	({{.Nicename}}){{end}}	[{{.Status}}]
 {{end}}`
 
 	VersionTemplate = `
@@ -150,18 +147,10 @@ func AddHaltCommand(cli *Cli, link PipelineLink) {
 }
 
 func AddJobsCommand(cli *Cli, link PipelineLink) {
-	cli.AddCommand("jobs", "Returns the list of jobs present in the server", func(command string, args ...string) error {
-		jobs, err := link.Jobs()
-		if err != nil {
-			return err
-		}
-		tmpl, err := template.New("joblist").Parse(JobListTemplate)
-		if err != nil {
-			return err
-		}
-		err = tmpl.Execute(os.Stdout, jobs)
-		return nil
-	})
+	newCommandBuilder("jobs", "Returns the list of jobs present in the server").
+		withCall(func(...interface{}) (interface{}, error) {
+		return link.Jobs()
+	}).withTemplate(JobListTemplate).build(cli)
 }
 
 func AddQueueCommand(cli *Cli, link PipelineLink) {

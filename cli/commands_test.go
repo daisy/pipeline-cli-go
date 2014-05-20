@@ -461,3 +461,41 @@ func TestResultsCommandError(t *testing.T) {
 	}
 
 }
+
+//test the list of jobs
+func TestJobs(t *testing.T) {
+	jobs := pipeline.Jobs{Jobs: []pipeline.Job{JOB_1, JOB_2}}
+	cli, link, _ := makeReturningCli(jobs, t)
+	r := overrideOutput(cli)
+	AddJobsCommand(cli, link)
+	err := cli.Run([]string{"jobs"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if getCall(link) != JOBS_CALL {
+		t.Errorf("jobs wasn't called")
+	}
+	jobsLine := []string{
+		JOB_1.Id,
+		fmt.Sprintf("(%s)", JOB_1.Nicename),
+		fmt.Sprintf("[%s]", JOB_1.Status),
+	}
+	if ok, line, message := checkTableLine(r, "\t", jobsLine); !ok {
+		t.Errorf("job template doesn't match (%q,%s)\n%s", jobsLine, line, message)
+	}
+}
+
+//test the list of jobs with error from the link
+func TestJobsError(t *testing.T) {
+	jobs := pipeline.Jobs{Jobs: []pipeline.Job{JOB_1, JOB_2}}
+	cli, link, pipe := makeReturningCli(jobs, t)
+	pipe.failOnCall = JOBS_CALL
+	AddJobsCommand(cli, link)
+	err := cli.Run([]string{"jobs"})
+	if getCall(link) != JOBS_CALL {
+		t.Errorf("jobs wasn't called")
+	}
+	if err == nil {
+		t.Errorf("Error from link not propagated")
+	}
+}

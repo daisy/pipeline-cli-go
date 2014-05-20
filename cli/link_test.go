@@ -27,7 +27,9 @@ var (
 		},
 	}
 	JOB_1 = pipeline.Job{
-		Status: "RUNNING",
+		Status:   "RUNNING",
+		Nicename: "my_little_job",
+		Id:       "job1",
 		Messages: []pipeline.Message{
 			pipeline.Message{
 				Sequence: 1,
@@ -42,7 +44,9 @@ var (
 		},
 	}
 	JOB_2 = pipeline.Job{
-		Status: "DONE",
+		Status:   "DONE",
+		Nicename: "the_other_job",
+		Id:       "job2",
 		Messages: []pipeline.Message{
 			pipeline.Message{
 				Sequence: 3,
