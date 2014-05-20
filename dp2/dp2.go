@@ -33,6 +33,8 @@ func main() {
 	cli.AddJobsCommand(comm, *link)
 	cli.AddLogCommand(comm, *link)
 	cli.AddQueueCommand(comm, *link)
+	cli.AddMoveUpCommand(comm, *link)
+	cli.AddMoveDownCommand(comm, *link)
 	cli.AddHaltCommand(comm, *link)
 	cli.AddVersionCommand(comm, link)
 

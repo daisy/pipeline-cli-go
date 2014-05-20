@@ -138,7 +138,7 @@ func TestQueueCommandError(t *testing.T) {
 	AddQueueCommand(cli, link)
 	err = cli.Run([]string{"queue"})
 	if getCall(link) != QUEUE_CALL {
-		t.Errorf("Queue wasn't call")
+		t.Errorf("Queue wasn't called")
 	}
 	if err == nil {
 		t.Errorf("Expected error is nil")
@@ -160,6 +160,32 @@ func TestMoveUpCommand(t *testing.T) {
 	err = cli.Run([]string{"moveup", "id"})
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
+	}
+	if getCall(link) != MOVEUP_CALL {
+		t.Errorf("moveup wasn't called")
+	}
+
+	if ok, line, message := checkTableLine(r, "\t", queueLine); !ok {
+		t.Errorf("Queue template doesn't match (%q,%s)\n%s", queueLine, line, message)
+	}
+}
+func TestMoveDownCommand(t *testing.T) {
+	pipe := newPipelineTest(false)
+	pipe.val = queue
+	link := PipelineLink{pipeline: pipe}
+	cli, err := makeCli("test", &link)
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	r := overrideOutput(cli)
+	AddMoveDownCommand(cli, link)
+
+	err = cli.Run([]string{"movedown", "id"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if getCall(link) != MOVEDOWN_CALL {
+		t.Errorf("moveup wasn't called")
 	}
 
 	if ok, line, message := checkTableLine(r, "\t", queueLine); !ok {

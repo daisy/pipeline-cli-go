@@ -179,8 +179,7 @@ func AddJobsCommand(cli *Cli, link PipelineLink) {
 
 func AddQueueCommand(cli *Cli, link PipelineLink) {
 	fn := func(...interface{}) (queue interface{}, err error) {
-		queue, err = link.Queue()
-		return
+		return link.Queue()
 	}
 	newCommandBuilder("queue", "Shows the execution queue and the job's priorities. ").
 		withCall(fn).withTemplate(QueueTemplate).build(cli)
@@ -188,10 +187,19 @@ func AddQueueCommand(cli *Cli, link PipelineLink) {
 
 func AddMoveUpCommand(cli *Cli, link PipelineLink) {
 	fn := func(args ...interface{}) (queue interface{}, err error) {
-		queue, err = link.MoveUp(args[0].(string))
-		return
+		return link.MoveUp(args[0].(string))
 	}
 	newCommandBuilder("moveup", "Moves the job up the execution queue").
+		withCall(fn).withTemplate(QueueTemplate).
+		buildWithId(cli)
+
+}
+
+func AddMoveDownCommand(cli *Cli, link PipelineLink) {
+	fn := func(args ...interface{}) (queue interface{}, err error) {
+		return link.MoveDown(args[0].(string))
+	}
+	newCommandBuilder("movedown", "Moves the job down the execution queue").
 		withCall(fn).withTemplate(QueueTemplate).
 		buildWithId(cli)
 
