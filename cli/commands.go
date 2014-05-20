@@ -44,8 +44,8 @@ func AddJobStatusCommand(cli *Cli, link PipelineLink) {
 		Data:    pipeline.Job{},
 		Verbose: false,
 	}
-	fn := func(args ...interface{}) (interface{}, error) {
-		job, err := link.Job(args[0].(string))
+	fn := func(args ...string) (interface{}, error) {
+		job, err := link.Job(args[0])
 		if err != nil {
 			return nil, err
 		}
@@ -63,8 +63,8 @@ func AddJobStatusCommand(cli *Cli, link PipelineLink) {
 }
 
 func AddDeleteCommand(cli *Cli, link PipelineLink) {
-	fn := func(args ...interface{}) (interface{}, error) {
-		id := args[0].(string)
+	fn := func(args ...string) (interface{}, error) {
+		id := args[0]
 		ok, err := link.Delete(id)
 		if err == nil && ok {
 			cli.Printf("Job %v removed from the server\n", id)
@@ -78,8 +78,8 @@ func AddDeleteCommand(cli *Cli, link PipelineLink) {
 func AddResultsCommand(cli *Cli, link PipelineLink) {
 	outputPath := ""
 	cmd := newCommandBuilder("results", "Stores the results from a job").
-		withCall(func(args ...interface{}) (v interface{}, err error) {
-		data, err := link.Results(args[0].(string))
+		withCall(func(args ...string) (v interface{}, err error) {
+		data, err := link.Results(args[0])
 		if err != nil {
 			return
 		}
@@ -98,8 +98,8 @@ func AddResultsCommand(cli *Cli, link PipelineLink) {
 
 func AddLogCommand(cli *Cli, link PipelineLink) {
 	outputPath := ""
-	fn := func(vals ...interface{}) (ret interface{}, err error) {
-		data, err := link.Log(vals[0].(string))
+	fn := func(vals ...string) (ret interface{}, err error) {
+		data, err := link.Log(vals[0])
 		if err != nil {
 			return
 		}
@@ -131,7 +131,7 @@ func AddLogCommand(cli *Cli, link PipelineLink) {
 }
 
 func AddHaltCommand(cli *Cli, link PipelineLink) {
-	fn := func(...interface{}) (val interface{}, err error) {
+	fn := func(...string) (val interface{}, err error) {
 		key, err := loadKey()
 		if err != nil {
 			return nil, fmt.Errorf("Coudn't open key file: %s", err.Error())
@@ -148,13 +148,13 @@ func AddHaltCommand(cli *Cli, link PipelineLink) {
 
 func AddJobsCommand(cli *Cli, link PipelineLink) {
 	newCommandBuilder("jobs", "Returns the list of jobs present in the server").
-		withCall(func(...interface{}) (interface{}, error) {
+		withCall(func(...string) (interface{}, error) {
 		return link.Jobs()
 	}).withTemplate(JobListTemplate).build(cli)
 }
 
 func AddQueueCommand(cli *Cli, link PipelineLink) {
-	fn := func(...interface{}) (queue interface{}, err error) {
+	fn := func(...string) (queue interface{}, err error) {
 		return link.Queue()
 	}
 	newCommandBuilder("queue", "Shows the execution queue and the job's priorities. ").
@@ -162,8 +162,8 @@ func AddQueueCommand(cli *Cli, link PipelineLink) {
 }
 
 func AddMoveUpCommand(cli *Cli, link PipelineLink) {
-	fn := func(args ...interface{}) (queue interface{}, err error) {
-		return link.MoveUp(args[0].(string))
+	fn := func(args ...string) (queue interface{}, err error) {
+		return link.MoveUp(args[0])
 	}
 	newCommandBuilder("moveup", "Moves the job up the execution queue").
 		withCall(fn).withTemplate(QueueTemplate).
@@ -172,8 +172,8 @@ func AddMoveUpCommand(cli *Cli, link PipelineLink) {
 }
 
 func AddMoveDownCommand(cli *Cli, link PipelineLink) {
-	fn := func(args ...interface{}) (queue interface{}, err error) {
-		return link.MoveDown(args[0].(string))
+	fn := func(args ...string) (queue interface{}, err error) {
+		return link.MoveDown(args[0])
 	}
 	newCommandBuilder("movedown", "Moves the job down the execution queue").
 		withCall(fn).withTemplate(QueueTemplate).
@@ -188,7 +188,7 @@ type Version struct {
 
 func AddVersionCommand(cli *Cli, link PipelineLink) {
 	newCommandBuilder("version", "Prints the version and authentication information").
-		withCall(func(...interface{}) (interface{}, error) {
+		withCall(func(...string) (interface{}, error) {
 		return Version{link, VERSION}, nil
 	}).withTemplate(VersionTemplate).build(cli)
 

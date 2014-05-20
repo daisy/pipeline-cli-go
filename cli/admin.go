@@ -92,8 +92,8 @@ func (c *Cli) AddNewClientCommand(link PipelineLink) {
 
 func (c *Cli) AddDeleteClientCommand(link PipelineLink) {
 	newCommandBuilder("delete", "Deletes a client").
-		withCall(func(args ...interface{}) (v interface{}, err error) {
-		id := args[0].(string)
+		withCall(func(args ...string) (v interface{}, err error) {
+		id := args[0]
 		_, err = link.pipeline.DeleteClient(id)
 		if err != nil {
 			return

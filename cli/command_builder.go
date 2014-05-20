@@ -7,7 +7,7 @@ import (
 )
 
 //Convinience interface for building commands
-type call func(...interface{}) (interface{}, error)
+type call func(...string) (interface{}, error)
 
 //commandBuilder builds commands in a reusable way
 type commandBuilder struct {
@@ -37,13 +37,8 @@ func (c *commandBuilder) withTemplate(template string) *commandBuilder {
 //builds the commands and adds it to the cli
 func (c *commandBuilder) build(cli *Cli) (cmd *subcommand.Command) {
 	return cli.AddCommand(c.name, c.desc, func(name string, args ...string) error {
-		//call the interface
-		iArgs := make([]interface{}, 0, len(args))
-		for _, arg := range args {
-			iArgs = append(iArgs, arg)
-		}
 
-		data, err := c.linkCall(iArgs...)
+		data, err := c.linkCall(args...)
 		if err != nil {
 			return err
 		}
