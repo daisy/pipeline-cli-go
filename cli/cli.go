@@ -210,7 +210,6 @@ func (c *Cli) Run(args []string) error {
 //Prints using the client output
 func (c *Cli) Printf(format string, vals ...interface{}) {
 	fmt.Fprintf(c.Output, format, vals...)
-	fmt.Fprintln(c.Output)
 }
 
 //prints the help
