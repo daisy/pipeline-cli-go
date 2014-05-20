@@ -63,6 +63,9 @@ func (c *commandBuilder) buildWithId(cli *Cli) (cmd *subcommand.Command) {
 			return err
 		}
 		data, err := c.linkCall(id)
+		if err != nil {
+			return err
+		}
 		tmpl, err := template.New("template").Parse(c.template)
 		if err != nil {
 			return err
