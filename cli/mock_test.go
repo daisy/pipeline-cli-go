@@ -12,15 +12,16 @@ import (
 )
 
 const (
-	QUEUE_CALL    = "queue"
-	MOVEUP_CALL   = "moveup"
-	MOVEDOWN_CALL = "movedown"
-	LOG_CALL      = "log"
-	JOB_CALL      = "job"
-	DELETE_CALL   = "delete"
-	HALT_CALL     = "halt"
-	RESULTS_CALL  = "results"
-	JOBS_CALL     = "jobs"
+	QUEUE_CALL         = "queue"
+	MOVEUP_CALL        = "moveup"
+	MOVEDOWN_CALL      = "movedown"
+	LOG_CALL           = "log"
+	JOB_CALL           = "job"
+	DELETE_CALL        = "delete"
+	HALT_CALL          = "halt"
+	RESULTS_CALL       = "results"
+	JOBS_CALL          = "jobs"
+	DELETE_CLIENT_CALL = "delete_client"
 )
 
 //Sets the output of the cli to a bytes.Buffer
@@ -222,7 +223,9 @@ func (p *PipelineTest) NewClient(cIn pipeline.Client) (cOut pipeline.Client, err
 	return
 }
 func (p *PipelineTest) DeleteClient(id string) (ok bool, err error) {
-	return
+	p.call = DELETE_CLIENT_CALL
+	_, err = p.mockCall()
+	return true, err
 }
 func (p *PipelineTest) Client(id string) (client pipeline.Client, err error) {
 	return

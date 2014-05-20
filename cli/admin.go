@@ -1,6 +1,5 @@
 package cli
 
-//TODO get rid of link methods that just bypass the to the pipeline
 import (
 	//"github.com/capitancambio/go-subcommand"
 	"fmt"
@@ -92,15 +91,17 @@ func (c *Cli) AddNewClientCommand(link PipelineLink) {
 }
 
 func (c *Cli) AddDeleteClientCommand(link PipelineLink) {
-	c.AddCommand("delete", "Deletes a client", func(command string, args ...string) error {
-		id := args[0]
-		_, err := link.pipeline.DeleteClient(id)
+	newCommandBuilder("delete", "Deletes a client").
+		withCall(func(args ...interface{}) (v interface{}, err error) {
+		id := args[0].(string)
+		_, err = link.pipeline.DeleteClient(id)
 		if err != nil {
-			return err
+			return
 		}
-		fmt.Printf("Client %v deleted\n", id)
-		return nil
-	}).SetArity(1, "CLIENT_ID")
+		c.Printf("Client %v deleted\n", id)
+		return
+	}).
+		build(c).SetArity(1, "CLIENT_ID")
 }
 
 func (c *Cli) AddClientCommand(link PipelineLink) {

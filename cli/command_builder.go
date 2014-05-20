@@ -36,9 +36,14 @@ func (c *commandBuilder) withTemplate(template string) *commandBuilder {
 
 //builds the commands and adds it to the cli
 func (c *commandBuilder) build(cli *Cli) (cmd *subcommand.Command) {
-	return cli.AddCommand(c.name, c.desc, func(string, ...string) error {
+	return cli.AddCommand(c.name, c.desc, func(name string, args ...string) error {
 		//call the interface
-		data, err := c.linkCall()
+		iArgs := make([]interface{}, 0, len(args))
+		for _, arg := range args {
+			iArgs = append(iArgs, arg)
+		}
+
+		data, err := c.linkCall(iArgs...)
 		if err != nil {
 			return err
 		}
