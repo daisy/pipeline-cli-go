@@ -98,8 +98,7 @@ func (c *Cli) AddDeleteClientCommand(link PipelineLink) {
 		if err != nil {
 			return
 		}
-		c.Printf("Client %v deleted\n", id)
-		return
+		return fmt.Sprintf("Client %v deleted\n", id), err
 	}).
 		build(c).SetArity(1, "CLIENT_ID")
 }
