@@ -13,6 +13,6 @@ install:
         - go build github.com/mattn/goveralls
 
 script:
-        - go test -covermode=count -coverprofile=profile.cov ./cli
+        - go test -covermode=atomic -coverprofile=profile.cov ./cli
         - ls $HOME/gopath
         - $HOME/gopath/bin/goveralls -coverprofile=profile.cov -service=travis-ci
