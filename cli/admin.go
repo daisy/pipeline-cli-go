@@ -6,13 +6,13 @@ import (
 	"os"
 	"text/template"
 
+	"github.com/capitancambio/go-subcommand"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
 )
 
 const (
-	TmplClients = `client_id         (role)
-
-{{range .}}{{.Id}}          ({{.Role}})
+	TmplClients = `client_id	(role)
+{{range .}}{{.Id}}	({{.Role}})
 {{end}}
 `
 	TmplClient = `
@@ -36,57 +36,23 @@ Secret:         ****
 )
 
 func (c *Cli) AddClientListCommand(link PipelineLink) {
-	c.AddCommand("list", "Returns the list of the available clients", func(command string, args ...string) error {
-		clients, err := link.pipeline.Clients()
-		if err != nil {
-			return err
-		}
-		tmpl, err := template.New("list").Parse(TmplClients)
-		if err != nil {
-			return err
-		}
-		err = tmpl.Execute(os.Stdout, clients)
-		return nil
-	})
+	newCommandBuilder("list", "Returns the list of the available clients").withCall(func(args ...string) (interface{}, error) {
+		return link.Clients()
+	}).withTemplate(TmplClients).build(c)
 }
 
 func (c *Cli) AddNewClientCommand(link PipelineLink) {
 	client := &pipeline.Client{}
-	cmd := c.AddCommand("create", "Creates a new client", func(command string, args ...string) error {
-		res, err := link.pipeline.NewClient(*client)
-		if err != nil {
-			return err
-		}
-		tmpl, err := template.New("client").Parse(TmplClient)
-		if err != nil {
-			return err
-		}
-		fmt.Println("Client successfully created")
-		err = tmpl.Execute(os.Stdout, res)
-		return nil
-	})
+	fn := func(...string) (interface{}, error) {
+		return link.NewClient(*client)
+	}
+	cmd := newCommandBuilder("create", "Creates a new client").withCall(fn).withTemplate(TmplClient).build(c)
+
 	cmd.AddOption("id", "i", "Client id (must be unique)", func(string, value string) error {
 		client.Id = value
 		return nil
 	}).Must(true)
-
-	cmd.AddOption("secret", "s", "Client secret", func(string, value string) error {
-		client.Secret = value
-		return nil
-	}).Must(true)
-
-	cmd.AddOption("role", "r", "Client role  (ADMIN,CLIENTAPP)", func(string, value string) error {
-		if value != "ADMIN" && value != "CLIENTAPP" {
-			return fmt.Errorf("%v is not a valid role", value)
-		}
-		client.Role = value
-		return nil
-	}).Must(true)
-
-	cmd.AddOption("contact", "c", "Client e-mail address ", func(string, value string) error {
-		client.Contact = value
-		return nil
-	})
+	addClientOptions(cmd, client, true)
 
 }
 
@@ -94,7 +60,7 @@ func (c *Cli) AddDeleteClientCommand(link PipelineLink) {
 	newCommandBuilder("delete", "Deletes a client").
 		withCall(func(args ...string) (v interface{}, err error) {
 		id := args[0]
-		_, err = link.pipeline.DeleteClient(id)
+		_, err = link.DeleteClient(id)
 		if err != nil {
 			return
 		}
@@ -104,28 +70,20 @@ func (c *Cli) AddDeleteClientCommand(link PipelineLink) {
 }
 
 func (c *Cli) AddClientCommand(link PipelineLink) {
+	fn := func(args ...string) (v interface{}, err error) {
+		return link.Client(args[0])
+	}
 
-	c.AddCommand("client", "Prints the detailed client inforamtion", func(command string, args ...string) error {
-		id := args[0]
-		client, err := link.pipeline.Client(id)
-		if err != nil {
-			return err
-		}
-		tmpl, err := template.New("client").Parse(TmplClient)
-		if err != nil {
-			return err
-		}
-		return tmpl.Execute(os.Stdout, client)
-	}).SetArity(1, "CLIENT_ID")
+	newCommandBuilder("client", "Prints the detailed client inforamtion").withCall(fn).withTemplate(TmplClient).build(c).SetArity(1, "CLIENT_ID")
 }
 func (c *Cli) AddModifyClientCommand(link PipelineLink) {
 	client := &pipeline.Client{}
-	cmd := c.AddCommand("modify", "Modifies a client", func(command string, args ...string) error {
+	fn := func(args ...string) (v interface{}, err error) {
 		id := args[0]
 		client.Id = id
-		old, err := link.pipeline.Client(id)
+		old, err := link.Client(id)
 		if err != nil {
-			return err
+			return
 		}
 		if len(client.Secret) == 0 {
 			client.Secret = old.Secret
@@ -136,41 +94,36 @@ func (c *Cli) AddModifyClientCommand(link PipelineLink) {
 		if len(client.Contact) == 0 {
 			client.Contact = old.Contact
 		}
-		res, err := link.pipeline.ModifyClient(*client, id)
-		if err != nil {
-			return err
-		}
-		tmpl, err := template.New("client").Parse(TmplClient)
-		if err != nil {
-			return err
-		}
-		fmt.Println("Client successfully modified")
-		err = tmpl.Execute(os.Stdout, res)
-		return nil
-	}).SetArity(1, "CLIENT_ID")
+		return link.ModifyClient(*client, id)
+	}
+	cmd := newCommandBuilder("modify", "Modifies a client").withCall(fn).withTemplate(TmplClient).build(c)
+	cmd.SetArity(1, "CLIENT_ID")
+	addClientOptions(cmd, client, false)
+
+}
+
+//Adds the client options a part from the id
+func addClientOptions(cmd *subcommand.Command, client *pipeline.Client, must bool) {
 	cmd.AddOption("secret", "s", "Client secret", func(string, value string) error {
 		client.Secret = value
 		return nil
-	})
-
+	}).Must(must)
 	cmd.AddOption("role", "r", "Client role  (ADMIN,CLIENTAPP)", func(string, value string) error {
 		if value != "ADMIN" && value != "CLIENTAPP" {
 			return fmt.Errorf("%v is not a valid role", value)
 		}
 		client.Role = value
 		return nil
-	})
-
+	}).Must(must)
 	cmd.AddOption("contact", "c", "Client e-mail address ", func(string, value string) error {
 		client.Contact = value
 		return nil
 	})
-
 }
 
 func (c *Cli) AddPropertyListCommand(link PipelineLink) {
 	c.AddCommand("properties", "List the pipeline ws runtime properties ", func(command string, args ...string) error {
-		properties, err := link.pipeline.Properties()
+		properties, err := link.Properties()
 		if err != nil {
 			return err
 		}

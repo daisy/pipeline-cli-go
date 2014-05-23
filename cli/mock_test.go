@@ -22,6 +22,10 @@ const (
 	RESULTS_CALL       = "results"
 	JOBS_CALL          = "jobs"
 	DELETE_CLIENT_CALL = "delete_client"
+	NEW_CLIENT_CALL    = "new_client"
+	CLIENT_CALL        = "client"
+	MODIFY_CLIENT_CALL = "modify_client"
+	LIST_CLIENT_CALL   = "list_client"
 )
 
 //Sets the output of the cli to a bytes.Buffer
@@ -217,10 +221,20 @@ func (p *PipelineTest) Halt(key string) error {
 }
 
 func (p *PipelineTest) Clients() (c []pipeline.Client, err error) {
+	p.call = LIST_CLIENT_CALL
+	ret, err := p.mockCall()
+	if ret != nil {
+		return ret.([]pipeline.Client), err
+	}
 	return
 }
 func (p *PipelineTest) NewClient(cIn pipeline.Client) (cOut pipeline.Client, err error) {
-	return
+	p.call = NEW_CLIENT_CALL
+	out, err := p.mockCall()
+	if err != nil {
+		return
+	}
+	return *(out.(*pipeline.Client)), err
 }
 func (p *PipelineTest) DeleteClient(id string) (ok bool, err error) {
 	p.call = DELETE_CLIENT_CALL
@@ -228,10 +242,20 @@ func (p *PipelineTest) DeleteClient(id string) (ok bool, err error) {
 	return true, err
 }
 func (p *PipelineTest) Client(id string) (client pipeline.Client, err error) {
-	return
+	p.call = CLIENT_CALL
+	out, err := p.mockCall()
+	if err != nil {
+		return
+	}
+	return *(out.(*pipeline.Client)), err
 }
 func (p *PipelineTest) ModifyClient(client pipeline.Client, id string) (c pipeline.Client, err error) {
-	return
+	p.call = MODIFY_CLIENT_CALL
+	_, err = p.mockCall()
+	if err != nil {
+		return
+	}
+	return client, err
 }
 func (p *PipelineTest) Properties() (props []pipeline.Property, err error) {
 	return
