@@ -218,24 +218,14 @@ func printHelp(cli Cli, globals bool, args ...string) error {
 		funcMap := template.FuncMap{
 			"flagAligner": aligner(flagsToStrings(cli.Flags())),
 		}
-		tmpl, err := template.New("globals").Funcs(funcMap).Parse(GLOBAL_OPTIONS_TEMPLATE)
-		if err != nil {
-			//this is serious stuff panic!!
-			println(err.Error())
-			panic("Error compiling globals template")
-		}
+		tmpl := template.Must(template.New("globals").Funcs(funcMap).Parse(GLOBAL_OPTIONS_TEMPLATE))
 		tmpl.Execute(os.Stdout, cli)
 
 	} else if len(args) == 0 {
 		funcMap := template.FuncMap{
 			"commandAligner": aligner(cli.mergeCommands()),
 		}
-		tmpl, err := template.New("mainHelp").Funcs(funcMap).Parse(MAIN_HELP_TEMPLATE)
-		if err != nil {
-			//this is serious stuff panic!!
-			println(err.Error())
-			panic("Error compiling help template")
-		}
+		tmpl := template.Must(template.New("mainHelp").Funcs(funcMap).Parse(MAIN_HELP_TEMPLATE))
 		tmpl.Execute(os.Stdout, cli)
 
 	} else {
@@ -249,12 +239,7 @@ func printHelp(cli Cli, globals bool, args ...string) error {
 		funcMap := template.FuncMap{
 			"flagAligner": aligner(flagsToStrings(cmd.Flags())),
 		}
-		tmpl, err := template.New("commandHelp").Funcs(funcMap).Parse(COMMAND_HELP_TEMPLATE)
-		if err != nil {
-			//this is serious stuff panic!!
-			println(err.Error())
-			panic("Error compiling command help template")
-		}
+		tmpl := template.Must(template.New("commandHelp").Funcs(funcMap).Parse(COMMAND_HELP_TEMPLATE))
 		//cmdFlag := commmandFlag{*cmd, cli.Name}
 		tmpl.Execute(os.Stdout, cmd)
 	}

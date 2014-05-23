@@ -50,12 +50,9 @@ func (c *commandBuilder) build(cli *Cli) (cmd *subcommand.Command) {
 }
 
 func (c commandBuilder) writeOutput(data interface{}, cli *Cli) error {
-	tmpl, err := template.New("template").Parse(c.template)
-	if err != nil {
-		return err
-	}
+	tmpl := template.Must(template.New("template").Parse(c.template))
 	if data != nil {
-		err = tmpl.Execute(cli.Output, data)
+		err := tmpl.Execute(cli.Output, data)
 		if err != nil {
 			return err
 		}
