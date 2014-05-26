@@ -237,27 +237,6 @@ func TestAsyncMessages(t *testing.T) {
 	}
 }
 
-func TestAppendOps(t *testing.T) {
-	//from empty variable
-	res := appendOpts("JAVA_OPTS=")
-	javaOptsEmpty := "JAVA_OPTS= " + OH_MY_GOSH
-	if javaOptsEmpty != res {
-		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "javaOptsEmpty ", javaOptsEmpty, res)
-	}
-	//non-empty no quotes
-	res = appendOpts("JAVA_OPTS=-Dsomething")
-	javaOptsNoQuotes := "JAVA_OPTS=-Dsomething " + OH_MY_GOSH
-	if javaOptsNoQuotes != res {
-		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "javaOptsNoQuotes ", javaOptsNoQuotes, res)
-	}
-
-	res = appendOpts("JAVA_OPTS=\"-Dsomething -Dandsthelse\"")
-	javaOptsQuotes := "JAVA_OPTS=-Dsomething -Dandsthelse " + OH_MY_GOSH
-	if javaOptsQuotes != res {
-		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "javaOptsQuotes ", javaOptsQuotes, res)
-	}
-}
-
 func TestIsLocal(t *testing.T) {
 	link := PipelineLink{FsAllow: true}
 	if !link.IsLocal() {
