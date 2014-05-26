@@ -451,3 +451,50 @@ func TestClientsError(t *testing.T) {
 		t.Errorf("Link error missing")
 	}
 }
+
+//Test the properties list
+func TestPropeties(t *testing.T) {
+
+	props := []pipeline.Property{pipeline.Property{
+		Name:       "org.daisy.pipeline.property",
+		Value:      "secret",
+		BundleName: "framework",
+	}}
+	cli, link, _ := makeReturningCli(props, t)
+	r := overrideOutput(cli)
+	cli.AddPropertyListCommand(link)
+	err := cli.Run([]string{"properties"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if getCall(link) != PROPERTIES_CALL {
+		t.Errorf("List client wasn't called")
+	}
+	outputLine := []string{
+		props[0].Name,
+		props[0].Value,
+		props[0].BundleName,
+	}
+	if ok, line, message := checkTableLine(r, "\t", outputLine); !ok {
+		t.Errorf("Properties template doesn't match (%q,%s)\n%s", queueLine, line, message)
+	}
+}
+
+func TestWithLinkError(t *testing.T) {
+
+	props := []pipeline.Property{pipeline.Property{
+		Name:       "org.daisy.pipeline.property",
+		Value:      "secret",
+		BundleName: "framework",
+	}}
+	cli, link, pipe := makeReturningCli(props, t)
+	pipe.failOnCall = PROPERTIES_CALL
+	cli.AddPropertyListCommand(link)
+	err := cli.Run([]string{"properties"})
+	if getCall(link) != PROPERTIES_CALL {
+		t.Errorf("List client wasn't called")
+	}
+	if err == nil {
+		t.Errorf("Expected error not returned")
+	}
+}

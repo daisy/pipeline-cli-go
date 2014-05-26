@@ -23,7 +23,6 @@ Secret:         ****
 
 `
 	TmplProperties = `Name          Value           Bundle
-        
 {{range .}}{{.Name}}	{{.Value}}	{{.BundleName}}
 {{end}}
 `
@@ -133,7 +132,7 @@ func (c *Cli) AddPropertyListCommand(link PipelineLink) {
 		func(args ...string) (interface{}, error) {
 			return link.Properties()
 		}).
-		withTemplate(SimpleTemplate).build(c)
+		withTemplate(TmplProperties).build(c)
 }
 
 func (c *Cli) AddSizesCommand(link PipelineLink) {
