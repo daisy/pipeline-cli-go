@@ -57,6 +57,30 @@ var (
 	}
 )
 
+//Tests the correct creation of a new link
+func TestNewLink(t *testing.T) {
+
+	config[STARTING] = true
+	config[HOST] = "www.daisy.org"
+	config[PORT] = 8888
+	config[PATH] = "ws"
+
+	link := NewLink(config)
+	{
+		res := link.pipeline.(*pipeline.Pipeline).BaseUrl
+		expected := "www.daisy.org:8888/ws/"
+		if res != expected {
+			t.Errorf("The url has not been properly set '%s'!='%s'", res, expected)
+		}
+	}
+	{
+		res := link.config[STARTING]
+		expected := true
+		if res != expected {
+			t.Errorf("Config has not been properly set '%v'!='%v'", res, expected)
+		}
+	}
+}
 func TestBringUp(t *testing.T) {
 	pipeline := newPipelineTest(false)
 	pipeline.authentication = true

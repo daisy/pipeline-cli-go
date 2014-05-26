@@ -55,7 +55,7 @@ type PipelineLink struct {
 	FsAllow        bool   //Framework mode
 }
 
-func NewLink(conf Config) (pLink *PipelineLink, err error) {
+func NewLink(conf Config) (pLink *PipelineLink) {
 
 	pLink = &PipelineLink{
 		pipeline: pipeline.NewPipeline(conf.Url()),
