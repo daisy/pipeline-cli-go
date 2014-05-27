@@ -105,6 +105,7 @@ func TestScriptToCommandNoLocalFail(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	overrideOutput(cli)
 	cli.WithScripts = false
 	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
@@ -123,6 +124,7 @@ func TestCliRequiredOptions(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	overrideOutput(cli)
 	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -171,6 +173,7 @@ func TestScriptNoOutput(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	overrideOutput(cli)
 	cli.WithScripts = false
 	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
@@ -190,6 +193,7 @@ func TestScriptDefault(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	overrideOutput(cli)
 	cli.WithScripts = false
 	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
@@ -213,6 +217,7 @@ func TestScriptBackground(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	overrideOutput(cli)
 	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -242,6 +247,7 @@ func TestScriptPersistent(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
+	overrideOutput(cli)
 	cli.WithScripts = false
 	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
@@ -258,8 +264,8 @@ func TestScriptPersistent(t *testing.T) {
 	if pipeline.count == 0 {
 		t.Error("Persistent job did not gather several times its status from the server")
 	}
-	if !pipeline.resulted {
-		t.Error("Persistent job did not gather its results")
+	if getCall(*link) != RESULTS_CALL {
+		t.Errorf("Persistent job did not gather its results")
 	}
 
 }

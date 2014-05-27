@@ -12,7 +12,7 @@ func TestCommandBuilderCommandConfig(t *testing.T) {
 	pipe := newPipelineTest(false)
 	link := PipelineLink{pipeline: pipe}
 	cmdBuilder := newCommandBuilder("name", "desc")
-	fn := func(...interface{}) (interface{}, error) { return link.Queue() }
+	fn := func(...string) (interface{}, error) { return link.Queue() }
 	cmdBuilder.withCall(fn)
 	cmdBuilder.withTemplate(testTmpl)
 	if cmdBuilder.linkCall == nil {
@@ -35,7 +35,7 @@ func TestBuilderCommand(t *testing.T) {
 	w := overrideOutput(cli)
 
 	cmdBuilder := newCommandBuilder("test_cmd", "cmd")
-	fn := func(...interface{}) (interface{}, error) {
+	fn := func(...string) (interface{}, error) {
 		return "Hello", nil
 	}
 	cmdBuilder.withCall(fn)
@@ -63,7 +63,7 @@ func TestBuilderCommandError(t *testing.T) {
 	overrideOutput(cli)
 
 	cmdBuilder := newCommandBuilder("test_cmd", "cmd")
-	fn := func(...interface{}) (val interface{}, err error) {
+	fn := func(...string) (val interface{}, err error) {
 		return nil, fmt.Errorf("Error!")
 	}
 	cmdBuilder.withCall(fn)
@@ -87,7 +87,7 @@ func TestBuilderCommandWithId(t *testing.T) {
 	link := PipelineLink{pipeline: pipe}
 
 	cmdBuilder := newCommandBuilder("status", "gets the status")
-	fn := func(args ...interface{}) (interface{}, error) {
+	fn := func(args ...string) (interface{}, error) {
 		//this gets the id
 		return args[0], nil
 	}

@@ -13,9 +13,12 @@ import (
 	"github.com/capitancambio/go-subcommand"
 )
 
+var keyFile = "dp2key.txt"
+
+//loads the halt key
 func loadKey() (key string, err error) {
 	//get temp dir
-	path := filepath.Join(os.TempDir(), "dp2key.txt")
+	path := filepath.Join(os.TempDir(), keyFile)
 	file, err := os.Open(path)
 	if err != nil {
 		errors.New("Could not find the key file, is the webservice running in this machine?")
@@ -25,7 +28,6 @@ func loadKey() (key string, err error) {
 		return
 	}
 	key = string(bytes)
-
 	return
 }
 

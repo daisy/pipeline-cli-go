@@ -3,6 +3,7 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -62,7 +63,7 @@ type jobExecution struct {
 	persistent bool
 }
 
-func (j jobExecution) run() error {
+func (j jobExecution) run(w io.Writer) error {
 	log.Printf("run data len %v\n", len(j.req.Data))
 	//manual check of output
 	if !j.req.Background && j.output == "" {
@@ -77,7 +78,7 @@ func (j jobExecution) run() error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Job %v sent to the server\n", job.Id)
+	fmt.Fprintf(w, "Job %v sent to the server\n", job.Id)
 	//store id if it suits
 	if storeId {
 		err = storeLastId(job.Id)
@@ -94,7 +95,7 @@ func (j jobExecution) run() error {
 		}
 		//print messages
 		if j.verbose {
-			println(msg.String())
+			fmt.Fprintln(w, msg.String())
 		}
 		status = msg.Status
 	}
@@ -107,15 +108,15 @@ func (j jobExecution) run() error {
 				return err
 			}
 			zippedDataToFolder(data, j.output)
-			fmt.Println("Results stored")
+			fmt.Fprintln(w, "Results stored")
 			if !j.persistent {
 				_, err = j.link.Delete(job.Id)
 				if err != nil {
 					return err
 				}
-				fmt.Printf("The job has been deleted from the server\n")
+				fmt.Fprintf(w, "The job has been deleted from the server\n")
 			}
-			fmt.Printf("Job finished with status: %v\n", status)
+			fmt.Fprintf(w, "Job finished with status: %v\n", status)
 		}
 
 	}
@@ -134,7 +135,7 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 		verbose: true,
 	}
 	command := cli.AddScriptCommand(script.Id, script.Description, func(string, ...string) error {
-		if err := jExec.run(); err != nil {
+		if err := jExec.run(cli.Output); err != nil {
 			return err
 		}
 		return nil
@@ -247,9 +248,9 @@ func pathToUri(paths string, separator string, basePath string) (urls []url.URL,
 	var urlBase *url.URL
 
 	if basePath != "" {
-		if string(basePath[0])!="/"{
+		if string(basePath[0]) != "/" {
 			//for windows path to build a proper url
-			basePath="/"+basePath
+			basePath = "/" + basePath
 		}
 		urlBase, err = url.Parse("file:" + basePath)
 	}

@@ -7,7 +7,10 @@ import (
 )
 
 //Convinience interface for building commands
-type call func(...interface{}) (interface{}, error)
+type call func(...string) (interface{}, error)
+
+//Template for printing strings
+var SimpleTemplate = `{{.}}`
 
 //commandBuilder builds commands in a reusable way
 type commandBuilder struct {
@@ -19,7 +22,7 @@ type commandBuilder struct {
 
 //Creates a new commandBuilder
 func newCommandBuilder(name, desc string) *commandBuilder {
-	return &commandBuilder{name: name, desc: desc}
+	return &commandBuilder{name: name, desc: desc, template: SimpleTemplate}
 }
 
 //Sets the call to be wrapped within the command
@@ -36,22 +39,25 @@ func (c *commandBuilder) withTemplate(template string) *commandBuilder {
 
 //builds the commands and adds it to the cli
 func (c *commandBuilder) build(cli *Cli) (cmd *subcommand.Command) {
-	return cli.AddCommand(c.name, c.desc, func(string, ...string) error {
-		//call the interface
-		data, err := c.linkCall()
+	return cli.AddCommand(c.name, c.desc, func(name string, args ...string) error {
+
+		data, err := c.linkCall(args...)
 		if err != nil {
 			return err
 		}
-		tmpl, err := template.New("template").Parse(c.template)
-		if err != nil {
-			return err
-		}
-		err = tmpl.Execute(cli.Output, data)
-		if err != nil {
-			return err
-		}
-		return nil
+		return c.writeOutput(data, cli)
 	})
+}
+
+func (c commandBuilder) writeOutput(data interface{}, cli *Cli) error {
+	tmpl := template.Must(template.New("template").Parse(c.template))
+	if data != nil {
+		err := tmpl.Execute(cli.Output, data)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 //Builds a command and configures it to expect a job id
@@ -63,15 +69,10 @@ func (c *commandBuilder) buildWithId(cli *Cli) (cmd *subcommand.Command) {
 			return err
 		}
 		data, err := c.linkCall(id)
-		tmpl, err := template.New("template").Parse(c.template)
 		if err != nil {
 			return err
 		}
-		err = tmpl.Execute(cli.Output, data)
-		if err != nil {
-			return err
-		}
-		return nil
+		return c.writeOutput(data, cli)
 	})
 
 	addLastId(cmd, lastId)

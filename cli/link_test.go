@@ -27,29 +27,60 @@ var (
 		},
 	}
 	JOB_1 = pipeline.Job{
-		Status: "RUNNING",
+		Status:   "RUNNING",
+		Nicename: "my_little_job",
+		Id:       "job1",
 		Messages: []pipeline.Message{
 			pipeline.Message{
 				Sequence: 1,
 				Content:  "Message 1",
+				Level:    "INFO",
 			},
 			pipeline.Message{
 				Sequence: 2,
 				Content:  "Message 2",
+				Level:    "DEBUG",
 			},
 		},
 	}
 	JOB_2 = pipeline.Job{
-		Status: "DONE",
+		Status:   "DONE",
+		Nicename: "the_other_job",
+		Id:       "job2",
 		Messages: []pipeline.Message{
 			pipeline.Message{
 				Sequence: 3,
 				Content:  "Message 3",
+				Level:    "WARN",
 			},
 		},
 	}
 )
 
+//Tests the correct creation of a new link
+func TestNewLink(t *testing.T) {
+
+	config[STARTING] = true
+	config[HOST] = "www.daisy.org"
+	config[PORT] = 8888
+	config[PATH] = "ws"
+
+	link := NewLink(config)
+	{
+		res := link.pipeline.(*pipeline.Pipeline).BaseUrl
+		expected := "www.daisy.org:8888/ws/"
+		if res != expected {
+			t.Errorf("The url has not been properly set '%s'!='%s'", res, expected)
+		}
+	}
+	{
+		res := link.config[STARTING]
+		expected := true
+		if res != expected {
+			t.Errorf("Config has not been properly set '%v'!='%v'", res, expected)
+		}
+	}
+}
 func TestBringUp(t *testing.T) {
 	pipeline := newPipelineTest(false)
 	pipeline.authentication = true
@@ -77,6 +108,93 @@ func TestBringUpFail(t *testing.T) {
 	err := bringUp(&link)
 	if err == nil {
 		t.Error("Expected error is nil")
+	}
+}
+
+func TestCheckCredentials(t *testing.T) {
+
+	pipeline := newPipelineTest(false)
+	pipeline.authentication = true
+	//both empty
+	{
+		cnf := copyConf()
+		cnf[STARTING] = false
+		cnf[CLIENTKEY] = ""
+		cnf[CLIENTSECRET] = ""
+		link := PipelineLink{pipeline: pipeline, config: cnf}
+		link.Authentication = true
+		err := link.Init()
+		if err == nil {
+			t.Errorf("Credentials should've error'd")
+		}
+	}
+	{
+		cnf := copyConf()
+		cnf[STARTING] = false
+		//client secret empty
+		cnf[CLIENTKEY] = "key"
+		cnf[CLIENTSECRET] = ""
+		link := PipelineLink{pipeline: pipeline, config: cnf}
+		link.Authentication = true
+		err := link.Init()
+		if err == nil {
+			t.Errorf("Credentials should've error'd")
+		}
+	}
+	{
+		//client key  empty
+		cnf := copyConf()
+		cnf[STARTING] = false
+		cnf[CLIENTKEY] = ""
+		cnf[CLIENTSECRET] = "shhh"
+		link := PipelineLink{pipeline: pipeline, config: cnf}
+		link.Authentication = true
+		err := link.Init()
+		if err == nil {
+			t.Errorf("Credentials should've error'd")
+		}
+	}
+}
+func TestSetCredentials(t *testing.T) {
+
+	pipeline := newPipelineTest(false)
+	pipeline.authentication = true
+	cnf := copyConf()
+	cnf[STARTING] = false
+	cnf[CLIENTKEY] = "key"
+	cnf[CLIENTSECRET] = "shh"
+	link := PipelineLink{pipeline: pipeline, config: cnf}
+	link.Authentication = true
+	err := link.Init()
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	{
+		exp := "key"
+		res := pipeline.key
+		if exp != res {
+			t.Errorf("Bad key %s!=%s", exp, res)
+		}
+	}
+	{
+		exp := "shh"
+		res := pipeline.secret
+		if exp != res {
+			t.Errorf("Bad secret %s!=%s", exp, res)
+		}
+	}
+}
+
+func TestBadStart(t *testing.T) {
+
+	pipeline := newPipelineTest(true)
+	pipeline.authentication = true
+	config[STARTING] = true
+	config[EXECLINENIX] = "nonexistingprogram"
+	link := PipelineLink{pipeline: pipeline, config: config}
+	err := link.Init()
+	if err == nil {
+		t.Errorf("Starting should've error'd")
 	}
 }
 
@@ -203,27 +321,6 @@ func TestAsyncMessages(t *testing.T) {
 		if msgs[i-1] != fmt.Sprintf("Message %v", i) {
 			t.Errorf("Wrong message %v", msgs[i-1])
 		}
-	}
-}
-
-func TestAppendOps(t *testing.T) {
-	//from empty variable
-	res := appendOpts("JAVA_OPTS=")
-	javaOptsEmpty := "JAVA_OPTS= " + OH_MY_GOSH
-	if javaOptsEmpty != res {
-		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "javaOptsEmpty ", javaOptsEmpty, res)
-	}
-	//non-empty no quotes
-	res = appendOpts("JAVA_OPTS=-Dsomething")
-	javaOptsNoQuotes := "JAVA_OPTS=-Dsomething " + OH_MY_GOSH
-	if javaOptsNoQuotes != res {
-		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "javaOptsNoQuotes ", javaOptsNoQuotes, res)
-	}
-
-	res = appendOpts("JAVA_OPTS=\"-Dsomething -Dandsthelse\"")
-	javaOptsQuotes := "JAVA_OPTS=-Dsomething -Dandsthelse " + OH_MY_GOSH
-	if javaOptsQuotes != res {
-		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "javaOptsQuotes ", javaOptsQuotes, res)
 	}
 }
 

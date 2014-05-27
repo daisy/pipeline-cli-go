@@ -36,7 +36,7 @@ func main() {
 	cli.AddMoveUpCommand(comm, *link)
 	cli.AddMoveDownCommand(comm, *link)
 	cli.AddHaltCommand(comm, *link)
-	cli.AddVersionCommand(comm, link)
+	cli.AddVersionCommand(comm, *link)
 
 	err = comm.Run(os.Args[1:])
 	if err != nil {

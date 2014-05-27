@@ -12,9 +12,22 @@ import (
 )
 
 const (
-	QUEUE_CALL    = "queue"
-	MOVEUP_CALL   = "moveup"
-	MOVEDOWN_CALL = "movedown"
+	QUEUE_CALL         = "queue"
+	MOVEUP_CALL        = "moveup"
+	MOVEDOWN_CALL      = "movedown"
+	LOG_CALL           = "log"
+	JOB_CALL           = "job"
+	DELETE_CALL        = "delete"
+	HALT_CALL          = "halt"
+	RESULTS_CALL       = "results"
+	JOBS_CALL          = "jobs"
+	DELETE_CLIENT_CALL = "delete_client"
+	NEW_CLIENT_CALL    = "new_client"
+	CLIENT_CALL        = "client"
+	MODIFY_CLIENT_CALL = "modify_client"
+	LIST_CLIENT_CALL   = "list_client"
+	PROPERTIES_CALL    = "properties"
+	SIZES_CALL         = "sizes"
 )
 
 //Sets the output of the cli to a bytes.Buffer
@@ -47,6 +60,26 @@ func checkTableLine(r io.Reader, separator string, values []string) (ok bool, li
 	return true, line, ""
 }
 
+//returns a map containing the key and values according to text lines separated by :, ignores lines that do not contain paired values
+func checkMapLikeOutput(r io.Reader) map[string]string {
+	reader := bufio.NewScanner(r)
+	values := make(map[string]string)
+	for reader.Scan() {
+		pair := strings.Split(reader.Text(), ":")
+		if len(pair) == 2 {
+			values[strings.Trim(pair[0], " ")] = strings.Trim(pair[1], " ")
+		} //else ignroe
+	}
+	return values
+}
+
+type FailingWriter struct {
+}
+
+func (f FailingWriter) Write([]byte) (int, error) {
+	return 0, errors.New("writing error")
+}
+
 //Pipeline Mock
 type PipelineTest struct {
 	fail           bool
@@ -59,6 +92,8 @@ type PipelineTest struct {
 	call           string
 	val            interface{}
 	failOnCall     string
+	key            string
+	secret         string
 }
 
 func (p PipelineTest) mockCall() (val interface{}, err error) {
@@ -95,7 +130,9 @@ func (p PipelineTest) Call() string {
 
 }
 
-func (p PipelineTest) SetCredentials(key, secret string) {
+func (p *PipelineTest) SetCredentials(key, secret string) {
+	p.key = key
+	p.secret = secret
 }
 
 func (p *PipelineTest) Alive() (alive pipeline.Alive, err error) {
@@ -127,6 +164,11 @@ func (p *PipelineTest) ScriptUrl(id string) string {
 }
 
 func (p *PipelineTest) Job(id string, msgSeq int) (job pipeline.Job, err error) {
+	p.call = JOB_CALL
+	_, err = p.mockCall()
+	if err != nil {
+		return
+	}
 	if p.fail {
 		return job, errors.New("Error")
 	}
@@ -145,43 +187,96 @@ func (p *PipelineTest) JobRequest(newJob pipeline.JobRequest, data []byte) (job 
 
 func (p *PipelineTest) DeleteJob(id string) (ok bool, err error) {
 	p.deleted = true
+	p.call = DELETE_CALL
+	ret, err := p.mockCall()
+	if ret != nil {
+		return ret.(bool), err
+	}
 	return
 }
 
 func (p *PipelineTest) Results(id string) (data []byte, err error) {
-	p.resulted = true
+	p.call = RESULTS_CALL
+	ret, err := p.mockCall()
+	if ret != nil {
+		return ret.([]byte), err
+	}
 	return
 }
 func (p *PipelineTest) Log(id string) (data []byte, err error) {
+	p.call = LOG_CALL
+	ret, err := p.mockCall()
+	if ret != nil {
+		return ret.([]byte), err
+	}
 	return
 }
 func (p *PipelineTest) Jobs() (jobs pipeline.Jobs, err error) {
+	p.call = JOBS_CALL
+	ret, err := p.mockCall()
+	if ret != nil {
+		return ret.(pipeline.Jobs), err
+	}
 	return
 }
 
 func (p *PipelineTest) Halt(key string) error {
-	return nil
+	p.call = HALT_CALL
+	_, err := p.mockCall()
+	return err
 }
 
 func (p *PipelineTest) Clients() (c []pipeline.Client, err error) {
+	p.call = LIST_CLIENT_CALL
+	ret, err := p.mockCall()
+	if ret != nil {
+		return ret.([]pipeline.Client), err
+	}
 	return
 }
 func (p *PipelineTest) NewClient(cIn pipeline.Client) (cOut pipeline.Client, err error) {
-	return
+	p.call = NEW_CLIENT_CALL
+	out, err := p.mockCall()
+	if err != nil {
+		return
+	}
+	return *(out.(*pipeline.Client)), err
 }
 func (p *PipelineTest) DeleteClient(id string) (ok bool, err error) {
-	return
+	p.call = DELETE_CLIENT_CALL
+	_, err = p.mockCall()
+	return true, err
 }
 func (p *PipelineTest) Client(id string) (client pipeline.Client, err error) {
-	return
+	p.call = CLIENT_CALL
+	out, err := p.mockCall()
+	if err != nil {
+		return
+	}
+	return *(out.(*pipeline.Client)), err
 }
 func (p *PipelineTest) ModifyClient(client pipeline.Client, id string) (c pipeline.Client, err error) {
-	return
+	p.call = MODIFY_CLIENT_CALL
+	_, err = p.mockCall()
+	if err != nil {
+		return
+	}
+	return client, err
 }
 func (p *PipelineTest) Properties() (props []pipeline.Property, err error) {
+	p.call = PROPERTIES_CALL
+	ret, err := p.mockCall()
+	if ret != nil {
+		return ret.([]pipeline.Property), err
+	}
 	return
 }
 func (p *PipelineTest) Sizes() (sizes pipeline.JobSizes, err error) {
+	p.call = SIZES_CALL
+	ret, err := p.mockCall()
+	if ret != nil {
+		return ret.(pipeline.JobSizes), err
+	}
 	return
 }
 func (p *PipelineTest) Queue() (val []pipeline.QueueJob, err error) {

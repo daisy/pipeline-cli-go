@@ -1,19 +1,17 @@
 package cli
 
-//TODO get rid of link methods that just bypass the to the pipeline
 import (
 	//"github.com/capitancambio/go-subcommand"
 	"fmt"
-	"os"
 	"text/template"
 
+	"github.com/capitancambio/go-subcommand"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
 )
 
 const (
-	TmplClients = `client_id         (role)
-
-{{range .}}{{.Id}}          ({{.Role}})
+	TmplClients = `client_id	(role)
+{{range .}}{{.Id}}	({{.Role}})
 {{end}}
 `
 	TmplClient = `
@@ -23,109 +21,69 @@ Contact:        {{.Contact}}
 Secret:         ****
 
 `
-	TmplProperties = ` Name          Value           Bundle
-        
-{{range .}}{{.Name}}            {{.Value}}              {{.BundleName}}
+	TmplProperties = `Name          Value           Bundle
+{{range .}}{{.Name}}	{{.Value}}	{{.BundleName}}
 {{end}}
 `
 	TmplSizes = `JobId                 		Context Size    Output Size    Log Size    Total Size
-
-{{range .}}{{.Id}}   {{format .Context}}    {{format .Output}}    {{format .Log}}    {{ total . | format}}
+{{range .}}{{.Id}}	{{format .Context}}	{{format .Output}}	{{format .Log}}	{{ total . | format}}
 {{end}}
 
 `
 )
 
 func (c *Cli) AddClientListCommand(link PipelineLink) {
-	c.AddCommand("list", "Returns the list of the available clients", func(command string, args ...string) error {
-		clients, err := link.pipeline.Clients()
-		if err != nil {
-			return err
-		}
-		tmpl, err := template.New("list").Parse(TmplClients)
-		if err != nil {
-			return err
-		}
-		err = tmpl.Execute(os.Stdout, clients)
-		return nil
-	})
+	newCommandBuilder("list", "Returns the list of the available clients").
+		withCall(func(args ...string) (interface{}, error) {
+		return link.Clients()
+	}).withTemplate(TmplClients).build(c)
 }
 
 func (c *Cli) AddNewClientCommand(link PipelineLink) {
 	client := &pipeline.Client{}
-	cmd := c.AddCommand("create", "Creates a new client", func(command string, args ...string) error {
-		res, err := link.pipeline.NewClient(*client)
-		if err != nil {
-			return err
-		}
-		tmpl, err := template.New("client").Parse(TmplClient)
-		if err != nil {
-			return err
-		}
-		fmt.Println("Client successfully created")
-		err = tmpl.Execute(os.Stdout, res)
-		return nil
-	})
+	fn := func(...string) (interface{}, error) {
+		return link.NewClient(*client)
+	}
+	cmd := newCommandBuilder("create", "Creates a new client").
+		withCall(fn).withTemplate(TmplClient).build(c)
+
 	cmd.AddOption("id", "i", "Client id (must be unique)", func(string, value string) error {
 		client.Id = value
 		return nil
 	}).Must(true)
-
-	cmd.AddOption("secret", "s", "Client secret", func(string, value string) error {
-		client.Secret = value
-		return nil
-	}).Must(true)
-
-	cmd.AddOption("role", "r", "Client role  (ADMIN,CLIENTAPP)", func(string, value string) error {
-		if value != "ADMIN" && value != "CLIENTAPP" {
-			return fmt.Errorf("%v is not a valid role", value)
-		}
-		client.Role = value
-		return nil
-	}).Must(true)
-
-	cmd.AddOption("contact", "c", "Client e-mail address ", func(string, value string) error {
-		client.Contact = value
-		return nil
-	})
+	addClientOptions(cmd, client, true)
 
 }
 
 func (c *Cli) AddDeleteClientCommand(link PipelineLink) {
-	c.AddCommand("delete", "Deletes a client", func(command string, args ...string) error {
+	newCommandBuilder("delete", "Deletes a client").
+		withCall(func(args ...string) (v interface{}, err error) {
 		id := args[0]
-		_, err := link.pipeline.DeleteClient(id)
+		_, err = link.DeleteClient(id)
 		if err != nil {
-			return err
+			return
 		}
-		fmt.Printf("Client %v deleted\n", id)
-		return nil
-	}).SetArity(1, "CLIENT_ID")
+		return fmt.Sprintf("Client %v deleted\n", id), err
+	}).
+		build(c).SetArity(1, "CLIENT_ID")
 }
 
 func (c *Cli) AddClientCommand(link PipelineLink) {
+	fn := func(args ...string) (v interface{}, err error) {
+		return link.Client(args[0])
+	}
 
-	c.AddCommand("client", "Prints the detailed client inforamtion", func(command string, args ...string) error {
-		id := args[0]
-		client, err := link.pipeline.Client(id)
-		if err != nil {
-			return err
-		}
-		tmpl, err := template.New("client").Parse(TmplClient)
-		if err != nil {
-			return err
-		}
-		return tmpl.Execute(os.Stdout, client)
-	}).SetArity(1, "CLIENT_ID")
+	newCommandBuilder("client", "Prints the detailed client inforamtion").
+		withCall(fn).withTemplate(TmplClient).build(c).SetArity(1, "CLIENT_ID")
 }
 func (c *Cli) AddModifyClientCommand(link PipelineLink) {
 	client := &pipeline.Client{}
-	cmd := c.AddCommand("modify", "Modifies a client", func(command string, args ...string) error {
+	fn := func(args ...string) (v interface{}, err error) {
 		id := args[0]
 		client.Id = id
-		old, err := link.pipeline.Client(id)
+		old, err := link.Client(id)
 		if err != nil {
-			return err
+			return
 		}
 		if len(client.Secret) == 0 {
 			client.Secret = old.Secret
@@ -136,52 +94,43 @@ func (c *Cli) AddModifyClientCommand(link PipelineLink) {
 		if len(client.Contact) == 0 {
 			client.Contact = old.Contact
 		}
-		res, err := link.pipeline.ModifyClient(*client, id)
-		if err != nil {
-			return err
-		}
-		tmpl, err := template.New("client").Parse(TmplClient)
-		if err != nil {
-			return err
-		}
-		fmt.Println("Client successfully modified")
-		err = tmpl.Execute(os.Stdout, res)
-		return nil
-	}).SetArity(1, "CLIENT_ID")
-	cmd.AddOption("secret", "s", "Client secret", func(string, value string) error {
-		client.Secret = value
-		return nil
-	})
-
-	cmd.AddOption("role", "r", "Client role  (ADMIN,CLIENTAPP)", func(string, value string) error {
-		if value != "ADMIN" && value != "CLIENTAPP" {
-			return fmt.Errorf("%v is not a valid role", value)
-		}
-		client.Role = value
-		return nil
-	})
-
-	cmd.AddOption("contact", "c", "Client e-mail address ", func(string, value string) error {
-		client.Contact = value
-		return nil
-	})
+		return link.ModifyClient(*client, id)
+	}
+	cmd := newCommandBuilder("modify", "Modifies a client").
+		withCall(fn).withTemplate(TmplClient).build(c)
+	cmd.SetArity(1, "CLIENT_ID")
+	addClientOptions(cmd, client, false)
 
 }
 
-func (c *Cli) AddPropertyListCommand(link PipelineLink) {
-	c.AddCommand("properties", "List the pipeline ws runtime properties ", func(command string, args ...string) error {
-		properties, err := link.pipeline.Properties()
-		if err != nil {
-			return err
-		}
-		tmpl, err := template.New("props").Parse(TmplProperties)
-		if err != nil {
-			return err
-		}
-		err = tmpl.Execute(os.Stdout, properties)
-
+//Adds the client options a part from the id
+func addClientOptions(cmd *subcommand.Command, client *pipeline.Client, must bool) {
+	cmd.AddOption("secret", "s", "Client secret", func(string, value string) error {
+		client.Secret = value
 		return nil
-	})
+	}).Must(must)
+	cmd.AddOption("role", "r", "Client role  (ADMIN,CLIENTAPP)",
+		func(string, value string) error {
+			if value != "ADMIN" && value != "CLIENTAPP" {
+				return fmt.Errorf("%v is not a valid role", value)
+			}
+			client.Role = value
+			return nil
+		}).Must(must)
+	cmd.AddOption("contact", "c", "Client e-mail address ",
+		func(string, value string) error {
+			client.Contact = value
+			return nil
+		})
+}
+
+func (c *Cli) AddPropertyListCommand(link PipelineLink) {
+	newCommandBuilder("properties", "List the pipeline ws runtime properties ").
+		withCall(
+		func(args ...string) (interface{}, error) {
+			return link.Properties()
+		}).
+		withTemplate(TmplProperties).build(c)
 }
 
 func (c *Cli) AddSizesCommand(link PipelineLink) {
@@ -189,29 +138,27 @@ func (c *Cli) AddSizesCommand(link PipelineLink) {
 	unitFormatter := func(size int) string {
 		return fmt.Sprintf("%d", size)
 	}
-	cmd := c.AddCommand("sizes", "Prits the total size or a detailed list of job data stored in the server", func(command string, args ...string) error {
-		sizes, err := link.Sizes()
-		if err != nil {
-			return err
-		}
-		if !list {
-			fmt.Printf("Total %s\n", unitFormatter(sizes.Total))
-		} else {
-			funcMap := template.FuncMap{
-				"format": unitFormatter,
-				"total": func(size pipeline.JobSize) int {
-					return size.Context + size.Output + size.Log
-				},
-			}
-			tmpl, err := template.New("sizes").Funcs(funcMap).Parse(TmplSizes)
+	cmd := c.AddCommand("sizes", "Prits the total size or a detailed list of job data stored in the server",
+		func(command string, args ...string) error {
+			sizes, err := link.Sizes()
 			if err != nil {
 				return err
 			}
-			err = tmpl.Execute(os.Stdout, sizes.JobSizes)
-		}
+			if !list {
+				c.Printf("Total %s\n", unitFormatter(sizes.Total))
+			} else {
+				funcMap := template.FuncMap{
+					"format": unitFormatter,
+					"total": func(size pipeline.JobSize) int {
+						return size.Context + size.Output + size.Log
+					},
+				}
+				tmpl := template.Must(template.New("sizes").Funcs(funcMap).Parse(TmplSizes))
+				err = tmpl.Execute(c.Output, sizes.JobSizes)
+			}
 
-		return nil
-	})
+			return err
+		})
 	cmd.AddSwitch("list", "l", "Displays a detailed list rather than the total size", func(string, string) error {
 		list = true
 		return nil
