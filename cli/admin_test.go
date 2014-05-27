@@ -498,3 +498,102 @@ func TestWithLinkError(t *testing.T) {
 		t.Errorf("Expected error not returned")
 	}
 }
+
+//Tests the sizes command
+func TestSizesTotal(t *testing.T) {
+
+	sizes := pipeline.JobSizes{
+		Total: 10,
+	}
+	cli, link, _ := makeReturningCli(sizes, t)
+	r := overrideOutput(cli)
+	cli.AddSizesCommand(link)
+	err := cli.Run([]string{"sizes"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if getCall(link) != SIZES_CALL {
+		t.Errorf("sizes wasn't called")
+	}
+	expected := "Total 10\n"
+	res := r.String()
+	if res != expected {
+		t.Errorf("Wrong total '%s'!='%s'", expected, res)
+	}
+}
+
+//Tests the sizes command when an error is returned from the link
+func TestSizesTotalError(t *testing.T) {
+
+	sizes := pipeline.JobSizes{
+		Total: 10,
+	}
+	cli, link, pipe := makeReturningCli(sizes, t)
+	pipe.failOnCall = SIZES_CALL
+	cli.AddSizesCommand(link)
+	err := cli.Run([]string{"sizes"})
+	if getCall(link) != SIZES_CALL {
+		t.Errorf("sizes wasn't called")
+	}
+	if err == nil {
+		t.Errorf("Link error not propagated")
+	}
+}
+
+//Tests the sizes command printing the total as M
+func TestSizesTotalFormat(t *testing.T) {
+
+	sizes := pipeline.JobSizes{
+		Total: 1048576, //1M
+	}
+	cli, link, _ := makeReturningCli(sizes, t)
+	r := overrideOutput(cli)
+	cli.AddSizesCommand(link)
+	err := cli.Run([]string{"sizes", "-h"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if getCall(link) != SIZES_CALL {
+		t.Errorf("sizes wasn't called")
+	}
+	expected := "Total 1.0000M\n"
+	res := r.String()
+	if res != expected {
+		t.Errorf("Wrong total '%s'!='%s'", expected, res)
+	}
+}
+
+//Sizes list
+func TestSizesList(t *testing.T) {
+	sizes := pipeline.JobSizes{
+		JobSizes: []pipeline.JobSize{
+			pipeline.JobSize{
+				Id:      "id",
+				Context: 2,
+				Output:  3,
+				Log:     3,
+			},
+		},
+		Total: 10,
+	}
+	cli, link, _ := makeReturningCli(sizes, t)
+	r := overrideOutput(cli)
+	cli.AddSizesCommand(link)
+	err := cli.Run([]string{"sizes", "-l"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if getCall(link) != SIZES_CALL {
+		t.Errorf("sizes wasn't called")
+	}
+	outputLine := []string{
+		sizes.JobSizes[0].Id,
+		fmt.Sprintf("%d", sizes.JobSizes[0].Context),
+		fmt.Sprintf("%d", sizes.JobSizes[0].Output),
+		fmt.Sprintf("%d", sizes.JobSizes[0].Log),
+		"8",
+	}
+	if ok, line, message := checkTableLine(r, "\t", outputLine); !ok {
+		t.Errorf("Sizes list doesn't match (%q,%s)\n%s", outputLine, line, message)
+	}
+}

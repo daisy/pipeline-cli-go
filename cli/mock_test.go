@@ -27,6 +27,7 @@ const (
 	MODIFY_CLIENT_CALL = "modify_client"
 	LIST_CLIENT_CALL   = "list_client"
 	PROPERTIES_CALL    = "properties"
+	SIZES_CALL         = "sizes"
 )
 
 //Sets the output of the cli to a bytes.Buffer
@@ -265,9 +266,13 @@ func (p *PipelineTest) Properties() (props []pipeline.Property, err error) {
 		return ret.([]pipeline.Property), err
 	}
 	return
-	return
 }
 func (p *PipelineTest) Sizes() (sizes pipeline.JobSizes, err error) {
+	p.call = SIZES_CALL
+	ret, err := p.mockCall()
+	if ret != nil {
+		return ret.(pipeline.JobSizes), err
+	}
 	return
 }
 func (p *PipelineTest) Queue() (val []pipeline.QueueJob, err error) {

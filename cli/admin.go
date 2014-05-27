@@ -3,7 +3,6 @@ package cli
 import (
 	//"github.com/capitancambio/go-subcommand"
 	"fmt"
-	"os"
 	"text/template"
 
 	"github.com/capitancambio/go-subcommand"
@@ -27,8 +26,7 @@ Secret:         ****
 {{end}}
 `
 	TmplSizes = `JobId                 		Context Size    Output Size    Log Size    Total Size
-
-{{range .}}{{.Id}}   {{format .Context}}    {{format .Output}}    {{format .Log}}    {{ total . | format}}
+{{range .}}{{.Id}}	{{format .Context}}	{{format .Output}}	{{format .Log}}	{{ total . | format}}
 {{end}}
 
 `
@@ -147,7 +145,7 @@ func (c *Cli) AddSizesCommand(link PipelineLink) {
 				return err
 			}
 			if !list {
-				fmt.Printf("Total %s\n", unitFormatter(sizes.Total))
+				c.Printf("Total %s\n", unitFormatter(sizes.Total))
 			} else {
 				funcMap := template.FuncMap{
 					"format": unitFormatter,
@@ -155,14 +153,11 @@ func (c *Cli) AddSizesCommand(link PipelineLink) {
 						return size.Context + size.Output + size.Log
 					},
 				}
-				tmpl, err := template.New("sizes").Funcs(funcMap).Parse(TmplSizes)
-				if err != nil {
-					return err
-				}
-				err = tmpl.Execute(os.Stdout, sizes.JobSizes)
+				tmpl := template.Must(template.New("sizes").Funcs(funcMap).Parse(TmplSizes))
+				err = tmpl.Execute(c.Output, sizes.JobSizes)
 			}
 
-			return nil
+			return err
 		})
 	cmd.AddSwitch("list", "l", "Displays a detailed list rather than the total size", func(string, string) error {
 		list = true
