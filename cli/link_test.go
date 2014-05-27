@@ -111,6 +111,93 @@ func TestBringUpFail(t *testing.T) {
 	}
 }
 
+func TestCheckCredentials(t *testing.T) {
+
+	pipeline := newPipelineTest(false)
+	pipeline.authentication = true
+	//both empty
+	{
+		cnf := copyConf()
+		cnf[STARTING] = false
+		cnf[CLIENTKEY] = ""
+		cnf[CLIENTSECRET] = ""
+		link := PipelineLink{pipeline: pipeline, config: cnf}
+		link.Authentication = true
+		err := link.Init()
+		if err == nil {
+			t.Errorf("Credentials should've error'd")
+		}
+	}
+	{
+		cnf := copyConf()
+		cnf[STARTING] = false
+		//client secret empty
+		cnf[CLIENTKEY] = "key"
+		cnf[CLIENTSECRET] = ""
+		link := PipelineLink{pipeline: pipeline, config: cnf}
+		link.Authentication = true
+		err := link.Init()
+		if err == nil {
+			t.Errorf("Credentials should've error'd")
+		}
+	}
+	{
+		//client key  empty
+		cnf := copyConf()
+		cnf[STARTING] = false
+		cnf[CLIENTKEY] = ""
+		cnf[CLIENTSECRET] = "shhh"
+		link := PipelineLink{pipeline: pipeline, config: cnf}
+		link.Authentication = true
+		err := link.Init()
+		if err == nil {
+			t.Errorf("Credentials should've error'd")
+		}
+	}
+}
+func TestSetCredentials(t *testing.T) {
+
+	pipeline := newPipelineTest(false)
+	pipeline.authentication = true
+	cnf := copyConf()
+	cnf[STARTING] = false
+	cnf[CLIENTKEY] = "key"
+	cnf[CLIENTSECRET] = "shh"
+	link := PipelineLink{pipeline: pipeline, config: cnf}
+	link.Authentication = true
+	err := link.Init()
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	{
+		exp := "key"
+		res := pipeline.key
+		if exp != res {
+			t.Errorf("Bad key %s!=%s", exp, res)
+		}
+	}
+	{
+		exp := "shh"
+		res := pipeline.secret
+		if exp != res {
+			t.Errorf("Bad secret %s!=%s", exp, res)
+		}
+	}
+}
+
+func TestBadStart(t *testing.T) {
+
+	pipeline := newPipelineTest(true)
+	pipeline.authentication = true
+	config[STARTING] = true
+	config[EXECLINENIX] = "nonexistingprogram"
+	link := PipelineLink{pipeline: pipeline, config: config}
+	err := link.Init()
+	if err == nil {
+		t.Errorf("Starting should've error'd")
+	}
+}
+
 func TestScripts(t *testing.T) {
 	link := PipelineLink{pipeline: newPipelineTest(false)}
 	list, err := link.Scripts()

@@ -92,6 +92,8 @@ type PipelineTest struct {
 	call           string
 	val            interface{}
 	failOnCall     string
+	key            string
+	secret         string
 }
 
 func (p PipelineTest) mockCall() (val interface{}, err error) {
@@ -128,7 +130,9 @@ func (p PipelineTest) Call() string {
 
 }
 
-func (p PipelineTest) SetCredentials(key, secret string) {
+func (p *PipelineTest) SetCredentials(key, secret string) {
+	p.key = key
+	p.secret = secret
 }
 
 func (p *PipelineTest) Alive() (alive pipeline.Alive, err error) {
