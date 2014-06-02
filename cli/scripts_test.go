@@ -56,6 +56,92 @@ func TestParseInputsBased(t *testing.T) {
 		t.Errorf("Url 1 is not formated %v", urls[1].String())
 	}
 }
+func TestScriptPriority(t *testing.T) {
+	config := copyConf()
+	config[STARTING] = false
+	pipeline := newPipelineTest(false)
+	pipeline.fsallow = false
+	link := &PipelineLink{pipeline: pipeline, config: config}
+	cli, err := makeCli("test", link)
+	cli.WithScripts = false
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	jobRequest, err := scriptToCommand(SCRIPT, cli, link)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	//parser.Parse([]string{"test","--i-source","value"})
+	err = cli.Run([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true", "--priority", "low"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if jobRequest.Priority != "low" {
+		t.Errorf("Priority not set %s!=%s", jobRequest.Priority, "low")
+	}
+}
+func TestScriptPriorityMedium(t *testing.T) {
+	config := copyConf()
+	config[STARTING] = false
+	pipeline := newPipelineTest(false)
+	pipeline.fsallow = false
+	link := &PipelineLink{pipeline: pipeline, config: config}
+	cli, err := makeCli("test", link)
+	cli.WithScripts = false
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	_, err = scriptToCommand(SCRIPT, cli, link)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	////medium
+	err = cli.Run([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true", "--priority", "medium"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+}
+func TestScriptPriorityHigh(t *testing.T) {
+	config := copyConf()
+	config[STARTING] = false
+	pipeline := newPipelineTest(false)
+	pipeline.fsallow = false
+	link := &PipelineLink{pipeline: pipeline, config: config}
+	cli, err := makeCli("test", link)
+	cli.WithScripts = false
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	_, err = scriptToCommand(SCRIPT, cli, link)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	////medium
+	err = cli.Run([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true", "--priority", "high"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+}
+func TestScriptPriorityWrongValue(t *testing.T) {
+	config := copyConf()
+	config[STARTING] = false
+	pipeline := newPipelineTest(false)
+	pipeline.fsallow = false
+	link := &PipelineLink{pipeline: pipeline, config: config}
+	cli, err := makeCli("test", link)
+	cli.WithScripts = false
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	_, err = scriptToCommand(SCRIPT, cli, link)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	err = cli.Run([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true", "--priority", "not_so_low"})
+	if err == nil {
+		t.Errorf("Wrong priority value didn't error")
+	}
+}
 
 func TestScriptToCommand(t *testing.T) {
 	config := copyConf()

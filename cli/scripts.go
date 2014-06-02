@@ -30,6 +30,7 @@ func getLastIdPath() string {
 type JobRequest struct {
 	Script     string               //Script id to call
 	Nicename   string               //Job's nicename
+	Priority   string               //Job's priority
 	Options    map[string][]string  //Options for the script
 	Inputs     map[string][]url.URL //Input ports for the script
 	Data       []byte               //Data to send with the job request
@@ -154,6 +155,15 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 		jExec.req.Nicename = nice
 
 		return nil
+	})
+	command.AddOption("priority", "r", "Set job's priority (high|medium|low)", func(name, priority string) error {
+		if priority == "high" || priority == "medium" || priority == "low" {
+			jExec.req.Priority = priority
+			return nil
+		} else {
+			return fmt.Errorf("%s is not a valid priority. Allowed values are high, medium and low",
+				priority)
+		}
 	})
 	command.AddSwitch("quiet", "q", "Do not print the job's messages", func(string, string) error {
 		jExec.verbose = false

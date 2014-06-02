@@ -257,6 +257,7 @@ func jobRequestToPipeline(req JobRequest, p PipelineLink) (pReq pipeline.JobRequ
 	pReq = pipeline.JobRequest{
 		Script:   pipeline.Script{Href: href},
 		Nicename: req.Nicename,
+		Priority: req.Priority,
 	}
 	for name, values := range req.Inputs {
 		input := pipeline.Input{Name: name}
