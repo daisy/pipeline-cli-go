@@ -15,6 +15,14 @@ import (
 
 var keyFile = "dp2key.txt"
 
+//Checks that a string defines a priority value
+func checkPriority(priority string) bool {
+
+	return priority == "high" || priority == "medium" ||
+		priority == "low"
+
+}
+
 //loads the halt key
 func loadKey() (key string, err error) {
 	//get temp dir

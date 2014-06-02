@@ -68,7 +68,7 @@ func TestNewClientCommand(t *testing.T) {
 	w := overrideOutput(cli)
 	pipe.val = client
 	cli.AddNewClientCommand(link)
-	strArgs := fmt.Sprintf("create -i %s -s %s -c %s -r %s", client.Id, client.Secret, client.Contact, client.Role)
+	strArgs := fmt.Sprintf("create -i %s -s %s -c %s -r %s -p high", client.Id, client.Secret, client.Contact, client.Role)
 	err := cli.Run(strings.Split(strArgs, " "))
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
@@ -96,6 +96,11 @@ func TestNewClientCommand(t *testing.T) {
 	expected = client.Role
 	if expected != result {
 		t.Errorf("Role '%s'!='%s'", expected, result)
+	}
+	result = outs["Priority"]
+	expected = client.Priority
+	if expected != result {
+		t.Errorf("Priority'%s'!='%s'", expected, result)
 	}
 }
 
@@ -181,10 +186,11 @@ func TestNewClientCommandRoles(t *testing.T) {
 func TestClientCommand(t *testing.T) {
 
 	client := &pipeline.Client{
-		Id:      "id",
-		Secret:  "secret",
-		Role:    "ADMIN",
-		Contact: "admin@localhost",
+		Id:       "id",
+		Secret:   "secret",
+		Role:     "ADMIN",
+		Contact:  "admin@localhost",
+		Priority: "low",
 	}
 	cli, link, pipe := makeReturningCli(*client, t)
 	w := overrideOutput(cli)
@@ -217,6 +223,11 @@ func TestClientCommand(t *testing.T) {
 	expected = client.Role
 	if expected != result {
 		t.Errorf("Role '%s'!='%s'", expected, result)
+	}
+	result = outs["Priority"]
+	expected = client.Priority
+	if expected != result {
+		t.Errorf("Priority '%s'!='%s'", expected, result)
 	}
 
 }
@@ -307,15 +318,16 @@ func TestModifyClientCommandClientNotFound(t *testing.T) {
 func TestModifyClientCommand(t *testing.T) {
 
 	client := &pipeline.Client{
-		Id:      "id",
-		Secret:  "secret",
-		Role:    "ADMIN",
-		Contact: "admin@localhost",
+		Id:       "id",
+		Secret:   "secret",
+		Role:     "ADMIN",
+		Contact:  "admin@localhost",
+		Priority: "low",
 	}
 	cli, link, _ := makeReturningCli(client, t)
 	w := overrideOutput(cli)
 	cli.AddModifyClientCommand(link)
-	args := "modify -s noso -r CLIENTAPP -c other@localhost id"
+	args := "modify -s noso -r CLIENTAPP -c other@localhost -p high id"
 	err := cli.Run(strings.Split(args, " "))
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
@@ -339,6 +351,11 @@ func TestModifyClientCommand(t *testing.T) {
 	expected = "CLIENTAPP"
 	if expected != result {
 		t.Errorf("Role '%s'!='%s'", expected, result)
+	}
+	result = outs["Priority"]
+	expected = "high"
+	if expected != result {
+		t.Errorf("Priority '%s'!='%s'", expected, result)
 	}
 
 }

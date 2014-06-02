@@ -157,7 +157,7 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 		return nil
 	})
 	command.AddOption("priority", "r", "Set job's priority (high|medium|low)", func(name, priority string) error {
-		if priority == "high" || priority == "medium" || priority == "low" {
+		if checkPriority(priority) {
 			jExec.req.Priority = priority
 			return nil
 		} else {
