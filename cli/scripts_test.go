@@ -80,6 +80,31 @@ func TestScriptPriority(t *testing.T) {
 		t.Errorf("Priority not set %s!=%s", jobRequest.Priority, "low")
 	}
 }
+
+func TestScriptNiceName(t *testing.T) {
+	config := copyConf()
+	config[STARTING] = false
+	pipeline := newPipelineTest(false)
+	pipeline.fsallow = false
+	link := &PipelineLink{pipeline: pipeline, config: config}
+	cli, err := makeCli("test", link)
+	cli.WithScripts = false
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	jobRequest, err := scriptToCommand(SCRIPT, cli, link)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	//parser.Parse([]string{"test","--i-source","value"})
+	err = cli.Run([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true", "--nicename", "my_job"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if jobRequest.Nicename != "my_job" {
+		t.Errorf("Nice name not set %s!=%s", jobRequest.Nicename, "my_job")
+	}
+}
 func TestScriptPriorityMedium(t *testing.T) {
 	config := copyConf()
 	config[STARTING] = false
