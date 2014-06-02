@@ -241,6 +241,9 @@ func TestJobStatusCommand(t *testing.T) {
 	if status, ok := values["Status"]; !ok || status != JOB_1.Status {
 		t.Errorf("Status doesn't match %s!=%s", JOB_1.Status, status)
 	}
+	if status, ok := values["Priority"]; !ok || status != JOB_1.Priority {
+		t.Errorf("Status doesn't match %s!=%s", JOB_1.Status, status)
+	}
 	if _, ok := values["Messages"]; ok {
 		t.Errorf("I said to shut up! but I can see some msgs")
 	}

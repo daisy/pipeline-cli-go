@@ -11,6 +11,7 @@ const (
 	JobStatusTemplate = `
 Job Id: {{.Data.Id }}
 Status: {{.Data.Status}}
+Priority: {{.Data.Priority}}
 {{if .Verbose}}Messages:
 {{range .Data.Messages}}
 ({{.Sequence}})[{{.Level}}]      {{.Content}}
