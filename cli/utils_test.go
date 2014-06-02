@@ -128,3 +128,23 @@ func TestLoadKeyOpenError(t *testing.T) {
 		t.Errorf("Expected error loading key didn't occur", err)
 	}
 }
+
+//Test that check priority recognises the allowed priorities
+func TestCheckPriorityOk(t *testing.T) {
+	if !checkPriority("high") {
+		t.Errorf("high wasn't recognised as priority")
+	}
+	if !checkPriority("medium") {
+		t.Errorf("medium wasn't recognised as priority")
+	}
+	if !checkPriority("low") {
+		t.Errorf("low wasn't recognised as priority")
+	}
+}
+
+//Test that check priority discards non-allowed values
+func TestCheckPriorityNotOk(t *testing.T) {
+	if checkPriority("asdfasdf") {
+		t.Errorf("non-recognised value passed checkPriority")
+	}
+}

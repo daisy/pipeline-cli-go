@@ -19,6 +19,7 @@ Client id:      {{.Id}}
 Role:           {{.Role}}
 Contact:        {{.Contact}}
 Secret:         ****
+Priority:       {{.Priority}}
 
 `
 	TmplProperties = `Name          Value           Bundle
@@ -121,6 +122,16 @@ func addClientOptions(cmd *subcommand.Command, client *pipeline.Client, must boo
 		func(string, value string) error {
 			client.Contact = value
 			return nil
+		})
+	cmd.AddOption("priority", "p", "Set the client priority (low|medium|high)",
+		func(string, priority string) error {
+			if checkPriority(priority) {
+				client.Priority = priority
+				return nil
+			} else {
+				return fmt.Errorf("%s is not a valid priority. Allowed values are high, medium and low",
+					priority)
+			}
 		})
 }
 

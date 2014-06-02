@@ -30,6 +30,7 @@ var (
 		Status:   "RUNNING",
 		Nicename: "my_little_job",
 		Id:       "job1",
+		Priority: "low",
 		Messages: []pipeline.Message{
 			pipeline.Message{
 				Sequence: 1,
@@ -47,6 +48,7 @@ var (
 		Status:   "DONE",
 		Nicename: "the_other_job",
 		Id:       "job2",
+		Priority: "high",
 		Messages: []pipeline.Message{
 			pipeline.Message{
 				Sequence: 3,
