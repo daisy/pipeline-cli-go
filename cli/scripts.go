@@ -150,6 +150,10 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 		//desc:=option.Desc+
 		command.AddOption("x-"+option.Name, "", option.Desc, optionFunc(jobRequest, link, option.Type)).Must(option.Required)
 	}
+	command.AddOption("output", "o", "Directory where to store the results. This option is mandatory when the job is not executed in the background", func(name, folder string) error {
+		jExec.output = folder
+		return nil
+	})
 
 	command.AddOption("nicename", "n", "Set job's nice name", func(name, nice string) error {
 		jExec.req.Nicename = nice
@@ -176,10 +180,6 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 
 	command.AddSwitch("background", "b", "Sends the job and exits", func(string, string) error {
 		jExec.req.Background = true
-		return nil
-	})
-	command.AddOption("output", "o", "Directory where to store the results. This option is mandatory when the job is not executed in the background", func(name, folder string) error {
-		jExec.output = folder
 		return nil
 	})
 
