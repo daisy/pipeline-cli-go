@@ -13,12 +13,7 @@ func main() {
 	cnf := cli.NewConfig()
 	// proper error handlign missing
 
-	link, err := cli.NewLink(cnf)
-	if err != nil {
-		fmt.Printf("Error connecting to the pipeline webservice:\n\t%v\n", err)
-		os.Exit(-1)
-	}
-
+	link := cli.NewLink(cnf)
 	comm, err := cli.NewCli("dp2", link)
 
 	if err != nil {
