@@ -13,18 +13,13 @@ func main() {
 	cnf := cli.NewConfig()
 	// proper error handlign missing
 
-	link, err := cli.NewLink(cnf)
-
-	if err != nil {
-		fmt.Printf("Error connecting to the pipeline webservice:\n\t%v\n", err)
-		os.Exit(-1)
-	}
+	link := cli.NewLink(cnf)
 
 	comm, err := cli.NewCli("dp2admin", link)
-	comm.WithScripts = false
 	if err != nil {
 		fmt.Printf("Error creating client:\n\t%v\n", err)
 	}
+	comm.WithScripts = false
 
 	cli.AddHaltCommand(comm, *link)
 	comm.AddClientListCommand(*link)
