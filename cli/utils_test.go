@@ -3,7 +3,9 @@ package cli
 import (
 	"archive/zip"
 	"bytes"
+	"fmt"
 	"os"
+	"os/user"
 	"path/filepath"
 	"testing"
 )
@@ -146,5 +148,64 @@ func TestCheckPriorityOk(t *testing.T) {
 func TestCheckPriorityNotOk(t *testing.T) {
 	if checkPriority("asdfasdf") {
 		t.Errorf("non-recognised value passed checkPriority")
+	}
+}
+
+func TestGetLastId(t *testing.T) {
+	oldSep := pathSeparator
+	oldHome := homePath
+	homePath = "home"
+	defer func() {
+		pathSeparator = oldSep
+		homePath = oldHome
+	}()
+	//for linux
+	pathSeparator = '/'
+	path := getLastIdPath("linux")
+	if "home/.daisy-pipeline/dp2/lastid" != path {
+		t.Errorf("Lastid path for linux is wrong %v", path)
+	}
+
+	//for windows
+	os.Setenv("APPDATA", "windows")
+	path = getLastIdPath("windows")
+	pathSeparator = '\\'
+	if path != "windows\\DAISY Pipeline 2\\dp2\\lastid" {
+		t.Errorf("Lastid path for windows is wrong %v", path)
+	}
+	//for darwin
+	pathSeparator = '/'
+	path = getLastIdPath("darwin")
+	if "home/Library/Application Support/DAISY Pipeline 2/dp2/lastid" != path {
+		t.Errorf("Lastid path for darwin is wrong %v", path)
+	}
+}
+
+func TestUnknownOs(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Errorf("Expecting panic didn't happend")
+		}
+	}()
+	getLastIdPath("myos")
+
+}
+
+func TestMustUserError(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Errorf("Expecting panic didn't happend")
+		}
+	}()
+
+	mustUser(nil, fmt.Errorf("erroring"))
+
+}
+
+func TestMustUser(t *testing.T) {
+	usr := &user.User{}
+	res := mustUser(usr, nil)
+	if usr != res {
+		t.Errorf("Different users")
 	}
 }

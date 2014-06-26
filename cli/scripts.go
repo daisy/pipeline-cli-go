@@ -9,22 +9,14 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
-	"bitbucket.org/kardianos/osext"
 	"github.com/daisy-consortium/pipeline-clientlib-go"
 )
 
-//set the last id path
-var LastIdPath = getLastIdPath()
-
-func getLastIdPath() string {
-	path, err := osext.ExecutableFolder()
-	if err != nil {
-		panic("Couldn't get the executable path")
-	}
-	return path + string(os.PathSeparator) + ".lastid"
-}
+//set the last id path (in utils)
+var LastIdPath = getLastIdPath(runtime.GOOS)
 
 //Represents the job request
 type JobRequest struct {

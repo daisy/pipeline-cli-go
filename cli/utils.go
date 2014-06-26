@@ -8,12 +8,25 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/user"
 	"path/filepath"
 
 	"github.com/capitancambio/go-subcommand"
 )
 
 var keyFile = "dp2key.txt"
+
+//testing multienv is a pain
+var pathSeparator = os.PathSeparator
+var homePath = mustUser(user.Current()).HomeDir
+
+//Filter the user error and panics if the error is present
+func mustUser(user *user.User, err error) *user.User {
+	if err != nil {
+		panic("Current user not found")
+	}
+	return user
+}
 
 //Checks that a string defines a priority value
 func checkPriority(priority string) bool {
@@ -129,4 +142,20 @@ func zippedDataToFolder(data []byte, folder string) (absPath string, err error) 
 	absPath, err = createAbsoluteFolder(folder)
 	err = dumpZippedData(data, absPath)
 	return
+}
+
+//gets the path for last id file
+func getLastIdPath(currentOs string) string {
+	var path string
+	switch currentOs {
+	case "linux":
+		path = homePath + "/.daisy-pipeline/dp2/lastid"
+	case "windows":
+		path = os.Getenv("APPDATA") + "\\DAISY Pipeline 2\\dp2\\lastid"
+	case "darwin":
+		path = homePath + "/Library/Application Support/DAISY Pipeline 2/dp2/lastid"
+	default:
+		panic(fmt.Sprintf("Platform not recognised %v", currentOs))
+	}
+	return path
 }
