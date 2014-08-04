@@ -431,6 +431,33 @@ func TestResultsCommand(t *testing.T) {
 
 }
 
+//Checks that results link entry has been called and data has been stored
+func TestResultsCommandToZip(t *testing.T) {
+	data := createZipFile(t)
+	cli, link, _ := makeReturningCli(data, t)
+	r := overrideOutput(cli)
+	AddResultsCommand(cli, link)
+	file, err := ioutil.TempFile("", "cli_")
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	defer os.Remove(file.Name())
+	err = cli.Run([]string{"results", "-z", "-o", file.Name(), "id"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if getCall(link) != RESULTS_CALL {
+		t.Errorf("results wasn't called")
+	}
+
+	msg := string(r.Bytes())
+	expected := fmt.Sprintf("Results stored into zipfile %v\n", file.Name())
+	if msg != expected {
+		t.Errorf("Got the wrong message '%s'!='%s'", expected, msg)
+	}
+
+}
+
 //Checks that results link entry has been called but the error of wrong zip data is returned
 func TestResultsCommandBadZipFormat(t *testing.T) {
 	data := []byte("i'm not a zip file")

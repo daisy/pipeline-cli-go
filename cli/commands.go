@@ -78,23 +78,35 @@ func AddDeleteCommand(cli *Cli, link PipelineLink) {
 
 func AddResultsCommand(cli *Cli, link PipelineLink) {
 	outputPath := ""
+	zipped := false
 	cmd := newCommandBuilder("results", "Stores the results from a job").
 		withCall(func(args ...string) (v interface{}, err error) {
 		data, err := link.Results(args[0])
 		if err != nil {
 			return
 		}
-		path, err := zippedDataToFolder(data, outputPath)
+		var path string
+		var extra string
+		if zipped {
+			path, err = zippedDataToFile(data, outputPath)
+			extra = "zipfile "
+		} else {
+			path, err = zippedDataToFolder(data, outputPath)
+		}
 		if err != nil {
 			return
 		}
-
-		return fmt.Sprintf("Results stored into %v\n", path), err
+		return fmt.Sprintf("Results stored into %s%v\n", extra, path), err
 	}).buildWithId(cli)
 	cmd.AddOption("output", "o", "Directory where to store the results", func(name, folder string) error {
 		outputPath = folder
 		return nil
 	}).Must(true)
+
+	cmd.AddSwitch("zipped", "z", "Store the results into a zipfile rather than to folder", func(string, string) error {
+		zipped = true
+		return nil
+	}).Must(false)
 }
 
 func AddLogCommand(cli *Cli, link PipelineLink) {
