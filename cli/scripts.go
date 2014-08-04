@@ -54,6 +54,7 @@ type jobExecution struct {
 	output     string
 	verbose    bool
 	persistent bool
+	zipped     bool
 }
 
 func (j jobExecution) run(w io.Writer) error {
@@ -100,8 +101,13 @@ func (j jobExecution) run(w io.Writer) error {
 			if err != nil {
 				return err
 			}
-			zippedDataToFolder(data, j.output)
-			fmt.Fprintln(w, "Results stored")
+			if j.zipped {
+				zippedDataToFile(data, j.output)
+				fmt.Fprintln(w, "Results stored to file")
+			} else {
+				zippedDataToFolder(data, j.output)
+				fmt.Fprintln(w, "Results stored")
+			}
 			if !j.persistent {
 				_, err = j.link.Delete(job.Id)
 				if err != nil {
@@ -126,6 +132,7 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 		req:     jobRequest,
 		output:  "",
 		verbose: true,
+		zipped:  false,
 	}
 	command := cli.AddScriptCommand(script.Id, script.Description, func(string, ...string) error {
 		if err := jExec.run(cli.Output); err != nil {
@@ -142,8 +149,12 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 		//desc:=option.Desc+
 		command.AddOption("x-"+option.Name, "", option.Desc, optionFunc(jobRequest, link, option.Type)).Must(option.Required)
 	}
-	command.AddOption("output", "o", "Directory where to store the results. This option is mandatory when the job is not executed in the background", func(name, folder string) error {
+	command.AddOption("output", "o", "Path where to store the results. This option is mandatory when the job is not executed in the background", func(name, folder string) error {
 		jExec.output = folder
+		return nil
+	})
+	command.AddSwitch("zip", "z", "Write the output to a zip file rather than to a folder", func(string, string) error {
+		jExec.zipped = true
 		return nil
 	})
 

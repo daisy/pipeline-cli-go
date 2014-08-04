@@ -140,7 +140,28 @@ func dumpZippedData(data []byte, folder string) error {
 func zippedDataToFolder(data []byte, folder string) (absPath string, err error) {
 	//Create folder
 	absPath, err = createAbsoluteFolder(folder)
+	filepath.Abs(folder)
 	err = dumpZippedData(data, absPath)
+	return
+}
+
+//Creates the folder and dumps the zippped data
+func zippedDataToFile(data []byte, file string) (absPath string, err error) {
+	//Create folder
+	absPath, err = filepath.Abs(file)
+	if err != nil {
+		return
+	}
+	f, err := os.Create(file)
+	if err != nil {
+		return
+	}
+	defer func() {
+		f.Close()
+	}()
+	if _, err = f.Write(data); err != nil {
+		return absPath, err
+	}
 	return
 }
 
