@@ -26,6 +26,23 @@ var (
 			},
 		},
 	}
+	JOB_REQUEST_2 = JobRequest{
+		Script:   "test",
+		Nicename: "nice",
+		Options: map[string][]string{
+			SCRIPT.Options[0].Name: []string{"file1.xml", "file2.xml"},
+			SCRIPT.Options[1].Name: []string{"true"},
+		},
+		Inputs: map[string][]url.URL{
+			SCRIPT.Inputs[0].Name: []url.URL{
+				url.URL{Opaque: "tmp/file.xml"},
+				url.URL{Opaque: "tmp/file1.xml"},
+			},
+			SCRIPT.Inputs[1].Name: []url.URL{
+				url.URL{Opaque: "tmp/file2.xml"},
+			},
+		},
+	}
 	JOB_1 = pipeline.Job{
 		Status:   "RUNNING",
 		Nicename: "my_little_job",
@@ -239,7 +256,7 @@ func TestScriptsFail(t *testing.T) {
 
 func TestJobRequestToPipeline(t *testing.T) {
 	link := PipelineLink{pipeline: newPipelineTest(false)}
-	req, err := jobRequestToPipeline(JOB_REQUEST, link)
+	req, err := jobRequestToPipeline(JOB_REQUEST_2, link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -259,15 +276,15 @@ func TestJobRequestToPipeline(t *testing.T) {
 		}
 
 	}
-	if req.Inputs[0].Items[0].Value != JOB_REQUEST.Inputs[req.Inputs[0].Name][0].String() {
-		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", JOB_REQUEST.Inputs[req.Inputs[0].Name][0].String(), req.Inputs[0].Items[0].Value)
+	if req.Inputs[0].Items[0].Value != JOB_REQUEST_2.Inputs[req.Inputs[0].Name][0].String() {
+		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", JOB_REQUEST_2.Inputs[req.Inputs[0].Name][0].String(), req.Inputs[0].Items[0].Value)
 	}
-	if req.Inputs[0].Items[1].Value != JOB_REQUEST.Inputs[req.Inputs[0].Name][1].String() {
-		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", JOB_REQUEST.Inputs[req.Inputs[0].Name][1].String(), req.Inputs[0].Items[1].Value)
+	if req.Inputs[0].Items[1].Value != JOB_REQUEST_2.Inputs[req.Inputs[0].Name][1].String() {
+		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", JOB_REQUEST_2.Inputs[req.Inputs[0].Name][1].String(), req.Inputs[0].Items[1].Value)
 	}
 
-	if req.Inputs[1].Items[0].Value != JOB_REQUEST.Inputs[req.Inputs[1].Name][0].String() {
-		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", JOB_REQUEST.Inputs[req.Inputs[1].Name][0].String(), req.Inputs[1].Items[0].Value)
+	if req.Inputs[1].Items[0].Value != JOB_REQUEST_2.Inputs[req.Inputs[1].Name][0].String() {
+		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", JOB_REQUEST_2.Inputs[req.Inputs[1].Name][0].String(), req.Inputs[1].Items[0].Value)
 	}
 
 	if len(req.Options) != 2 {
@@ -281,18 +298,18 @@ func TestJobRequestToPipeline(t *testing.T) {
 	if req.Options[1].Name != SCRIPT.Options[1].Name {
 		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", req.Options[1].Name, SCRIPT.Options[1].Name)
 	}
-	if req.Options[0].Items[0].Value != JOB_REQUEST.Options[req.Options[0].Name][0] {
-		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", JOB_REQUEST.Options[req.Options[0].Name][0], req.Options[0].Items[0].Value)
+	if req.Options[0].Items[0].Value != JOB_REQUEST_2.Options[req.Options[0].Name][0] {
+		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", JOB_REQUEST_2.Options[req.Options[0].Name][0], req.Options[0].Items[0].Value)
 	}
-	if req.Options[0].Items[1].Value != JOB_REQUEST.Options[req.Options[0].Name][1] {
-		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", JOB_REQUEST.Options[req.Options[0].Name][1], req.Options[0].Items[1].Value)
+	if req.Options[0].Items[1].Value != JOB_REQUEST_2.Options[req.Options[0].Name][1] {
+		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", JOB_REQUEST_2.Options[req.Options[0].Name][1], req.Options[0].Items[1].Value)
 	}
 
 	if len(req.Options[1].Items) != 0 {
 		t.Error("Simple option lenght !=0")
 	}
-	if req.Options[1].Value != JOB_REQUEST.Options[req.Options[1].Name][0] {
-		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", JOB_REQUEST.Options[req.Options[0].Name][1], req.Options[0].Items[1].Value)
+	if req.Options[1].Value != JOB_REQUEST_2.Options[req.Options[1].Name][0] {
+		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", JOB_REQUEST_2.Options[req.Options[0].Name][1], req.Options[0].Items[1].Value)
 	}
 }
 
