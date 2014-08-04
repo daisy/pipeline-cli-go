@@ -25,7 +25,7 @@ go get launchpad.net/goyaml
 go get github.com/daisy-consortium/pipeline-clientlib-go
 go get bitbucket.org/kardianos/osext
 echo "Testing..."
-go test github.com/daisy-consortium/pipeline-cli-go/cli
+go test github.com/daisy-consortium/pipeline-cli-go/cli/...
 echo "Building ..."
 echo "Buliding native dp2"
 go install github.com/daisy-consortium/pipeline-cli-go/dp2 
