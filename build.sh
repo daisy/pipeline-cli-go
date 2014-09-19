@@ -8,9 +8,11 @@ function buildPlatform {
                 popd > /dev/null
         fi
         echo "Building dp2 for ${1}/${2}"
-        GOOS=${1} GOARCH=${2} go build -o bin/dp2_${1}_${2} github.com/daisy-consortium/pipeline-cli-go/dp2 
+        mkdir -p bin/${1}_${2}
+        GOOS=${1} GOARCH=${2} go build -o bin/${1}_${2}/dp2 github.com/daisy-consortium/pipeline-cli-go/dp2 
         echo "Building dp2admin for ${1}/${2}"
-        GOOS=${1} GOARCH=${2} go build -o bin/dp2admin_${1}_${2} github.com/daisy-consortium/pipeline-cli-go/dp2admin 
+        GOOS=${1} GOARCH=${2} go build -o bin/${1}_${2}/dp2admin github.com/daisy-consortium/pipeline-cli-go/dp2admin 
+        cp ../dp2/config.yml bin/${1}_${2}
 }
 
 OS="darwin linux windows"
@@ -27,11 +29,6 @@ go get bitbucket.org/kardianos/osext
 echo "Testing..."
 go test github.com/daisy-consortium/pipeline-cli-go/cli/...
 echo "Building ..."
-echo "Buliding native dp2"
-go install github.com/daisy-consortium/pipeline-cli-go/dp2 
-echo "Buliding native dp2admin"
-go install github.com/daisy-consortium/pipeline-cli-go/dp2admin 
-cp ../dp2/config.yml bin
 for sys in $OS; do 
         for plat in $PLATFORMS; do 
                 buildPlatform $sys $plat; 
