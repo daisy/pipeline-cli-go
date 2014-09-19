@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"net/url"
+	"sort"
 	"testing"
 
 	"github.com/daisy-consortium/pipeline-clientlib-go"
@@ -75,6 +76,18 @@ var (
 		},
 	}
 )
+
+type Inputs []pipeline.Input
+
+func (in Inputs) Len() int {
+	return len(in)
+}
+func (in Inputs) Swap(i, j int) {
+	in[i], in[j] = in[j], in[i]
+}
+func (in Inputs) Less(i, j int) bool {
+	return in[i].Name < in[j].Name
+}
 
 //Tests the correct creation of a new link
 func TestNewLink(t *testing.T) {
@@ -266,6 +279,7 @@ func TestJobRequestToPipeline(t *testing.T) {
 	if "nice" != req.Nicename {
 		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "nicename", "nice", req.Nicename)
 	}
+	sort.Sort(Inputs(req.Inputs))
 
 	if len(req.Inputs) != 2 {
 		t.Errorf("Bad input list len %v", len(req.Inputs))

@@ -38,16 +38,16 @@ var SCRIPT pipeline.Script = pipeline.Script{
 	},
 	Inputs: []pipeline.Input{
 		pipeline.Input{
-			Desc:      "input port",
-			Mediatype: "application/x-dtbook+xml",
-			Name:      "source",
-			Sequence:  true,
-		},
-		pipeline.Input{
 			Desc:      "input port not seq",
 			Mediatype: "application/x-dtbook+xml",
 			Name:      "single",
 			Sequence:  false,
+		},
+		pipeline.Input{
+			Desc:      "input port",
+			Mediatype: "application/x-dtbook+xml",
+			Name:      "source",
+			Sequence:  true,
 		},
 	},
 }
