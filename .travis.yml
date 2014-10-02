@@ -5,7 +5,7 @@ go:
 install:
         - go get github.com/capitancambio/go-subcommand
         - go get launchpad.net/goyaml
-        - go get github.com/daisy-consortium/pipeline-clientlib-go
+        - go get github.com/daisy/pipeline-clientlib-go
         - go get bitbucket.org/kardianos/osext
         - go get code.google.com/p/go.tools/cmd/cover
         - go get github.com/modocache/gover

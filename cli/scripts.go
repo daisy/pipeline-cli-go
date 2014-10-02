@@ -12,7 +12,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/daisy-consortium/pipeline-clientlib-go"
+	"github.com/daisy/pipeline-clientlib-go"
 )
 
 //set the last id path (in utils)

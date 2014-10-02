@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/daisy-consortium/pipeline-cli-go/cli"
+	"github.com/daisy/pipeline-cli-go/cli"
 )
 
 func main() {

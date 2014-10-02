@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/daisy-consortium/pipeline-clientlib-go"
+	"github.com/daisy/pipeline-clientlib-go"
 )
 
 const (

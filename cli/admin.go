@@ -6,7 +6,7 @@ import (
 	"text/template"
 
 	"github.com/capitancambio/go-subcommand"
-	"github.com/daisy-consortium/pipeline-clientlib-go"
+	"github.com/daisy/pipeline-clientlib-go"
 )
 
 const (

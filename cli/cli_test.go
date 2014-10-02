@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/daisy-consortium/pipeline-clientlib-go"
+	"github.com/daisy/pipeline-clientlib-go"
 )
 
 var SCRIPT pipeline.Script = pipeline.Script{

@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/daisy-consortium/pipeline-clientlib-go"
+	"github.com/daisy/pipeline-clientlib-go"
 )
 
 var (
