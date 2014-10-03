@@ -36,5 +36,6 @@ func main() {
 	err = comm.Run(os.Args[1:])
 	if err != nil {
 		fmt.Printf("Error:\n\t%v\n", err)
+		os.Exit(-1)
 	}
 }

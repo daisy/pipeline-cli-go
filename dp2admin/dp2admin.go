@@ -18,6 +18,7 @@ func main() {
 	comm, err := cli.NewCli("dp2admin", link)
 	if err != nil {
 		fmt.Printf("Error creating client:\n\t%v\n", err)
+		os.Exit(-1)
 	}
 	comm.WithScripts = false
 
@@ -33,5 +34,6 @@ func main() {
 	err = comm.Run(os.Args[1:])
 	if err != nil {
 		fmt.Printf("Error:\n\t%v\n", err)
+		os.Exit(-1)
 	}
 }
