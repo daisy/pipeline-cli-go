@@ -134,7 +134,7 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 		verbose: true,
 		zipped:  false,
 	}
-	command := cli.AddScriptCommand(script.Id, script.Description, func(string, ...string) error {
+	command := cli.AddScriptCommand(script.Id, fmt.Sprintf("%s [v%s]", script.Description, script.Version), func(string, ...string) error {
 		if err := jExec.run(cli.Output); err != nil {
 			return err
 		}
