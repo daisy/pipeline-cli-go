@@ -12,7 +12,8 @@ tags
 dp2/dp2
 dp2admin/dp2admin
 
-#mvn targe
+#build directories
+build
 target
 
 #lastid files

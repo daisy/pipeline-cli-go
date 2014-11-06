@@ -1,18 +1,19 @@
 language: go
+
 go:
-        - tip
+  - tip
 
-install:
-        - go get github.com/capitancambio/go-subcommand
-        - go get launchpad.net/goyaml
-        - go get github.com/daisy/pipeline-clientlib-go
-        - go get bitbucket.org/kardianos/osext
-        - go get code.google.com/p/go.tools/cmd/cover
-        - go get github.com/modocache/gover
-        - go get github.com/mattn/goveralls
-        - go build github.com/mattn/goveralls
+after_success:
+  - make cover-deploy
+  - make dist
+  - .maven/maven_deploy.sh
 
-script:
-        - go test -covermode=atomic -coverprofile=profile.cov ./cli
-        - ls $HOME/gopath
-        - $HOME/gopath/bin/goveralls -coverprofile=profile.cov -service=travis-ci
+# whitelist; only deploy master branch
+branches:
+  only:
+  - master
+
+env:
+  global:
+  - secure: "fh6uYTjqFq6J9sT2XeAIjSMNRaycbcD4hgqBhOm3GbZsrUP90G24RwkI+lglccC27h/TwgdMvS8uljFgPkZW8gSX08wIvuEBRhZnvf95Z4Bm6DOBH7MpYH46UKTqYe0MswwU0dwEJz98yAPd9+Ohte+lL5tkJnEUFVLDjUQYkUo="
+  - secure: "DadC/IxfZk1dOCB3aXuxajJtFMnb1c0dgPWeJOLxySQdER23pxIQYI5OjCJIr/bSmMV39K9aaYK/fc237wr3nveR7jkID+WAz4xJSTK13igeVAr5OSca5lrxAqSJWJkrVz8+qiJnw8restG3uwQ4QJm0OagaHCBjKr5314Rn5ZY="
