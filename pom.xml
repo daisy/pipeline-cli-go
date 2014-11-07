@@ -40,7 +40,7 @@
                   </plugin>
                   <configuration>
                     <descriptors>
-                      <descriptor>.maven/assembly.xml</descriptor>
+                      <descriptor>.build/assembly.xml</descriptor>
                     </descriptors>
                   </configuration>
                 </pluginExecutor>

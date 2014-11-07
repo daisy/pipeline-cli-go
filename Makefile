@@ -18,7 +18,7 @@ Available targets:
 endef
 export HELP_TEXT
 
-.PHONY: help clean build-setup build dist cover cover-deploy all
+.PHONY: help clean build-setup build dist test cover-deploy all
 
 all: build
 
@@ -28,7 +28,7 @@ help:
 clean:
 	-rm -rf "${BUILDDIR}"
 
-build: build-dp2 build-dp2admin
+build: test build-dp2 build-dp2admin
 
 build-setup:
 	@export GOPATH="${GOPATH}"
@@ -58,12 +58,8 @@ dist: build-setup cover
 	        -osarch="linux/amd64 linux/386 darwin/386 darwin/amd64 windows/386 windows/amd64" \
 	        ./dp2/ ./dp2admin
 
-#test: build-setup
-	#@echo "Running tests..."
-	#@${GO} test ./cli/...
-
-cover: build-setup
-	@echo "Running tests with coverage..."
+test: build-setup
+	@echo "Running tests..."
 	@${GO} test -covermode=atomic -coverprofile=${BUILDDIR}/profile.cov ./cli/...
 
 cover-deploy: cover

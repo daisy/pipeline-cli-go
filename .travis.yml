@@ -4,9 +4,7 @@ go:
   - tip
 
 after_success:
-  - make cover-deploy
-  - make dist
-  - .maven/maven_deploy.sh
+  - .build/after_success.sh
 
 # whitelist; only deploy master branch
 branches:
