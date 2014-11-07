@@ -305,25 +305,40 @@ func TestJobRequestToPipeline(t *testing.T) {
 		t.Errorf("Bad option list len %v", len(req.Inputs))
 	}
 
-	if req.Options[0].Name != SCRIPT.Options[0].Name {
-		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", req.Options[0].Name, SCRIPT.Options[0].Name)
-	}
+	optMap := map[string]pipeline.Option{}
+	for _, opt := range req.Options {
+		optMap[opt.Name] = opt
 
-	if req.Options[1].Name != SCRIPT.Options[1].Name {
-		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", req.Options[1].Name, SCRIPT.Options[1].Name)
 	}
-	if req.Options[0].Items[0].Value != JOB_REQUEST_2.Options[req.Options[0].Name][0] {
-		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", JOB_REQUEST_2.Options[req.Options[0].Name][0], req.Options[0].Items[0].Value)
+	for i := 0; i < 2; i++ {
+		if _, ok := optMap[SCRIPT.Options[i].Name]; !ok {
+			t.Errorf("JobRequest to pipeline failed \nexpected %v not found in options", SCRIPT.Options[i].Name)
+		}
 	}
-	if req.Options[0].Items[1].Value != JOB_REQUEST_2.Options[req.Options[0].Name][1] {
-		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", JOB_REQUEST_2.Options[req.Options[0].Name][1], req.Options[0].Items[1].Value)
-	}
+	{ //option test-opt
+		name := "test-opt"
+		opt := optMap[name]
+		reqOpts := JOB_REQUEST_2.Options[name]
+		if len(opt.Items) != len(reqOpts) {
+			t.Errorf("Len of options mismatch %v %v", name, len(reqOpts))
+		}
+		for idx, item := range opt.Items {
+			if item.Value != reqOpts[idx] {
+				t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", reqOpts, item.Value)
+			}
 
-	if len(req.Options[1].Items) != 0 {
-		t.Error("Simple option lenght !=0")
+		}
 	}
-	if req.Options[1].Value != JOB_REQUEST_2.Options[req.Options[1].Name][0] {
-		t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", JOB_REQUEST_2.Options[req.Options[0].Name][1], req.Options[0].Items[1].Value)
+	{ //option another-top
+		name := "another-opt"
+		opt := optMap[name]
+		if len(opt.Items) != 0 {
+			t.Error("Simple option lenght !=0")
+		}
+		if opt.Value != JOB_REQUEST_2.Options[name][0] {
+
+			t.Errorf("JobRequest to pipeline failed \nexpected %v \nresult %v", JOB_REQUEST_2.Options[name][0], opt.Value)
+		}
 	}
 }
 
