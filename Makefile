@@ -1,7 +1,8 @@
-BUILDDIR := ${CURDIR}/build
-GOPATH   := ${BUILDDIR}
-GO       := env GOPATH="${GOPATH}" go
-GOX      := env GOPATH="${GOPATH}" ${GOPATH}/bin/gox
+BUILDDIR  := ${CURDIR}/build
+GOPATH    := ${BUILDDIR}
+GO        := env GOPATH="${GOPATH}" go
+GOX       := env GOPATH="${GOPATH}" ${GOPATH}/bin/gox
+GOVERALLS := env GOPATH="${GOPATH}" ${GOPATH}/bin/goveralls
 
 
 define HELP_TEXT
@@ -60,10 +61,12 @@ dist: build-setup test
 
 test: build-setup
 	@echo "Running tests..."
-	@${GO} test -covermode=atomic -coverprofile=${BUILDDIR}/profile.cov ./cli/...
+	@${GO} test -covermode=atomic -coverprofile=${BUILDDIR}/profile.cov \
+		github.com/daisy/pipeline-cli-go/cli
 
-cover-deploy: test
+cover-deploy: test 
+	@${GO} get github.com/modocache/gover
 	@${GO} get github.com/mattn/goveralls
-	GOPATH="${GOPATH}" ${GOPATH}/bin/goveralls \
+	@${GOVERALLS} \
 	      -coverprofile=${BUILDDIR}/profile.cov \
 	      -service=travis-ci
