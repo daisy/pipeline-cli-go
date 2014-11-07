@@ -209,3 +209,87 @@ func TestMustUser(t *testing.T) {
 		t.Errorf("Different users")
 	}
 }
+
+const (
+	OracleJdkVersion = `java version "%s"
+Java(TM) SE Runtime Environment (build 1.7.0_67-b01)
+Java HotSpot(TM) Client VM (build 24.65-b04, mixed mode, sharing)`
+	OpenJdkVersion = `java version "%s"
+OpenJDK Runtime Environment (IcedTea 2.5.2) (7u65-2.5.2-3~14.04)
+OpenJDK 64-Bit Server VM (build 24.65-b04, mixed mode)`
+)
+
+func TestParseVersion(t *testing.T) {
+	v, err := parseVesion(fmt.Sprintf(OracleJdkVersion, "1.7_u12"))
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if v != 1.7 {
+		t.Errorf("version was expected to be 1.7")
+	}
+	v, err = parseVesion(fmt.Sprintf(OpenJdkVersion, "1.7_12"))
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if v != 1.7 {
+		t.Errorf("version was expected to be 1.7")
+	}
+
+	v, err = parseVesion(fmt.Sprintf(OracleJdkVersion, "1.6.12"))
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if v != 1.6 {
+		t.Errorf("version was expected to be 1.6")
+	}
+	v, err = parseVesion(fmt.Sprintf(OpenJdkVersion, "1.8"))
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if v != 1.8 {
+		t.Errorf("version was expected to be 1.6")
+	}
+
+}
+func TestParseVersionErrors(t *testing.T) {
+	//no java out
+	_, err := parseVesion("")
+	if err == nil {
+		t.Errorf("Expected error not returned for empty string")
+	}
+	_, err = parseVesion("this is not a version line")
+	if err == nil {
+		t.Errorf("Expected error not returned for nonsense")
+	}
+	_, err = parseVesion(fmt.Sprintf(OpenJdkVersion, "arg!"))
+	if err == nil {
+		t.Errorf("Expected error not returned for an unparseable version")
+	}
+
+}
+
+func TestAssertJava(t *testing.T) {
+	back := javaVersionService
+	defer func() {
+		javaVersionService = back
+	}()
+	javaVersionService = func() (string, error) {
+		return fmt.Sprintf(OracleJdkVersion, "1.7_u89"), nil
+	}
+	if err := AssertJava(1.7); err != nil {
+		t.Errorf("Unexpected error %v", err.Error())
+	}
+	javaVersionService = func() (string, error) {
+		return fmt.Sprintf(OracleJdkVersion, "1.6_u89"), nil
+	}
+	if err := AssertJava(1.7); err == nil {
+		t.Errorf("Expected error not returned")
+	}
+	javaVersionService = func() (string, error) {
+		return "", fmt.Errorf("error!")
+	}
+	if err := AssertJava(1.7); err == nil {
+		t.Errorf("Expected error not returned")
+	}
+
+}

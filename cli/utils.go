@@ -8,8 +8,11 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"os/user"
 	"path/filepath"
+	re "regexp"
+	"strconv"
 
 	"github.com/capitancambio/go-subcommand"
 )
@@ -179,4 +182,52 @@ func getLastIdPath(currentOs string) string {
 		panic(fmt.Sprintf("Platform not recognised %v", currentOs))
 	}
 	return path
+}
+
+func AssertJava(minJavaVersion float64) error {
+	//get the output
+	output, err := javaVersionService()
+	if err != nil {
+		return err
+	}
+	//parse the output
+	ver, err := parseVesion(output)
+	if err != nil {
+		return err
+	}
+	//check with the min version
+	if ver < minJavaVersion {
+		return fmt.Errorf("A java version 1.7 or greater is need in order to run the pipeline")
+	}
+	return nil
+}
+
+var javaVersionService = func() (string, error) {
+	javaCmd := "java"
+	//try with JAVA_HOME
+	javaHome := os.Getenv("JAVA_HOME")
+	if javaHome != "" {
+		javaCmd = filepath.Join(javaHome, "bin", javaCmd)
+	}
+	cmd := exec.Command(javaCmd, "-version")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+	//error!
+	return string(output), nil
+}
+
+//parses the vesion from
+func parseVesion(javaOut string) (ver float64, err error) {
+	strVer := ""
+	reg := re.MustCompile(`java version "(\d\.\d)?.*"`)
+	res := reg.FindStringSubmatch(javaOut)
+	if len(res) > 0 {
+		strVer = res[len(res)-1]
+	} else {
+		return ver, fmt.Errorf("Couldn't find version in %s", javaOut)
+	}
+	return strconv.ParseFloat(strVer, 64)
+
 }
