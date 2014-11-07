@@ -13,7 +13,7 @@ Available targets:
   build-dp2           build dp2 tool
   build-dp2admin      build dp2admin tool
   dist                build x-platform binaries
-  cover               run test coverage
+  test                run tests with coverage
   cover-deploy        deploy test coverage results
 endef
 export HELP_TEXT
@@ -49,7 +49,7 @@ build-dp2admin: build-setup
 	@echo "Building dp2admin..."
 	@${GO} install ${GOBUILD_FLAGS} github.com/daisy/pipeline-cli-go/dp2admin
 
-dist: build-setup cover
+dist: build-setup test
 	@echo "Building for x-platform..."
 	@${GO} get github.com/mitchellh/gox
 	@${GOX} -build-toolchain \
@@ -62,8 +62,7 @@ test: build-setup
 	@echo "Running tests..."
 	@${GO} test -covermode=atomic -coverprofile=${BUILDDIR}/profile.cov ./cli/...
 
-cover-deploy: cover
-	@${GO} get github.com/modocache/gover
+cover-deploy: test
 	@${GO} get github.com/mattn/goveralls
 	GOPATH="${GOPATH}" ${GOPATH}/bin/goveralls \
 	      -coverprofile=${BUILDDIR}/profile.cov \
