@@ -5,5 +5,5 @@ if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; th
   make dist
   mvn deploy -DskipTests -Dinvoker.skip=true --settings .maven/settings.xml
 else
-  echo "Skipping Maven deploy."
+  echo "Skipping deploy tasks."
 fi
