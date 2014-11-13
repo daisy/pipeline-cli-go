@@ -94,6 +94,7 @@ type PipelineTest struct {
 	failOnCall     string
 	key            string
 	secret         string
+	withScripts    bool
 }
 
 func (p PipelineTest) mockCall() (val interface{}, err error) {
@@ -119,6 +120,7 @@ func newPipelineTest(fail bool) *PipelineTest {
 		authentication: false,
 		fsallow:        true,
 		call:           "",
+		withScripts:    true,
 	}
 }
 
@@ -149,7 +151,12 @@ func (p *PipelineTest) Scripts() (scripts pipeline.Scripts, err error) {
 	if p.fail {
 		return scripts, errors.New("Error")
 	}
-	return pipeline.Scripts{Href: "test", Scripts: []pipeline.Script{pipeline.Script{Id: "test"}}}, err
+	if p.withScripts {
+		return pipeline.Scripts{Href: "test", Scripts: []pipeline.Script{pipeline.Script{Id: "test"}}}, err
+	} else {
+		return
+
+	}
 }
 
 func (p *PipelineTest) Script(id string) (script pipeline.Script, err error) {

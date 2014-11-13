@@ -64,7 +64,6 @@ type Cli struct {
 	*subcommand.Parser
 	Scripts        []*ScriptCommand      //pipeline scripts
 	StaticCommands []*subcommand.Command //commands which are always present
-	WithScripts    bool                  //Load the scripts once the configuration has been loaded. True by default
 	Output         io.Writer             //writer where to dump the output
 }
 
@@ -77,9 +76,8 @@ type ScriptCommand struct {
 //Creates a new CLI with a name and pipeline link to perform queries
 func NewCli(name string, link *PipelineLink) (cli *Cli, err error) {
 	cli = &Cli{
-		Parser:      subcommand.NewParser(name),
-		WithScripts: true,
-		Output:      os.Stdout,
+		Parser: subcommand.NewParser(name),
+		Output: os.Stdout,
 	}
 	//set the help command
 	cli.setHelp()
@@ -90,14 +88,12 @@ func NewCli(name string, link *PipelineLink) (cli *Cli, err error) {
 		if err = link.Init(); err != nil {
 			return err
 		}
-		if cli.WithScripts {
-			scripts, err := link.Scripts()
-			if err != nil {
-				fmt.Printf("Error loading scripts:\n\t%v\n", err)
-				os.Exit(-1)
-			}
-			cli.AddScripts(scripts, link)
+		scripts, err := link.Scripts()
+		if err != nil {
+			fmt.Printf("Error loading scripts:\n\t%v\n", err)
+			os.Exit(-1)
 		}
+		cli.AddScripts(scripts, link)
 		if !link.IsLocal() {
 			//it we are not in local mode we need to send the data
 			for _, cmd := range cli.Scripts {

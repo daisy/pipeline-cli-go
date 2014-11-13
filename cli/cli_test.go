@@ -61,7 +61,7 @@ func makeCli(name string, link *PipelineLink) (*Cli, error) {
 		return nil, err
 	}
 	cli.Output = ioutil.Discard
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	return cli, err
 }
 
@@ -72,7 +72,7 @@ func TestCliAddScriptCommand(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	cli.WithScripts = true
+	link.pipeline.(*PipelineTest).withScripts = false
 	cli.AddScriptCommand("test", "", func(string, ...string) error { return nil }, nil)
 	if cli.Scripts[0].Name != "test" {
 		t.Error("Add script is not adding scripts to the list")
@@ -100,7 +100,7 @@ func TestCliNonRequiredOptions(t *testing.T) {
 	config[STARTING] = false
 	link := &PipelineLink{FsAllow: true, pipeline: newPipelineTest(false), config: config}
 	cli, err := makeCli("testprog", link)
-	cli.WithScripts = true
+	link.pipeline.(*PipelineTest).withScripts = true
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -135,7 +135,7 @@ func TestClientNew(t *testing.T) {
 	config[STARTING] = false
 	link := &PipelineLink{pipeline: newPipelineTest(false), config: config}
 	cli, err := makeCli("testprog", link)
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -149,7 +149,7 @@ func TestClientNew(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	cli.AddNewClientCommand(*link)
 	err = cli.Run([]string{"create", "-r", "ADMIN", "-s", "sshh"})
 	if err == nil {
@@ -159,7 +159,7 @@ func TestClientNew(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	cli.AddNewClientCommand(*link)
 	err = cli.Run([]string{"create", "-r", "ADMIN", "-i", "paco"})
 	if err == nil {
@@ -174,7 +174,7 @@ func TestClientDelete(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	cli.AddDeleteClientCommand(*link)
 	//Bad role
 	err = cli.Run([]string{"delete"})
@@ -195,7 +195,7 @@ func TestConfigIntOptions(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 
 	err = cli.Run([]string{"--" + PORT, "harwich", "test"})
 	if err == nil {
@@ -218,7 +218,7 @@ func TestConfigBooleanOptions(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 
 	err = cli.Run([]string{"--" + DEBUG, "please", "test"})
 	if err == nil {
@@ -241,7 +241,7 @@ func TestConfigOptions(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	exp := Config{
 		HOST:         "http://google.com",
 		PORT:         80,
@@ -288,7 +288,7 @@ func TestConfigFileDoesNotExists(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	err = cli.Run([]string{"-f", "/tmp/theprobabilitythatthisfileactuallyexistsshouldbereallycloseto0",
 		"help",
 	})
@@ -318,7 +318,7 @@ func TestConfigFile(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	err = cli.Run([]string{"-f", tmpFile.Name(),
 		"help",
 	})

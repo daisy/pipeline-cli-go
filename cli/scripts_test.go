@@ -63,7 +63,7 @@ func TestScriptPriority(t *testing.T) {
 	pipeline.fsallow = false
 	link := &PipelineLink{pipeline: pipeline, config: config}
 	cli, err := makeCli("test", link)
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -88,7 +88,7 @@ func TestScriptNiceName(t *testing.T) {
 	pipeline.fsallow = false
 	link := &PipelineLink{pipeline: pipeline, config: config}
 	cli, err := makeCli("test", link)
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -112,7 +112,7 @@ func TestScriptPriorityMedium(t *testing.T) {
 	pipeline.fsallow = false
 	link := &PipelineLink{pipeline: pipeline, config: config}
 	cli, err := makeCli("test", link)
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -133,7 +133,7 @@ func TestScriptPriorityHigh(t *testing.T) {
 	pipeline.fsallow = false
 	link := &PipelineLink{pipeline: pipeline, config: config}
 	cli, err := makeCli("test", link)
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -154,7 +154,7 @@ func TestScriptPriorityWrongValue(t *testing.T) {
 	pipeline.fsallow = false
 	link := &PipelineLink{pipeline: pipeline, config: config}
 	cli, err := makeCli("test", link)
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -175,7 +175,7 @@ func TestScriptToCommand(t *testing.T) {
 	pipeline.fsallow = false
 	link := &PipelineLink{pipeline: pipeline, config: config}
 	cli, err := makeCli("test", link)
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	if err != nil {
 		t.Error("Unexpected error")
 	}
@@ -217,7 +217,7 @@ func TestScriptToCommandNoLocalFail(t *testing.T) {
 		t.Error("Unexpected error")
 	}
 	overrideOutput(cli)
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -240,7 +240,7 @@ func TestCliRequiredOptions(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	//parser.Parse([]string{"test","--i-source","value"})
 	err = cli.Run([]string{"test", "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-another-opt", "true"})
 	if err == nil {
@@ -285,7 +285,7 @@ func TestScriptNoOutput(t *testing.T) {
 		t.Error("Unexpected error")
 	}
 	overrideOutput(cli)
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -305,7 +305,7 @@ func TestScriptDefault(t *testing.T) {
 		t.Error("Unexpected error")
 	}
 	overrideOutput(cli)
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
 		t.Error("Unexpected error")
@@ -333,7 +333,7 @@ func TestScriptBackground(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	//parser.Parse([]string{"test","--i-source","value"})
 	err = cli.Run([]string{"test", "-b", "-o", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
 	if err != nil {
@@ -359,7 +359,7 @@ func TestScriptPersistent(t *testing.T) {
 		t.Error("Unexpected error")
 	}
 	overrideOutput(cli)
-	cli.WithScripts = false
+	link.pipeline.(*PipelineTest).withScripts = false
 	_, err = scriptToCommand(SCRIPT, cli, link)
 	if err != nil {
 		t.Error("Unexpected error")
