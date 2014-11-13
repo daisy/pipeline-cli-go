@@ -31,7 +31,19 @@ General commands:
         {{range .StaticCommands}}{{commandAligner .Name}} {{.Description}}
         {{end}}
 
+
 List of global options:                 {{.Name}} help -g
+List of admin commands:                 {{.Name}} help -a
+Detailed help for a single command:     {{.Name}} help COMMAND
+`
+	ADMIN_HELP_TEMPLATE = `
+Usage {{.Name}} [GLOBAL_OPTIONS] command [COMMAND_OPTIONS] [PARAMS]
+
+Admin commands:
+        {{range .AdminCommands}}{{commandAligner .Name}} {{.Description}}
+        {{end}}
+
+List of global options:                 {{.Name}} help -g 
 Detailed help for a single command:     {{.Name}} help COMMAND
 `
 	//TODO: Check if required options to write/ignore []
@@ -64,6 +76,7 @@ type Cli struct {
 	*subcommand.Parser
 	Scripts        []*ScriptCommand      //pipeline scripts
 	StaticCommands []*subcommand.Command //commands which are always present
+	AdminCommands  []*subcommand.Command //admin commands
 	Output         io.Writer             //writer where to dump the output
 }
 
@@ -112,10 +125,16 @@ func NewCli(name string, link *PipelineLink) (cli *Cli, err error) {
 //Sets the help function
 func (c *Cli) setHelp() {
 	globals := false
-	c.Parser.SetHelp("help", "Help description", func(help string, args ...string) error {
-		return printHelp(*c, globals, args...)
-	}).AddSwitch("globals", "g", "Show global options", func(string, string) error {
+	admin := false
+	cmd := c.Parser.SetHelp("help", "Help description", func(help string, args ...string) error {
+		return printHelp(*c, globals, admin, args...)
+	})
+	cmd.AddSwitch("globals", "g", "Show global options", func(string, string) error {
 		globals = true
+		return nil
+	})
+	cmd.AddSwitch("admin", "a", "showadmin options", func(string, string) error {
+		admin = true
 		return nil
 	})
 }
@@ -175,6 +194,13 @@ func (c *Cli) AddCommand(name, desc string, fn func(string, ...string) error) *s
 	return cmd
 }
 
+//Adds admin related commands to the cli and keeps track of it for displaying help
+func (c *Cli) AddAdminCommand(name, desc string, fn func(string, ...string) error) *subcommand.Command {
+	cmd := c.Parser.AddCommand(name, desc, fn)
+	c.AdminCommands = append(c.AdminCommands, cmd)
+	return cmd
+}
+
 //convinience function to gather all the command names
 func (c Cli) mergeCommands() []string {
 	names := make([]string, 0, len(c.StaticCommands)+len(c.Scripts))
@@ -209,7 +235,7 @@ func (c *Cli) Printf(format string, vals ...interface{}) {
 }
 
 //prints the help
-func printHelp(cli Cli, globals bool, args ...string) error {
+func printHelp(cli Cli, globals, admin bool, args ...string) error {
 	if globals {
 		funcMap := template.FuncMap{
 			"flagAligner": aligner(flagsToStrings(cli.Flags())),
@@ -221,7 +247,11 @@ func printHelp(cli Cli, globals bool, args ...string) error {
 		funcMap := template.FuncMap{
 			"commandAligner": aligner(cli.mergeCommands()),
 		}
-		tmpl := template.Must(template.New("mainHelp").Funcs(funcMap).Parse(MAIN_HELP_TEMPLATE))
+		tmplName := MAIN_HELP_TEMPLATE
+		if admin {
+			tmplName = ADMIN_HELP_TEMPLATE
+		}
+		tmpl := template.Must(template.New("mainHelp").Funcs(funcMap).Parse(tmplName))
 		tmpl.Execute(os.Stdout, cli)
 
 	} else {

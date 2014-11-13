@@ -37,7 +37,7 @@ func (c *Cli) AddClientListCommand(link PipelineLink) {
 	newCommandBuilder("list", "Returns the list of the available clients").
 		withCall(func(args ...string) (interface{}, error) {
 		return link.Clients()
-	}).withTemplate(TmplClients).build(c)
+	}).withTemplate(TmplClients).buildAdmin(c)
 }
 
 func (c *Cli) AddNewClientCommand(link PipelineLink) {
@@ -46,7 +46,7 @@ func (c *Cli) AddNewClientCommand(link PipelineLink) {
 		return link.NewClient(*client)
 	}
 	cmd := newCommandBuilder("create", "Creates a new client").
-		withCall(fn).withTemplate(TmplClient).build(c)
+		withCall(fn).withTemplate(TmplClient).buildAdmin(c)
 
 	cmd.AddOption("id", "i", "Client id (must be unique)", func(string, value string) error {
 		client.Id = value
@@ -57,16 +57,16 @@ func (c *Cli) AddNewClientCommand(link PipelineLink) {
 }
 
 func (c *Cli) AddDeleteClientCommand(link PipelineLink) {
-	newCommandBuilder("delete", "Deletes a client").
+	newCommandBuilder("remove", "Removes a client").
 		withCall(func(args ...string) (v interface{}, err error) {
 		id := args[0]
 		_, err = link.DeleteClient(id)
 		if err != nil {
 			return
 		}
-		return fmt.Sprintf("Client %v deleted\n", id), err
+		return fmt.Sprintf("Client %v removed\n", id), err
 	}).
-		build(c).SetArity(1, "CLIENT_ID")
+		buildAdmin(c).SetArity(1, "CLIENT_ID")
 }
 
 func (c *Cli) AddClientCommand(link PipelineLink) {
@@ -75,7 +75,7 @@ func (c *Cli) AddClientCommand(link PipelineLink) {
 	}
 
 	newCommandBuilder("client", "Prints the detailed client inforamtion").
-		withCall(fn).withTemplate(TmplClient).build(c).SetArity(1, "CLIENT_ID")
+		withCall(fn).withTemplate(TmplClient).buildAdmin(c).SetArity(1, "CLIENT_ID")
 }
 func (c *Cli) AddModifyClientCommand(link PipelineLink) {
 	client := &pipeline.Client{}
@@ -98,7 +98,7 @@ func (c *Cli) AddModifyClientCommand(link PipelineLink) {
 		return link.ModifyClient(*client, id)
 	}
 	cmd := newCommandBuilder("modify", "Modifies a client").
-		withCall(fn).withTemplate(TmplClient).build(c)
+		withCall(fn).withTemplate(TmplClient).buildAdmin(c)
 	cmd.SetArity(1, "CLIENT_ID")
 	addClientOptions(cmd, client, false)
 
@@ -141,7 +141,7 @@ func (c *Cli) AddPropertyListCommand(link PipelineLink) {
 		func(args ...string) (interface{}, error) {
 			return link.Properties()
 		}).
-		withTemplate(TmplProperties).build(c)
+		withTemplate(TmplProperties).buildAdmin(c)
 }
 
 func (c *Cli) AddSizesCommand(link PipelineLink) {

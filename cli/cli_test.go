@@ -79,15 +79,15 @@ func TestCliAddScriptCommand(t *testing.T) {
 	}
 }
 
-func TestCliAddCommand(t *testing.T) {
+func TestCliAddAdminCommand(t *testing.T) {
 	config[STARTING] = false
 	link := &PipelineLink{pipeline: newPipelineTest(false), config: config}
 	cli, err := makeCli("testprog", link)
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	cli.AddCommand("stest", "", func(string, ...string) error { return nil })
-	if cli.StaticCommands[0].Name != "stest" {
+	cli.AddAdminCommand("stest", "", func(string, ...string) error { return nil })
+	if cli.AdminCommands[0].Name != "stest" {
 		t.Error("Add Command is not adding commands to the list")
 	}
 
@@ -120,11 +120,11 @@ func TestPrintHelpErrors(t *testing.T) {
 	}
 	cli.AddScripts([]pipeline.Script{SCRIPT}, link)
 	//more than one parameter fail
-	err = printHelp(*cli, false, "one", "two")
+	err = printHelp(*cli, false, false, "one", "two")
 	if err == nil {
 		t.Error("Expected error (more than one param) is nil")
 	}
-	err = printHelp(*cli, false, "one")
+	err = printHelp(*cli, false, false, "one")
 	if err == nil {
 		t.Error("Expected error (unknown command) is nil")
 	}

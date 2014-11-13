@@ -49,6 +49,18 @@ func (c *commandBuilder) build(cli *Cli) (cmd *subcommand.Command) {
 	})
 }
 
+//builds the commands and adds it to the cli
+func (c *commandBuilder) buildAdmin(cli *Cli) (cmd *subcommand.Command) {
+	return cli.AddAdminCommand(c.name, c.desc, func(name string, args ...string) error {
+
+		data, err := c.linkCall(args...)
+		if err != nil {
+			return err
+		}
+		return c.writeOutput(data, cli)
+	})
+}
+
 func (c commandBuilder) writeOutput(data interface{}, cli *Cli) error {
 	tmpl := template.Must(template.New("template").Parse(c.template))
 	if data != nil {

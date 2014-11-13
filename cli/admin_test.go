@@ -14,7 +14,7 @@ func TestDeleteClient(t *testing.T) {
 	cli, link, _ := makeReturningCli(nil, t)
 	r := overrideOutput(cli)
 	cli.AddDeleteClientCommand(link)
-	err := cli.Run([]string{"delete", "id"})
+	err := cli.Run([]string{"remove", "id"})
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -23,11 +23,10 @@ func TestDeleteClient(t *testing.T) {
 	}
 
 	result := string(r.Bytes())
-	expected := "Client id deleted\n"
+	expected := "Client id removed\n"
 	if result != string(expected) {
 		t.Errorf("client delete error %s!=%s", string(expected), result)
 	}
-
 }
 
 //Test delete client command id check
@@ -35,7 +34,7 @@ func TestDeleteClientNoId(t *testing.T) {
 	cli, link, _ := makeReturningCli(nil, t)
 	//r := overrideOutput(cli)
 	cli.AddDeleteClientCommand(link)
-	err := cli.Run([]string{"delete"})
+	err := cli.Run([]string{"remove"})
 	if err == nil {
 		t.Errorf("Delete client needs an id")
 	}
@@ -47,7 +46,7 @@ func TestDeleteClientError(t *testing.T) {
 	pipe.failOnCall = DELETE_CLIENT_CALL
 	//r := overrideOutput(cli)
 	cli.AddDeleteClientCommand(link)
-	err := cli.Run([]string{"delete", "nonexistent id"})
+	err := cli.Run([]string{"remove", "nonexistent id"})
 	if getCall(link) != DELETE_CLIENT_CALL {
 		t.Errorf("delete client wasn't called")
 	}
