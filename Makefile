@@ -12,7 +12,6 @@ Available targets:
   all                 build binaries
   build               build all
   build-dp2           build dp2 tool
-  build-dp2admin      build dp2admin tool
   dist                build x-platform binaries
   test                run tests with coverage
   cover-deploy        deploy test coverage results
@@ -29,7 +28,7 @@ help:
 clean:
 	-rm -rf "${BUILDDIR}"
 
-build: test build-dp2 build-dp2admin
+build: test build-dp2 
 
 build-setup:
 	@export GOPATH="${GOPATH}"
@@ -46,9 +45,6 @@ build-dp2: build-setup
 	@echo "Building dp2..."
 	@${GO} install ${GOBUILD_FLAGS} github.com/daisy/pipeline-cli-go/dp2
 
-build-dp2admin: build-setup
-	@echo "Building dp2admin..."
-	@${GO} install ${GOBUILD_FLAGS} github.com/daisy/pipeline-cli-go/dp2admin
 
 dist: build-setup test
 	@echo "Building for x-platform..."
@@ -57,7 +53,7 @@ dist: build-setup test
 	        -osarch="linux/amd64 linux/386 darwin/386 darwin/amd64 windows/386 windows/amd64"
 	@${GOX} -output="${GOPATH}/bin/{{.OS}}_{{.Arch}}/{{.Dir}}" \
 	        -osarch="linux/amd64 linux/386 darwin/386 darwin/amd64 windows/386 windows/amd64" \
-	        ./dp2/ ./dp2admin
+	        ./dp2/ 
 
 test: build-setup
 	@echo "Running tests..."

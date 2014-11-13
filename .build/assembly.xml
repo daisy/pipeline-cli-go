@@ -10,7 +10,6 @@
       <directory>build/bin/${item}</directory>
       <includes>
         <include>dp2*</include>
-        <include>dp2admin*</include>
       </includes>
       <outputDirectory>/</outputDirectory>
       <fileMode>0755</fileMode>
