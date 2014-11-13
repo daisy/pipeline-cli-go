@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
 	re "regexp"
 	"strconv"
@@ -21,14 +20,10 @@ var keyFile = "dp2key.txt"
 
 //testing multienv is a pain
 var pathSeparator = os.PathSeparator
-var homePath = mustUser(user.Current()).HomeDir
 
-//Filter the user error and panics if the error is present
-func mustUser(user *user.User, err error) *user.User {
-	if err != nil {
-		panic("Current user not found")
-	}
-	return user
+//homepath service
+var homePath = func() string {
+	return os.Getenv("HOME")
 }
 
 //Checks that a string defines a priority value
@@ -173,11 +168,11 @@ func getLastIdPath(currentOs string) string {
 	var path string
 	switch currentOs {
 	case "linux":
-		path = homePath + "/.daisy-pipeline/dp2/lastid"
+		path = homePath() + "/.daisy-pipeline/dp2/lastid"
 	case "windows":
 		path = os.Getenv("APPDATA") + "\\DAISY Pipeline 2\\dp2\\lastid"
 	case "darwin":
-		path = homePath + "/Library/Application Support/DAISY Pipeline 2/dp2/lastid"
+		path = homePath() + "/Library/Application Support/DAISY Pipeline 2/dp2/lastid"
 	default:
 		panic(fmt.Sprintf("Platform not recognised %v", currentOs))
 	}

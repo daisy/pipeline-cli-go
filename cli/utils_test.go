@@ -5,8 +5,8 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"os/user"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -154,7 +154,9 @@ func TestCheckPriorityNotOk(t *testing.T) {
 func TestGetLastId(t *testing.T) {
 	oldSep := pathSeparator
 	oldHome := homePath
-	homePath = "home"
+	homePath = func() string {
+		return "home"
+	}
 	defer func() {
 		pathSeparator = oldSep
 		homePath = oldHome
@@ -191,22 +193,13 @@ func TestUnknownOs(t *testing.T) {
 
 }
 
-func TestMustUserError(t *testing.T) {
-	defer func() {
-		if recover() == nil {
-			t.Errorf("Expecting panic didn't happend")
-		}
-	}()
-
-	mustUser(nil, fmt.Errorf("erroring"))
-
-}
-
-func TestMustUser(t *testing.T) {
-	usr := &user.User{}
-	res := mustUser(usr, nil)
-	if usr != res {
-		t.Errorf("Different users")
+func TestHomePath(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("this would fail in windows")
+	}
+	res := homePath()
+	if res != os.Getenv("HOME") || res == "" {
+		t.Errorf("Error getting home")
 	}
 }
 
