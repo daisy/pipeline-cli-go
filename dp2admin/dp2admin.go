@@ -30,16 +30,6 @@ func main() {
 		fmt.Printf("Error creating client:\n\t%v\n", err)
 		os.Exit(-1)
 	}
-	comm.WithScripts = false
-
-	cli.AddHaltCommand(comm, *link)
-	comm.AddClientListCommand(*link)
-	comm.AddNewClientCommand(*link)
-	comm.AddDeleteClientCommand(*link)
-	comm.AddModifyClientCommand(*link)
-	comm.AddClientCommand(*link)
-	comm.AddPropertyListCommand(*link)
-	comm.AddSizesCommand(*link)
 
 	err = comm.Run(os.Args[1:])
 	if err != nil {
