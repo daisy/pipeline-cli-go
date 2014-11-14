@@ -88,7 +88,7 @@ func bringUp(pLink *PipelineLink) error {
 	if err != nil {
 		if pLink.config[STARTING].(bool) {
 			alive, err = NewPipelineLauncher(pLink.pipeline,
-				pLink.config[EXECLINENIX].(string), pLink.config[TIMEOUT].(int)).Launch(os.Stdout)
+				pLink.config.ExecPath(), pLink.config[TIMEOUT].(int)).Launch(os.Stdout)
 			if err != nil {
 				return fmt.Errorf("Error bringing the pipeline2 up %v", err.Error())
 			}
