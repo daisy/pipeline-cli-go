@@ -4,8 +4,8 @@ port: 8181
 ws_path: ws
 ws_timeup: 25
 #DP2 launch config 
-exec_line_nix: /home/javi/daisy/pipeline-assembly/target/dev-launcher/bin/pipeline2
-exec_line_win: ../pipeline-assembly/target/dev-launcher/bin/pipeline2.bat
+exec_line: ../../../../../../../daisy/pipeline-assembly/target/dev-launcher/bin/pipeline2
+
 local: true
 # ROBOT CONF
 client_key: clientid

@@ -1,10 +1,13 @@
 package cli
 
 import (
-	"bitbucket.org/kardianos/osext"
 	"bytes"
+	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
+
+	"bitbucket.org/kardianos/osext"
 )
 
 var (
@@ -153,4 +156,23 @@ func TestNewConfigDefaultFile(t *testing.T) {
 
 	cnf := NewConfig()
 	tCompareCnfs(cnf, EXP, t)
+}
+
+func TestBuildPath(t *testing.T) {
+	//from a absolute path
+	conf := Config{}
+	conf[EXECLINE] = "/home/cosa/pipeline2"
+	base := "/tmp"
+	path := conf.buildPath(base)
+	fmt.Printf("path %+v\n", path)
+	if path != conf[EXECLINE] {
+		t.Errorf("If the path is absolute no resolving against base should be done %v %v", path, conf[EXECLINE])
+
+	}
+	conf[EXECLINE] = "../cosa/pipeline2"
+	if path != filepath.FromSlash("/tmp/../cosa/pipeline2") {
+		t.Errorf("The path is not being resolved %v", path)
+
+	}
+
 }

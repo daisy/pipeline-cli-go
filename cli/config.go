@@ -1,13 +1,15 @@
 package cli
 
 import (
-	"bitbucket.org/kardianos/osext"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"launchpad.net/goyaml"
 	"log"
 	"os"
+	"path/filepath"
+
+	"bitbucket.org/kardianos/osext"
+	"launchpad.net/goyaml"
 )
 
 //Yaml file keys
@@ -16,8 +18,7 @@ const (
 	PORT         = "port"
 	PATH         = "ws_path"
 	WSTIMEUP     = "ws_timeup"
-	EXECLINENIX  = "exec_line_nix"
-	EXECLINEWIN  = "exec_line_win"
+	EXECLINE     = "exec_line"
 	CLIENTKEY    = "client_key"
 	CLIENTSECRET = "client_secret"
 	TIMEOUT      = "timeout"
@@ -41,8 +42,7 @@ var config = Config{
 	PORT:         8181,
 	PATH:         "ws",
 	WSTIMEUP:     25,
-	EXECLINENIX:  "",
-	EXECLINEWIN:  "",
+	EXECLINE:     "",
 	CLIENTKEY:    "",
 	CLIENTSECRET: "",
 	TIMEOUT:      10,
@@ -57,8 +57,7 @@ var config_descriptions = map[string]string{
 	PORT:         "Pipeline's webserivce port",
 	PATH:         "Pipeline's webservice path, as in http://daisy.org:8181/path",
 	WSTIMEUP:     "Time to wait until the webserivce starts in seconds",
-	EXECLINENIX:  "Pipeline webserivice executable path in unix-like systems",
-	EXECLINEWIN:  "Pipeline webserivice executable path in windows systems",
+	EXECLINE:     "Pipeline webserivice executable path",
 	CLIENTKEY:    "Client key for authenticated requests",
 	CLIENTSECRET: "Client secrect for authenticated requests",
 	TIMEOUT:      "Http connection timeout in seconds",
@@ -133,66 +132,19 @@ func (c Config) UpdateDebug() {
 func (c Config) Url() string {
 	return fmt.Sprintf("%v:%v/%v/", c[HOST], c[PORT], c[PATH])
 }
+func (c Config) ExecPath() string {
+	base, err := osext.ExecutableFolder()
+	if err != nil {
+		panic("Error getting executable path")
+	}
+	return c.buildPath(base)
+}
 
-//Configuration loading from the yaml node
-//func nodeToConfig(conf Config, node yaml.Node) error {
-//var err error
-//file := yaml.File{Root: node}
-//conf[HOST], err = file.Get(HOST)
-//if err != nil {
-//return fmt.Errorf(ERR_STR, err)
-//}
-
-//aux, err := file.GetInt(PORT)
-//if err != nil {
-//return fmt.Errorf(ERR_STR, err)
-//}
-//conf[PORT] = int(aux)
-
-//conf[PATH], err = file.Get(PATH)
-//if err != nil {
-//return fmt.Errorf(ERR_STR, err)
-//}
-
-//aux, err = file.GetInt(WSTIMEUP)
-//conf[WSTIMEUP] = int(aux)
-//if err != nil {
-//return fmt.Errorf(ERR_STR, err)
-//}
-
-//conf[EXECLINENIX], err = file.Get(EXECLINENIX)
-//if err != nil {
-//return fmt.Errorf(ERR_STR, err)
-//}
-
-//conf[EXECLINEWIN], err = file.Get(EXECLINEWIN)
-//if err != nil {
-//return fmt.Errorf(ERR_STR, err)
-//}
-
-//conf[CLIENTKEY], err = file.Get(CLIENTKEY)
-//if err != nil {
-//return fmt.Errorf(ERR_STR, err)
-//}
-
-//conf[CLIENTSECRET], err = file.Get(CLIENTSECRET)
-//if err != nil {
-//return fmt.Errorf(ERR_STR, err)
-//}
-
-//aux, err = file.GetInt(TIMEOUT)
-//if err != nil {
-//return fmt.Errorf(ERR_STR, err)
-//}
-//conf[TIMEOUT] = int(aux)
-//conf[DEBUG], err = file.GetBool(DEBUG)
-//if err != nil {
-//return fmt.Errorf(ERR_STR, err)
-//}
-//conf[STARTING], err = file.GetBool(STARTING)
-//if err != nil {
-//return fmt.Errorf(ERR_STR, err)
-//}
-//conf.UpdateDebug()
-//return nil
-//}
+func (c Config) buildPath(base string) string {
+	p := filepath.FromSlash(c[EXECLINE].(string))
+	if filepath.IsAbs(p) {
+		return p
+	} else {
+		return filepath.Join(base, p)
+	}
+}
