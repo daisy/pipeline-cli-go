@@ -88,7 +88,6 @@ func (l Launcher) wait(cAlive chan pipeline.Alive, tries chan int) {
 }
 
 //Launches the pipeline writing the output messages to the supplied
-//writer
 func (l Launcher) Launch(w io.Writer) (alive pipeline.Alive, err error) {
 	log.Println("Starting the fwk")
 	//launch the ws
@@ -112,7 +111,7 @@ func (l Launcher) Launch(w io.Writer) (alive pipeline.Alive, err error) {
 			log.Println("The ws seems to be up")
 			return
 		case tries := <-triesChan:
-			fmt.Fprintf(w, "Trying to dial to the ws (%v)\n", tries)
+			log.Printf("Trying to dial to the ws (%v)\n", tries)
 		//keep on going
 		case <-timeOut:
 			log.Println("launcher timed up")
