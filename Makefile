@@ -39,7 +39,7 @@ build-setup:
 	@${GO} get launchpad.net/goyaml 
 	@${GO} get github.com/daisy/pipeline-clientlib-go
 	@${GO} get bitbucket.org/kardianos/osext
-	@${GO} get golang.org/x/tools/cmd/cover 
+	@${GO} get code.google.com/p/go.tools/cmd/cover 
 
 build-dp2: build-setup
 	@echo "Building dp2..."
