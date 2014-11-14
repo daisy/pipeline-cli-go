@@ -172,7 +172,7 @@ func TestGetLastId(t *testing.T) {
 	os.Setenv("APPDATA", "windows")
 	path = getLastIdPath("windows")
 	pathSeparator = '\\'
-	if path != "windows\\DAISY Pipeline 2\\dp2\\lastid" {
+	if path != "windows\\DAISY Pipeline 2\\lastid" {
 		t.Errorf("Lastid path for windows is wrong %v", path)
 	}
 	//for darwin

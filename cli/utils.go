@@ -170,7 +170,7 @@ func getLastIdPath(currentOs string) string {
 	case "linux":
 		path = homePath() + "/.daisy-pipeline/dp2/lastid"
 	case "windows":
-		path = os.Getenv("APPDATA") + "\\DAISY Pipeline 2\\dp2\\lastid"
+		path = os.Getenv("APPDATA") + "\\DAISY Pipeline 2\\lastid"
 	case "darwin":
 		path = homePath() + "/Library/Application Support/DAISY Pipeline 2/dp2/lastid"
 	default:
