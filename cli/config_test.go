@@ -18,8 +18,7 @@ port: 9999
 ws_path: ws
 ws_timeup: 10
 #DP2 launch config 
-exec_line_nix: unix
-exec_line_win: windows
+exec_line: prog 
 local: true
 # ROBOT CONF
 client_key: clientid
@@ -37,8 +36,7 @@ starting: true
 		"port":          9999,
 		"ws_path":       "ws",
 		"ws_timeup":     10,
-		"exec_line_nix": "unix",
-		"exec_line_win": "windows",
+		"exec_line":     "prog",
 		"client_key":    "clientid",
 		"client_secret": "supersecret",
 		"timeout":       10,
@@ -73,14 +71,8 @@ func tCompareCnfs(one, exp Config, t *testing.T) {
 		t.Errorf(T_STRING, test, exp[test], res)
 	}
 
-	test = EXECLINENIX
-	res = one[EXECLINENIX]
-	if res != exp[test] {
-		t.Errorf(T_STRING, test, exp[test], res)
-	}
-
-	test = EXECLINEWIN
-	res = one[EXECLINEWIN]
+	test = EXECLINE
+	res = one[EXECLINE]
 	if res != exp[test] {
 		t.Errorf(T_STRING, test, exp[test], res)
 	}
@@ -170,6 +162,7 @@ func TestBuildPath(t *testing.T) {
 
 	}
 	conf[EXECLINE] = "../cosa/pipeline2"
+	path = conf.buildPath(base)
 	if path != filepath.FromSlash("/tmp/../cosa/pipeline2") {
 		t.Errorf("The path is not being resolved %v", path)
 

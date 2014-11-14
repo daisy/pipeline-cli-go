@@ -145,6 +145,6 @@ func (c Config) buildPath(base string) string {
 	if filepath.IsAbs(p) {
 		return p
 	} else {
-		return filepath.Join(base, p)
+		return base + string(filepath.Separator) + p
 	}
 }
