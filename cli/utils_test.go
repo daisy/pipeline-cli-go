@@ -269,38 +269,20 @@ func TestAssertJava(t *testing.T) {
 	javaVersionService = func() (string, error) {
 		return fmt.Sprintf(OracleJdkVersion, "1.7_u89"), nil
 	}
-	if err := AssertJava(1.7, "linux"); err != nil {
+	if err := AssertJava(1.7); err != nil {
 		t.Errorf("Unexpected error %v", err.Error())
 	}
 	javaVersionService = func() (string, error) {
 		return fmt.Sprintf(OracleJdkVersion, "1.6_u89"), nil
 	}
-	if err := AssertJava(1.7, "linux"); err == nil {
+	if err := AssertJava(1.7); err == nil {
 		t.Errorf("Expected error not returned")
 	}
 	javaVersionService = func() (string, error) {
 		return "", fmt.Errorf("error!")
 	}
-	if err := AssertJava(1.7, "linux"); err == nil {
+	if err := AssertJava(1.7); err == nil {
 		t.Errorf("Expected error not returned")
 	}
-	//darwin ignores javachecks
-	javaVersionService = func() (string, error) {
-		return fmt.Sprintf(OracleJdkVersion, "1.7_u89"), nil
-	}
-	if err := AssertJava(1.7, "darwin"); err != nil {
-		t.Errorf("Unexpected error %v", err.Error())
-	}
-	javaVersionService = func() (string, error) {
-		return fmt.Sprintf(OracleJdkVersion, "1.6_u89"), nil
-	}
-	if err := AssertJava(1.7, "darwin"); err != nil {
-		t.Errorf("Unexpected error %v", err.Error())
-	}
-	javaVersionService = func() (string, error) {
-		return "", fmt.Errorf("error!")
-	}
-	if err := AssertJava(1.7, "darwin"); err != nil {
-		t.Errorf("Unexpected error %v", err.Error())
-	}
+
 }

@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	re "regexp"
+	"runtime"
 	"strconv"
 
 	"github.com/capitancambio/go-subcommand"
@@ -179,11 +180,7 @@ func getLastIdPath(currentOs string) string {
 	return path
 }
 
-func AssertJava(minJavaVersion float64, currentOs string) error {
-	//ignore checking java version on darwin
-	if currentOs == "darwin" {
-		return nil
-	}
+func AssertJava(minJavaVersion float64) error {
 	//get the output
 	output, err := javaVersionService()
 	if err != nil {
@@ -202,12 +199,24 @@ func AssertJava(minJavaVersion float64, currentOs string) error {
 }
 
 var javaVersionService = func() (string, error) {
+
 	javaCmd := "java"
 	//try with JAVA_HOME
 	javaHome := os.Getenv("JAVA_HOME")
-	if javaHome != "" {
-		javaCmd = filepath.Join(javaHome, "bin", javaCmd)
+	//darwing stuff
+	if javaHome == "" && runtime.GOOS == "darwin" {
+		output, err := exec.Command("/usr/libexec/java_home").Output()
+		if len(output) == 0 {
+			javaHome = "/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/"
+		} else if (err != nil) {
+			javaHome = string(output)
+		}
 	}
+	if javaHome != "" {
+		if _, err := os.Stat(javaHome); err == nil {
+			javaCmd = filepath.Join(javaHome, "bin", javaCmd)
+		}
+	} 
 	cmd := exec.Command(javaCmd, "-version")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
