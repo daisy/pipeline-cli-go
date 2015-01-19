@@ -179,7 +179,11 @@ func getLastIdPath(currentOs string) string {
 	return path
 }
 
-func AssertJava(minJavaVersion float64) error {
+func AssertJava(minJavaVersion float64, currentOs string) error {
+	//ignore checking java version on darwin
+	if currentOs == "darwin" {
+		return nil
+	}
 	//get the output
 	output, err := javaVersionService()
 	if err != nil {
