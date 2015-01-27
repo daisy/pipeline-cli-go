@@ -105,6 +105,30 @@ func TestScriptNiceName(t *testing.T) {
 		t.Errorf("Nice name not set %s!=%s", jobRequest.Nicename, "my_job")
 	}
 }
+func TestScriptBatch(t *testing.T) {
+	config := copyConf()
+	config[STARTING] = false
+	pipeline := newPipelineTest(false)
+	pipeline.fsallow = false
+	link := &PipelineLink{pipeline: pipeline, config: config}
+	cli, err := makeCli("test", link)
+	link.pipeline.(*PipelineTest).withScripts = false
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	jobRequest, err := scriptToCommand(SCRIPT, cli, link)
+	if err != nil {
+		t.Error("Unexpected error")
+	}
+	//parser.Parse([]string{"test","--i-source","value"})
+	err = cli.Run([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true", "--batch", "my_batch"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if jobRequest.BatchId != "my_batch" {
+		t.Errorf("Batch id not set %s!=%s", jobRequest.BatchId, "my_batch")
+	}
+}
 func TestScriptPriorityMedium(t *testing.T) {
 	config := copyConf()
 	config[STARTING] = false

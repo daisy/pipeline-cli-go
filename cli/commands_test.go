@@ -529,3 +529,90 @@ func TestJobsError(t *testing.T) {
 		t.Errorf("Error from link not propagated")
 	}
 }
+
+//test the list of jobs
+func TestBatch(t *testing.T) {
+	jobs := pipeline.Jobs{Jobs: []pipeline.Job{JOB_1, JOB_2}}
+	cli, link, _ := makeReturningCli(jobs, t)
+	r := overrideOutput(cli)
+	AddBatchCommand(cli, link)
+	err := cli.Run([]string{"batch", "batch-id"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if getCall(link) != BATCH_CALL {
+		t.Errorf("batch wasn't called")
+	}
+
+	jobsLine := []string{
+		JOB_1.Id,
+		fmt.Sprintf("(%s)", JOB_1.Nicename),
+		fmt.Sprintf("[%s]", JOB_1.Status),
+	}
+	if ok, line, message := checkTableLine(r, "\t", jobsLine); !ok {
+		t.Errorf("job template doesn't match (%q,%s)\n%s", jobsLine, line, message)
+	}
+}
+
+//test the list of jobs
+func TestBatchError(t *testing.T) {
+	jobs := pipeline.Jobs{Jobs: []pipeline.Job{JOB_1, JOB_2}}
+	cli, link, pipe := makeReturningCli(jobs, t)
+	pipe.failOnCall = BATCH_CALL
+	AddBatchCommand(cli, link)
+	err := cli.Run([]string{"batch", "batch-id"})
+	if getCall(link) != BATCH_CALL {
+		t.Errorf("jobs wasn't called")
+	}
+	if err == nil {
+		t.Errorf("Error from link not propagated")
+	}
+}
+
+//test the list of jobs
+func TestBatchMissingId(t *testing.T) {
+	jobs := pipeline.Jobs{Jobs: []pipeline.Job{JOB_1, JOB_2}}
+	cli, link, _ := makeReturningCli(jobs, t)
+	AddBatchCommand(cli, link)
+	err := cli.Run([]string{"batch"})
+	if err == nil {
+		t.Errorf("Expected error of missing id not returned")
+	}
+}
+
+//Checks the call to the pipeline link and the output when deleting a batch
+func TestDeleteBatch(t *testing.T) {
+
+	cli, link, _ := makeReturningCli(true, t)
+	r := overrideOutput(cli)
+	AddDeleteBatchCommand(cli, link)
+	err := cli.Run([]string{"delete-batch", "id"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if getCall(link) != DELETE_BATCH {
+		t.Errorf("delete batch wasn't called")
+	}
+	expected := "Batch id removed from the server\n"
+	result := string(r.Bytes())
+	if expected != result {
+		t.Errorf("The message is not correct '%s'!='%s'", expected, result)
+	}
+
+}
+
+//Checks the call to the pipeline link and the output when deleting a batch
+func TestDeleteErrorBatch(t *testing.T) {
+
+	cli, link, p := makeReturningCli(false, t)
+	p.failOnCall = DELETE_BATCH
+	AddDeleteBatchCommand(cli, link)
+	err := cli.Run([]string{"delete-batch", "id"})
+	if getCall(link) != DELETE_BATCH {
+		t.Errorf("batch wasn't called")
+	}
+	if err == nil {
+		t.Errorf("Expected error not propagated")
+	}
+
+}

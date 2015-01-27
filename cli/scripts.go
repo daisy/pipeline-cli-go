@@ -22,6 +22,7 @@ var LastIdPath = getLastIdPath(runtime.GOOS)
 type JobRequest struct {
 	Script     string               //Script id to call
 	Nicename   string               //Job's nicename
+	BatchId    string               //Job's nicename
 	Priority   string               //Job's priority
 	Options    map[string][]string  //Options for the script
 	Inputs     map[string][]url.URL //Input ports for the script
@@ -160,6 +161,11 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 
 	command.AddOption("nicename", "n", "Set job's nice name", func(name, nice string) error {
 		jExec.req.Nicename = nice
+
+		return nil
+	})
+	command.AddOption("batch", "i", "Set job's batch id", func(name, id string) error {
+		jExec.req.BatchId = id
 
 		return nil
 	})

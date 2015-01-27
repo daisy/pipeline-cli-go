@@ -43,6 +43,7 @@ var (
 				url.URL{Opaque: "tmp/file2.xml"},
 			},
 		},
+		BatchId: "batchId",
 	}
 	JOB_1 = pipeline.Job{
 		Status:   "RUNNING",
@@ -278,6 +279,9 @@ func TestJobRequestToPipeline(t *testing.T) {
 	}
 	if "nice" != req.Nicename {
 		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "nicename", "nice", req.Nicename)
+	}
+	if "batchId" != req.BatchId {
+		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "batch id", "batchId", req.BatchId)
 	}
 	sort.Sort(Inputs(req.Inputs))
 

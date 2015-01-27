@@ -28,6 +28,8 @@ type PipelineApi interface {
 	Results(id string) ([]byte, error)
 	Log(id string) ([]byte, error)
 	Jobs() (pipeline.Jobs, error)
+	Batch(string) (pipeline.Jobs, error)
+	DeleteBatch(string) (bool, error)
 	Halt(key string) error
 	Clients() (clients []pipeline.Client, err error)
 	NewClient(in pipeline.Client) (out pipeline.Client, err error)
@@ -150,6 +152,20 @@ func (p PipelineLink) Jobs() (jobs []pipeline.Job, err error) {
 	return
 }
 
+//Returns the batch of jobs
+func (p PipelineLink) Batch(id string) (jobs []pipeline.Job, err error) {
+	pJobs, err := p.pipeline.Batch(id)
+	if err != nil {
+		return
+	}
+	jobs = pJobs.Jobs
+	return
+}
+func (p PipelineLink) DeleteBatch(id string) (ok bool, err error) {
+	ok, err = p.pipeline.DeleteBatch(id)
+	return
+}
+
 //Admin
 func (p PipelineLink) Halt(key string) error {
 	return p.pipeline.Halt(key)
@@ -258,6 +274,7 @@ func jobRequestToPipeline(req JobRequest, p PipelineLink) (pReq pipeline.JobRequ
 		Script:   pipeline.Script{Href: href},
 		Nicename: req.Nicename,
 		Priority: req.Priority,
+		BatchId:  req.BatchId,
 	}
 	for name, values := range req.Inputs {
 		input := pipeline.Input{Name: name}

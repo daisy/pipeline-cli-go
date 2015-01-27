@@ -18,9 +18,11 @@ const (
 	LOG_CALL           = "log"
 	JOB_CALL           = "job"
 	DELETE_CALL        = "delete"
+	DELETE_BATCH       = "delete-batch"
 	HALT_CALL          = "halt"
 	RESULTS_CALL       = "results"
 	JOBS_CALL          = "jobs"
+	BATCH_CALL         = "batch"
 	DELETE_CLIENT_CALL = "delete_client"
 	NEW_CLIENT_CALL    = "new_client"
 	CLIENT_CALL        = "client"
@@ -201,6 +203,15 @@ func (p *PipelineTest) DeleteJob(id string) (ok bool, err error) {
 	}
 	return
 }
+func (p *PipelineTest) DeleteBatch(id string) (ok bool, err error) {
+	p.deleted = true
+	p.call = DELETE_BATCH
+	ret, err := p.mockCall()
+	if ret != nil {
+		return ret.(bool), err
+	}
+	return
+}
 
 func (p *PipelineTest) Results(id string) (data []byte, err error) {
 	p.call = RESULTS_CALL
@@ -220,6 +231,14 @@ func (p *PipelineTest) Log(id string) (data []byte, err error) {
 }
 func (p *PipelineTest) Jobs() (jobs pipeline.Jobs, err error) {
 	p.call = JOBS_CALL
+	ret, err := p.mockCall()
+	if ret != nil {
+		return ret.(pipeline.Jobs), err
+	}
+	return
+}
+func (p *PipelineTest) Batch(id string) (jobs pipeline.Jobs, err error) {
+	p.call = BATCH_CALL
 	ret, err := p.mockCall()
 	if ret != nil {
 		return ret.(pipeline.Jobs), err

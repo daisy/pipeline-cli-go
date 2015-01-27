@@ -162,6 +162,35 @@ func AddJobsCommand(cli *Cli, link PipelineLink) {
 	}).withTemplate(JobListTemplate).build(cli)
 }
 
+func AddBatchCommand(cli *Cli, link PipelineLink) {
+	cmd := newCommandBuilder("batch", "returns the list of jobs that belong to this batch").
+		withCall(func(args ...string) (interface{}, error) {
+		if len(args) != 1 {
+			return "", fmt.Errorf("Command batch needs the batch id")
+		}
+		id := args[0]
+		return link.Batch(id)
+	}).withTemplate(JobListTemplate).build(cli)
+	cmd.SetArity(1, "Batch id")
+
+}
+
+func AddDeleteBatchCommand(cli *Cli, link PipelineLink) {
+	cmd := newCommandBuilder("delete-batch", "Deletes a batch of jobs").
+		withCall(func(args ...string) (interface{}, error) {
+		if len(args) != 1 {
+			return "", fmt.Errorf("Command batch needs the batch id")
+		}
+		id := args[0]
+		ok, err := link.DeleteBatch(id)
+		if err == nil && ok {
+			return fmt.Sprintf("Batch %v removed from the server\n", id), err
+		}
+		return "", err
+	}).build(cli)
+	cmd.SetArity(1, "Batch id")
+
+}
 func AddQueueCommand(cli *Cli, link PipelineLink) {
 	fn := func(...string) (queue interface{}, err error) {
 		return link.Queue()
