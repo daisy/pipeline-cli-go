@@ -104,8 +104,8 @@ func TestCliNonRequiredOptions(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	//parser.Parse([]string{"test","--i-source","value"})
-	err = cli.Run([]string{"test", "-o", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml"})
+	//parser.Parse([]string{"test","--source","value"})
+	err = cli.Run([]string{"test", "-o", os.TempDir(), "--source", "./tmp/file", "--single", "./tmp/file2", "--test-opt", "./myfile.xml"})
 	if err != nil {
 		t.Errorf("Non required option threw an error %v", err.Error())
 	}

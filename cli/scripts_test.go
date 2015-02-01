@@ -2,6 +2,8 @@ package cli
 
 import (
 	"fmt"
+
+	"github.com/capitancambio/go-subcommand"
 	//"github.com/capitancambio/go-subcommand"
 	//"github.com/daisy-consortium/pipeline-clientlib-go"
 	"io/ioutil"
@@ -71,8 +73,8 @@ func TestScriptPriority(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	//parser.Parse([]string{"test","--i-source","value"})
-	err = cli.Run([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true", "--priority", "low"})
+	//parser.Parse([]string{"test","--source","value"})
+	err = cli.Run([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--source", "./tmp/file", "--single", "./tmp/file2", "--test-opt", "./myfile.xml", "--another-opt", "true", "--priority", "low"})
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -96,8 +98,8 @@ func TestScriptNiceName(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	//parser.Parse([]string{"test","--i-source","value"})
-	err = cli.Run([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true", "--nicename", "my_job"})
+	//parser.Parse([]string{"test","--source","value"})
+	err = cli.Run([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--source", "./tmp/file", "--single", "./tmp/file2", "--test-opt", "./myfile.xml", "--another-opt", "true", "--nicename", "my_job"})
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -121,7 +123,7 @@ func TestScriptPriorityMedium(t *testing.T) {
 		t.Error("Unexpected error")
 	}
 	////medium
-	err = cli.Run([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true", "--priority", "medium"})
+	err = cli.Run([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--source", "./tmp/file", "--single", "./tmp/file2", "--test-opt", "./myfile.xml", "--another-opt", "true", "--priority", "medium"})
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -142,7 +144,7 @@ func TestScriptPriorityHigh(t *testing.T) {
 		t.Error("Unexpected error")
 	}
 	////medium
-	err = cli.Run([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true", "--priority", "high"})
+	err = cli.Run([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--source", "./tmp/file", "--single", "./tmp/file2", "--test-opt", "./myfile.xml", "--another-opt", "true", "--priority", "high"})
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -162,7 +164,7 @@ func TestScriptPriorityWrongValue(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	err = cli.Run([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true", "--priority", "not_so_low"})
+	err = cli.Run([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--source", "./tmp/file", "--single", "./tmp/file2", "--test-opt", "./myfile.xml", "--another-opt", "true", "--priority", "not_so_low"})
 	if err == nil {
 		t.Errorf("Wrong priority value didn't error")
 	}
@@ -183,14 +185,15 @@ func TestScriptToCommand(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	//parser.Parse([]string{"test","--i-source","value"})
-	err = cli.Run([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
+	//parser.Parse([]string{"test","--source","value"})
+	err = cli.Run([]string{"test", "-o", os.TempDir(), "-d", os.TempDir(), "--source", "./tmp/file", "--single", "./tmp/file2", "--test-opt", "./myfile.xml", "--another-opt", "true"})
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
 	if jobRequest.Script != "test" {
 		t.Error("script not set")
 	}
+	fmt.Printf("jobRequest.Inputs %+v\n", jobRequest.Inputs)
 	if jobRequest.Inputs["source"][0].String() != "./tmp/file" {
 		t.Errorf("Input source not set %v", jobRequest.Inputs["source"][0].String())
 	}
@@ -222,8 +225,8 @@ func TestScriptToCommandNoLocalFail(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	//parser.Parse([]string{"test","--i-source","value"})
-	err = cli.Run([]string{"test", "-o", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
+	//parser.Parse([]string{"test","--source","value"})
+	err = cli.Run([]string{"test", "-o", os.TempDir(), "--source", "./tmp/file", "--single", "./tmp/file2", "--test-opt", "./myfile.xml", "--another-opt", "true"})
 	if err == nil {
 		t.Error("Expected error not thrown")
 	}
@@ -241,8 +244,8 @@ func TestCliRequiredOptions(t *testing.T) {
 		t.Error("Unexpected error")
 	}
 	link.pipeline.(*PipelineTest).withScripts = false
-	//parser.Parse([]string{"test","--i-source","value"})
-	err = cli.Run([]string{"test", "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-another-opt", "true"})
+	//parser.Parse([]string{"test","--source","value"})
+	err = cli.Run([]string{"test", "--source", "./tmp/file", "--single", "./tmp/file2", "--another-opt", "true"})
 	if err == nil {
 		t.Errorf("Missing required option wasn't thrown")
 	}
@@ -290,8 +293,8 @@ func TestScriptNoOutput(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	//parser.Parse([]string{"test","--i-source","value"})
-	err = cli.Run([]string{"test", "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
+	//parser.Parse([]string{"test","--source","value"})
+	err = cli.Run([]string{"test", "--source", "./tmp/file", "--single", "./tmp/file2", "--test-opt", "./myfile.xml", "--another-opt", "true"})
 	if err == nil {
 		t.Errorf("No error thrown")
 	}
@@ -310,8 +313,8 @@ func TestScriptDefault(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	//parser.Parse([]string{"test","--i-source","value"})
-	err = cli.Run([]string{"test", "-o", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
+	//parser.Parse([]string{"test","--source","value"})
+	err = cli.Run([]string{"test", "-o", os.TempDir(), "--source", "./tmp/file", "--single", "./tmp/file2", "--test-opt", "./myfile.xml", "--another-opt", "true"})
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -334,8 +337,8 @@ func TestScriptBackground(t *testing.T) {
 		t.Error("Unexpected error")
 	}
 	link.pipeline.(*PipelineTest).withScripts = false
-	//parser.Parse([]string{"test","--i-source","value"})
-	err = cli.Run([]string{"test", "-b", "-o", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
+	//parser.Parse([]string{"test","--source","value"})
+	err = cli.Run([]string{"test", "-b", "-o", os.TempDir(), "--source", "./tmp/file", "--single", "./tmp/file2", "--test-opt", "./myfile.xml", "--another-opt", "true"})
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -364,8 +367,8 @@ func TestScriptPersistent(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected error")
 	}
-	//parser.Parse([]string{"test","--i-source","value"})
-	err = cli.Run([]string{"test", "-p", "-o", os.TempDir(), "--i-source", "./tmp/file", "--i-single", "./tmp/file2", "--x-test-opt", "./myfile.xml", "--x-another-opt", "true"})
+	//parser.Parse([]string{"test","--source","value"})
+	err = cli.Run([]string{"test", "-p", "-o", os.TempDir(), "--source", "./tmp/file", "--single", "./tmp/file2", "--test-opt", "./myfile.xml", "--another-opt", "true"})
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -377,6 +380,27 @@ func TestScriptPersistent(t *testing.T) {
 	}
 	if getCall(*link) != RESULTS_CALL {
 		t.Errorf("Persistent job did not gather its results")
+	}
+
+}
+func TestGetFlagName(t *testing.T) {
+	name := getFlagName("myflag", "", []subcommand.Flag{subcommand.Flag{}})
+	if name != "myflag" {
+		t.Errorf("name is my myflag != %v", name)
+	}
+
+}
+func TestGetFlagCommonName(t *testing.T) {
+	name := getFlagName("myflag", "t-", []subcommand.Flag{subcommand.Flag{Long: "--myflag"}})
+	if name != "t-myflag" {
+		t.Errorf("expting t-myflag!= %v", name)
+	}
+
+}
+func TestGetFlagCommonExists(t *testing.T) {
+	name := getFlagName("output", "t-", []subcommand.Flag{subcommand.Flag{}})
+	if name != "t-output" {
+		t.Errorf("expting t-output != %v", name)
 	}
 
 }

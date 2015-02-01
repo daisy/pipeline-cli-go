@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/capitancambio/go-subcommand"
 	"github.com/daisy/pipeline-clientlib-go"
 )
 
@@ -122,6 +123,31 @@ func (j jobExecution) run(w io.Writer) error {
 	return nil
 }
 
+var commonFlags = []string{"--output", "--zip", "--nicename", "--priority", "--quiet", "--persistent", "--background"}
+
+func getFlagName(name, prefix string, flags []subcommand.Flag) string {
+	flaggedName := "--" + name
+
+	allFlags := []string{}
+	allFlags = append(allFlags, commonFlags...)
+	allFlags = append(allFlags, flagsToString(flags)...)
+	for _, f := range allFlags {
+		if f == flaggedName {
+			return prefix + name
+		}
+
+	}
+
+	return name
+}
+func flagsToString(flags []subcommand.Flag) []string {
+	res := make([]string, len(flags), len(flags))
+	for idx, flag := range flags {
+		res[idx] = flag.Long
+	}
+	return res
+}
+
 //Adds the command and flags to be able to call the script to the cli
 func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req *JobRequest, err error) {
 	jobRequest := newJobRequest()
@@ -142,12 +168,14 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 	}, jobRequest)
 
 	for _, input := range script.Inputs {
-		command.AddOption("i-"+input.Name, "", input.Desc, inputFunc(jobRequest, link)).Must(true)
+		name := getFlagName(input.Name, "i-", command.Flags())
+		command.AddOption(name, "", input.Desc, inputFunc(jobRequest, link)).Must(true)
 	}
 
 	for _, option := range script.Options {
 		//desc:=option.Desc+
-		command.AddOption("x-"+option.Name, "", option.Desc, optionFunc(jobRequest, link, option.Type)).Must(option.Required)
+		name := getFlagName(option.Name, "x-", command.Flags())
+		command.AddOption(name, "", option.Desc, optionFunc(jobRequest, link, option.Type)).Must(option.Required)
 	}
 	command.AddOption("output", "o", "Path where to store the results. This option is mandatory when the job is not executed in the background", func(name, folder string) error {
 		jExec.output = folder
@@ -216,7 +244,12 @@ func (c *ScriptCommand) addDataOption() {
 func inputFunc(req *JobRequest, link *PipelineLink) func(string, string) error {
 	return func(name, value string) error {
 		var err error
-		req.Inputs[name[2:]], err = pathToUri(value, ",", getBasePath(link.IsLocal()))
+		//control prefix
+		if strings.HasPrefix("i-", name) {
+			req.Inputs[name[2:]], err = pathToUri(value, ",", getBasePath(link.IsLocal()))
+		} else {
+			req.Inputs[name], err = pathToUri(value, ",", getBasePath(link.IsLocal()))
+		}
 		return err
 	}
 }
@@ -225,7 +258,10 @@ func inputFunc(req *JobRequest, link *PipelineLink) func(string, string) error {
 //and value
 func optionFunc(req *JobRequest, link *PipelineLink, optionType string) func(string, string) error {
 	return func(name, value string) error {
-		name = name[2:]
+		//control prefix
+		if strings.HasPrefix("x-", name) {
+			name = name[2:]
+		}
 		if optionType == "anyFileURI" || optionType == "anyDirURI" {
 			urls, err := pathToUri(value, ",", getBasePath(link.IsLocal()))
 			if err != nil {
