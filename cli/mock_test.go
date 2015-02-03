@@ -141,7 +141,7 @@ func (p *PipelineTest) Alive() (alive pipeline.Alive, err error) {
 	if p.fail {
 		return alive, errors.New("Error")
 	}
-	alive.Version = "test"
+	alive.Version = "version-test"
 	alive.FsAllow = p.fsallow
 	alive.Authentication = p.authentication
 	return
