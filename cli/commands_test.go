@@ -92,13 +92,12 @@ func TestMoveDownCommand(t *testing.T) {
 func TestVersionCommand(t *testing.T) {
 	pipe := newPipelineTest(false)
 	link := PipelineLink{pipeline: pipe}
-	link.Version = "2.0.0-test"
 	cli, err := makeCli("test", &link)
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
 	r := overrideOutput(cli)
-	AddVersionCommand(cli, link)
+	AddVersionCommand(cli, &link)
 
 	err = cli.Run([]string{"version"})
 	if err != nil {
@@ -116,8 +115,8 @@ func TestVersionCommand(t *testing.T) {
 		t.Errorf("Client version not present")
 	}
 
-	if val, ok := values["Pipeline version"]; !ok || val != "2.0.0-test" {
-		t.Errorf("Pipeline version '2.0.0-test'!='%s'", val)
+	if val, ok := values["Pipeline version"]; !ok || val != "version-test" {
+		t.Errorf("Pipeline version 'version-test'!='%s'", val)
 
 	}
 

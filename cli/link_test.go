@@ -123,7 +123,7 @@ func TestBringUp(t *testing.T) {
 		t.Error("Unexpected error")
 	}
 
-	if link.Version != "test" {
+	if link.Version != "version-test" {
 		t.Error("Version not set")
 	}
 	if link.FsAllow != true {
