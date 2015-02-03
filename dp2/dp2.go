@@ -40,7 +40,7 @@ func main() {
 	cli.AddMoveUpCommand(comm, *link)
 	cli.AddMoveDownCommand(comm, *link)
 	cli.AddHaltCommand(comm, *link)
-	cli.AddVersionCommand(comm, *link)
+	cli.AddVersionCommand(comm, link)
 	//admin commands
 	comm.AddClientListCommand(*link)
 	comm.AddNewClientCommand(*link)

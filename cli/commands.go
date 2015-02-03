@@ -191,11 +191,11 @@ func AddMoveDownCommand(cli *Cli, link PipelineLink) {
 }
 
 type Version struct {
-	PipelineLink
+	*PipelineLink
 	CliVersion string
 }
 
-func AddVersionCommand(cli *Cli, link PipelineLink) {
+func AddVersionCommand(cli *Cli, link *PipelineLink) {
 	newCommandBuilder("version", "Prints the version and authentication information").
 		withCall(func(...string) (interface{}, error) {
 		return Version{link, VERSION}, nil
