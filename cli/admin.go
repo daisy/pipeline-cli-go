@@ -149,7 +149,7 @@ func (c *Cli) AddSizesCommand(link PipelineLink) {
 	unitFormatter := func(size int) string {
 		return fmt.Sprintf("%d", size)
 	}
-	cmd := c.AddCommand("sizes", "Prits the total size or a detailed list of job data stored in the server",
+	cmd := c.AddAdminCommand("sizes", "Prits the total size or a detailed list of job data stored in the server",
 		func(command string, args ...string) error {
 			sizes, err := link.Sizes()
 			if err != nil {

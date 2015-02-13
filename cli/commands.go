@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/daisy/pipeline-clientlib-go"
 )
@@ -201,4 +202,32 @@ func AddVersionCommand(cli *Cli, link *PipelineLink) {
 		return Version{link, VERSION}, nil
 	}).withTemplate(VersionTemplate).build(cli)
 
+}
+
+func AddCleanCommand(cli *Cli, link PipelineLink) {
+	pred := isError
+	fn := func(args ...string) (interface{}, error) {
+		jobs, err := link.Jobs()
+		if err != nil {
+			return "", err
+		}
+		deleteFn := func(j pipeline.Job, c chan string) {
+			ok, err := link.Delete(j.Id)
+			if err == nil && ok {
+				c <- fmt.Sprintf("Job %v removed from the server\n", j.Id)
+			} else {
+				c <- fmt.Sprintf("Couldn't remove Job %v from the server (%v)\n", j.Id, err)
+			}
+		}
+		msgs := parallelMap(jobs, deleteFn, pred)
+		return strings.Join(msgs, ""), nil
+
+	}
+	cmd := newCommandBuilder("clean", "Removes the jobs with an ERROR status").
+		withCall(fn).build(cli)
+	cmd.AddSwitch("done", "d", "Removes also the jobs with a DONE status", func(string, string) error {
+		pred = or(pred, isDone)
+		return nil
+	})
+	cmd.SetArity(0, "")
 }

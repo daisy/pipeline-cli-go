@@ -75,6 +75,19 @@ var (
 			},
 		},
 	}
+	JOB_3 = pipeline.Job{
+		Status:   "ERROR",
+		Nicename: "errored job",
+		Id:       "job3",
+		Priority: "high",
+		Messages: []pipeline.Message{
+			pipeline.Message{
+				Sequence: 3,
+				Content:  "Message 3",
+				Level:    "WARN",
+			},
+		},
+	}
 )
 
 type Inputs []pipeline.Input

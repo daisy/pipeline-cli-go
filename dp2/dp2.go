@@ -39,6 +39,7 @@ func main() {
 	cli.AddQueueCommand(comm, *link)
 	cli.AddMoveUpCommand(comm, *link)
 	cli.AddMoveDownCommand(comm, *link)
+	cli.AddCleanCommand(comm, *link)
 	cli.AddHaltCommand(comm, *link)
 	cli.AddVersionCommand(comm, link)
 	//admin commands
