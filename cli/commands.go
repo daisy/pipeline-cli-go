@@ -229,4 +229,5 @@ func AddCleanCommand(cli *Cli, link PipelineLink) {
 		pred = or(pred, isDone)
 		return nil
 	})
+	cmd.SetArity(0, "")
 }
