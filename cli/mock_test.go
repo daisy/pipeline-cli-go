@@ -95,6 +95,8 @@ type PipelineTest struct {
 	key            string
 	secret         string
 	withScripts    bool
+	jobs           func() (pipeline.Jobs, error)
+	delete         func(string) (bool, error)
 }
 
 func (p PipelineTest) mockCall() (val interface{}, err error) {
@@ -193,6 +195,9 @@ func (p *PipelineTest) JobRequest(newJob pipeline.JobRequest, data []byte) (job 
 }
 
 func (p *PipelineTest) DeleteJob(id string) (ok bool, err error) {
+	if p.delete != nil {
+		return p.delete(id)
+	}
 	p.deleted = true
 	p.call = DELETE_CALL
 	ret, err := p.mockCall()
@@ -219,6 +224,9 @@ func (p *PipelineTest) Log(id string) (data []byte, err error) {
 	return
 }
 func (p *PipelineTest) Jobs() (jobs pipeline.Jobs, err error) {
+	if p.jobs != nil {
+		return p.jobs()
+	}
 	p.call = JOBS_CALL
 	ret, err := p.mockCall()
 	if ret != nil {

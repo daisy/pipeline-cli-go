@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/daisy/pipeline-clientlib-go"
@@ -527,5 +529,112 @@ func TestJobsError(t *testing.T) {
 	}
 	if err == nil {
 		t.Errorf("Error from link not propagated")
+	}
+}
+
+func TestClean(t *testing.T) {
+	jobs := pipeline.Jobs{Jobs: []pipeline.Job{JOB_2, JOB_3}}
+	cli, link, p := makeReturningCli(jobs, t)
+	jobsCalled := false
+	deleteCalled := 0
+	deletedId := ""
+	p.jobs = func() (pipeline.Jobs, error) {
+		jobsCalled = true
+		return jobs, nil
+	}
+	p.delete = func(id string) (bool, error) {
+		deleteCalled++
+		deletedId = id
+		return true, nil
+	}
+
+	r := overrideOutput(cli)
+	AddCleanCommand(cli, link)
+	err := cli.Run([]string{"clean"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if !jobsCalled {
+		t.Errorf("Jobs wasn't called")
+	}
+	if deleteCalled != 1 {
+		t.Errorf("Delete wasn't called exactly once")
+	}
+	if deletedId != JOB_3.Id {
+		t.Errorf("Delete wasn't called on the errored job")
+	}
+	expected := fmt.Sprintf("Job %v removed from the server\n", JOB_3.Id)
+	result := string(r.Bytes())
+	if expected != result {
+		t.Errorf("The message is not correct '%s'!='%s'", expected, result)
+	}
+
+}
+func TestCleanAll(t *testing.T) {
+	jobs := pipeline.Jobs{Jobs: []pipeline.Job{JOB_2, JOB_3}}
+	cli, link, p := makeReturningCli(jobs, t)
+	jobsCalled := false
+	deleteCalled := int32(0)
+	p.jobs = func() (pipeline.Jobs, error) {
+		jobsCalled = true
+		return jobs, nil
+	}
+	p.delete = func(id string) (bool, error) {
+		atomic.AddInt32(&deleteCalled, 1)
+		return true, nil
+	}
+
+	r := overrideOutput(cli)
+	AddCleanCommand(cli, link)
+	err := cli.Run([]string{"clean", "-d"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if !jobsCalled {
+		t.Errorf("Jobs wasn't called")
+	}
+	if deleteCalled != 2 {
+		t.Errorf("Delete wasn't called twice")
+	}
+	//the calls to delete are parallel
+	result := string(r.Bytes())
+	if !strings.Contains(result, JOB_2.Id) {
+		t.Errorf("Id from JOB_2 is not in the output")
+	}
+	if !strings.Contains(result, JOB_3.Id) {
+		t.Errorf("Id from JOB_3 is not in the output")
+	}
+}
+func TestCleanErrors(t *testing.T) {
+	jobs := pipeline.Jobs{Jobs: []pipeline.Job{JOB_2, JOB_3}}
+	cli, link, p := makeReturningCli(jobs, t)
+	jobsCalled := false
+	deleteCalled := false
+	errDel := fmt.Errorf("error")
+	p.jobs = func() (pipeline.Jobs, error) {
+		jobsCalled = true
+		return jobs, nil
+	}
+	p.delete = func(id string) (bool, error) {
+		deleteCalled = true
+		return false, errDel
+	}
+
+	r := overrideOutput(cli)
+	AddCleanCommand(cli, link)
+	err := cli.Run([]string{"clean"})
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if !jobsCalled {
+		t.Errorf("Jobs wasn't called")
+	}
+	if !deleteCalled {
+		t.Errorf("Delete wasn't called ")
+	}
+	expected := fmt.Sprintf("Couldn't remove Job %v from the server (%v)\n", JOB_3.Id, errDel)
+	result := string(r.Bytes())
+	if expected != result {
+		t.Errorf("The message is not correct '%s'!='%s'", expected, result)
 	}
 }
