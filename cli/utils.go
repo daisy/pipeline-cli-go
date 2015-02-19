@@ -130,7 +130,6 @@ func (z *ZipInflator) Close() error {
 		if err := mkdir(filepath.Dir(path)); err != nil {
 			return err
 		}
-		fmt.Printf("path %+v\n", path)
 
 		rc, err := f.Open()
 		if err != nil {
