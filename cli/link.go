@@ -3,6 +3,7 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"time"
@@ -25,7 +26,7 @@ type PipelineApi interface {
 	ScriptUrl(id string) string
 	Job(string, int) (pipeline.Job, error)
 	DeleteJob(id string) (bool, error)
-	Results(id string) ([]byte, error)
+	Results(id string, w io.Writer) error
 	Log(id string) ([]byte, error)
 	Jobs() (pipeline.Jobs, error)
 	Halt(key string) error
@@ -133,9 +134,8 @@ func (p PipelineLink) Delete(jobId string) (ok bool, err error) {
 }
 
 //Return the zipped results as a []byte
-func (p PipelineLink) Results(jobId string) (data []byte, err error) {
-	data, err = p.pipeline.Results(jobId)
-	return
+func (p PipelineLink) Results(jobId string, w io.Writer) error {
+	return p.pipeline.Results(jobId, w)
 }
 func (p PipelineLink) Log(jobId string) (data []byte, err error) {
 	data, err = p.pipeline.Log(jobId)

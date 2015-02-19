@@ -58,7 +58,7 @@ type jobExecution struct {
 	zipped     bool
 }
 
-func (j jobExecution) run(w io.Writer) error {
+func (j jobExecution) run(stdOut io.Writer) error {
 	log.Printf("run data len %v\n", len(j.req.Data))
 	//manual check of output
 	if !j.req.Background && j.output == "" {
@@ -73,7 +73,7 @@ func (j jobExecution) run(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(w, "Job %v sent to the server\n", job.Id)
+	fmt.Fprintf(stdOut, "Job %v sent to the server\n", job.Id)
 	//store id if it suits
 	if storeId {
 		err = storeLastId(job.Id)
@@ -90,7 +90,7 @@ func (j jobExecution) run(w io.Writer) error {
 		}
 		//print messages
 		if j.verbose {
-			fmt.Fprintln(w, msg.String())
+			fmt.Fprintln(stdOut, msg.String())
 		}
 		status = msg.Status
 	}
@@ -98,25 +98,25 @@ func (j jobExecution) run(w io.Writer) error {
 	if status != "ERROR" {
 		//get the data
 		if !j.req.Background {
-			data, err := j.link.Results(job.Id)
+			wc, err := zipProcessor(j.output, j.zipped)
 			if err != nil {
 				return err
 			}
-			if j.zipped {
-				zippedDataToFile(data, j.output)
-				fmt.Fprintln(w, "Results stored to file")
-			} else {
-				zippedDataToFolder(data, j.output)
-				fmt.Fprintln(w, "Results stored")
+			if err := j.link.Results(job.Id, wc); err != nil {
+				return err
 			}
+			if err := wc.Close(); err != nil {
+				return err
+			}
+
 			if !j.persistent {
 				_, err = j.link.Delete(job.Id)
 				if err != nil {
 					return err
 				}
-				fmt.Fprintf(w, "The job has been deleted from the server\n")
+				fmt.Fprintf(stdOut, "The job has been deleted from the server\n")
 			}
-			fmt.Fprintf(w, "Job finished with status: %v\n", status)
+			fmt.Fprintf(stdOut, "Job finished with status: %v\n", status)
 		}
 
 	}

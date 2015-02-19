@@ -93,10 +93,32 @@ func mkdir(path string) error {
 	return nil
 }
 
-//Writes the  data to the specified folder
-func dumpZippedData(data []byte, folder string) error {
-	buff := bytes.NewReader(data)
-	reader, err := zip.NewReader(buff, int64(len(data)))
+type ZipInflator struct {
+	folder string
+	buff   *bytes.Buffer
+}
+
+func NewZipInflator(folder string) *ZipInflator {
+	return &ZipInflator{
+		folder: folder,
+		buff:   bytes.NewBuffer([]byte{}),
+	}
+
+}
+
+//Writes the  data to a intermediate buffer
+func (z *ZipInflator) Write(data []byte) (int, error) {
+	return z.buff.Write(data)
+}
+
+//
+func (z *ZipInflator) Close() error {
+	l := int64(z.buff.Len())
+	//if  no data do not try to compress it
+	if l == 0 {
+		return nil
+	}
+	reader, err := zip.NewReader(bytes.NewReader(z.buff.Bytes()), l)
 	if err != nil {
 		return err
 	}
@@ -104,10 +126,11 @@ func dumpZippedData(data []byte, folder string) error {
 	//and store the results
 	for _, f := range reader.File {
 		//Get the path of the new file
-		path := filepath.Join(folder, filepath.Clean(f.Name))
+		path := filepath.Join(z.folder, filepath.Clean(f.Name))
 		if err := mkdir(filepath.Dir(path)); err != nil {
 			return err
 		}
+		fmt.Printf("path %+v\n", path)
 
 		rc, err := f.Open()
 		if err != nil {
@@ -135,33 +158,12 @@ func dumpZippedData(data []byte, folder string) error {
 	return nil
 }
 
-//Creates the folder and dumps the zippped data
-func zippedDataToFolder(data []byte, folder string) (absPath string, err error) {
-	//Create folder
-	absPath, err = createAbsoluteFolder(folder)
-	filepath.Abs(folder)
-	err = dumpZippedData(data, absPath)
-	return
-}
-
-//Creates the folder and dumps the zippped data
-func zippedDataToFile(data []byte, file string) (absPath string, err error) {
-	//Create folder
-	absPath, err = filepath.Abs(file)
-	if err != nil {
-		return
+func zipProcessor(file string, asZip bool) (io.WriteCloser, error) {
+	if asZip {
+		return os.Create(file)
+	} else {
+		return NewZipInflator(file), nil
 	}
-	f, err := os.Create(file)
-	if err != nil {
-		return
-	}
-	defer func() {
-		f.Close()
-	}()
-	if _, err = f.Write(data); err != nil {
-		return absPath, err
-	}
-	return
 }
 
 //gets the path for last id file
@@ -208,7 +210,7 @@ var javaVersionService = func() (string, error) {
 		output, err := exec.Command("/usr/libexec/java_home").Output()
 		if len(output) == 0 {
 			javaHome = "/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/"
-		} else if (err != nil) {
+		} else if err != nil {
 			javaHome = string(output)
 		}
 	}
@@ -216,7 +218,7 @@ var javaVersionService = func() (string, error) {
 		if _, err := os.Stat(javaHome); err == nil {
 			javaCmd = filepath.Join(javaHome, "bin", javaCmd)
 		}
-	} 
+	}
 	cmd := exec.Command(javaCmd, "-version")
 	output, err := cmd.CombinedOutput()
 	if err != nil {

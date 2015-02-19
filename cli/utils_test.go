@@ -62,7 +62,12 @@ func TestDumpFiles(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
-	err = dumpZippedData(data, folder)
+	zi := NewZipInflator(folder)
+	_, err = zi.Write(data)
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	err = zi.Close()
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}

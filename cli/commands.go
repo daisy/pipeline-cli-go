@@ -82,22 +82,23 @@ func AddResultsCommand(cli *Cli, link PipelineLink) {
 	zipped := false
 	cmd := newCommandBuilder("results", "Stores the results from a job").
 		withCall(func(args ...string) (v interface{}, err error) {
-		data, err := link.Results(args[0])
+
+		wc, err := zipProcessor(outputPath, zipped)
 		if err != nil {
 			return
 		}
-		var path string
+		if err = link.Results(args[0], wc); err != nil {
+			return
+		}
+		if err = wc.Close(); err != nil {
+			return
+		}
+
 		var extra string
 		if zipped {
-			path, err = zippedDataToFile(data, outputPath)
 			extra = "zipfile "
-		} else {
-			path, err = zippedDataToFolder(data, outputPath)
 		}
-		if err != nil {
-			return
-		}
-		return fmt.Sprintf("Results stored into %s%v\n", extra, path), err
+		return fmt.Sprintf("Results stored into %s%v\n", extra, outputPath), err
 	}).buildWithId(cli)
 	cmd.AddOption("output", "o", "Directory where to store the results", func(name, folder string) error {
 		outputPath = folder
