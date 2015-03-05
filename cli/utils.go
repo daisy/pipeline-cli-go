@@ -178,6 +178,11 @@ func getLastIdPath(currentOs string) string {
 	default:
 		panic(fmt.Sprintf("Platform not recognised %v", currentOs))
 	}
+	base := filepath.Dir(path)
+	_, err := os.Stat(base)
+	if err != nil {
+		mkdir(base)
+	}
 	return path
 }
 
