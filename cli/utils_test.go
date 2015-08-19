@@ -215,6 +215,9 @@ Java HotSpot(TM) Client VM (build 24.65-b04, mixed mode, sharing)`
 	OpenJdkVersion = `java version "%s"
 OpenJDK Runtime Environment (IcedTea 2.5.2) (7u65-2.5.2-3~14.04)
 OpenJDK 64-Bit Server VM (build 24.65-b04, mixed mode)`
+	OpenJdkVersionUbuntu = `openjdk version "%s"
+OpenJDK Runtime Environment (build 1.8.0_45-internal-b14)
+OpenJDK 64-Bit Server VM (build 25.45-b02, mixed mode)`
 )
 
 func TestParseVersion(t *testing.T) {
@@ -245,8 +248,16 @@ func TestParseVersion(t *testing.T) {
 		t.Errorf("Unexpected error %v", err)
 	}
 	if v != 1.8 {
-		t.Errorf("version was expected to be 1.6")
+		t.Errorf("version was expected to be 1.8")
 	}
+	v, err = parseVersion(fmt.Sprintf(OpenJdkVersionUbuntu, "1.8.0_45-internal"))
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if v != 1.8 {
+		t.Errorf("version was expected to be 1.8")
+	}
+
 
 }
 func TestParseVersionErrors(t *testing.T) {
@@ -288,6 +299,12 @@ func TestAssertJava(t *testing.T) {
 	}
 	if err := AssertJava(1.7); err == nil {
 		t.Errorf("Expected error not returned")
+	}
+	javaVersionService = func() (string, error) {
+		return fmt.Sprintf(OpenJdkVersionUbuntu, "1.8.0_45-internal"), nil
+	}
+	if err := AssertJava(1.8); err != nil {
+		t.Errorf("Unexpected error %v", err.Error())
 	}
 
 }
