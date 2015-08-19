@@ -193,7 +193,7 @@ func AssertJava(minJavaVersion float64) error {
 		return err
 	}
 	//parse the output
-	ver, err := parseVesion(output)
+	ver, err := parseVersion(output)
 	if err != nil {
 		return err
 	}
@@ -233,7 +233,7 @@ var javaVersionService = func() (string, error) {
 }
 
 //parses the vesion from
-func parseVesion(javaOut string) (ver float64, err error) {
+func parseVersion(javaOut string) (ver float64, err error) {
 	strVer := ""
 	reg := re.MustCompile(`java version "(\d\.\d)?.*"`)
 	res := reg.FindStringSubmatch(javaOut)

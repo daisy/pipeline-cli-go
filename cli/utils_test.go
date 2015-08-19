@@ -218,14 +218,14 @@ OpenJDK 64-Bit Server VM (build 24.65-b04, mixed mode)`
 )
 
 func TestParseVersion(t *testing.T) {
-	v, err := parseVesion(fmt.Sprintf(OracleJdkVersion, "1.7_u12"))
+	v, err := parseVersion(fmt.Sprintf(OracleJdkVersion, "1.7_u12"))
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
 	if v != 1.7 {
 		t.Errorf("version was expected to be 1.7")
 	}
-	v, err = parseVesion(fmt.Sprintf(OpenJdkVersion, "1.7_12"))
+	v, err = parseVersion(fmt.Sprintf(OpenJdkVersion, "1.7_12"))
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -233,14 +233,14 @@ func TestParseVersion(t *testing.T) {
 		t.Errorf("version was expected to be 1.7")
 	}
 
-	v, err = parseVesion(fmt.Sprintf(OracleJdkVersion, "1.6.12"))
+	v, err = parseVersion(fmt.Sprintf(OracleJdkVersion, "1.6.12"))
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
 	if v != 1.6 {
 		t.Errorf("version was expected to be 1.6")
 	}
-	v, err = parseVesion(fmt.Sprintf(OpenJdkVersion, "1.8"))
+	v, err = parseVersion(fmt.Sprintf(OpenJdkVersion, "1.8"))
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -251,15 +251,15 @@ func TestParseVersion(t *testing.T) {
 }
 func TestParseVersionErrors(t *testing.T) {
 	//no java out
-	_, err := parseVesion("")
+	_, err := parseVersion("")
 	if err == nil {
 		t.Errorf("Expected error not returned for empty string")
 	}
-	_, err = parseVesion("this is not a version line")
+	_, err = parseVersion("this is not a version line")
 	if err == nil {
 		t.Errorf("Expected error not returned for nonsense")
 	}
-	_, err = parseVesion(fmt.Sprintf(OpenJdkVersion, "arg!"))
+	_, err = parseVersion(fmt.Sprintf(OpenJdkVersion, "arg!"))
 	if err == nil {
 		t.Errorf("Expected error not returned for an unparseable version")
 	}
