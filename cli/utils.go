@@ -193,7 +193,7 @@ func AssertJava(minJavaVersion float64) error {
 		return err
 	}
 	//parse the output
-	ver, err := parseVesion(output)
+	ver, err := parseVersion(output)
 	if err != nil {
 		return err
 	}
@@ -228,14 +228,14 @@ var javaVersionService = func() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	//error!
 	return string(output), nil
 }
 
 //parses the vesion from
-func parseVesion(javaOut string) (ver float64, err error) {
+func parseVersion(javaOut string) (ver float64, err error) {
 	strVer := ""
-	reg := re.MustCompile(`java version "(\d\.\d)?.*"`)
+	// under Ubuntu 15.4 openjdk `java -version` prints "openjdk version "1.8.0_45-internal""
+	reg := re.MustCompile(`(?:java|openjdk) version "(\d\.\d)?.*"`)
 	res := reg.FindStringSubmatch(javaOut)
 	if len(res) > 0 {
 		strVer = res[len(res)-1]
