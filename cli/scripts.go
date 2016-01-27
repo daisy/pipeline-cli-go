@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/capitancambio/blackterm"
 	"github.com/capitancambio/go-subcommand"
 	"github.com/daisy/pipeline-clientlib-go"
 )
@@ -160,7 +161,7 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 		verbose: true,
 		zipped:  false,
 	}
-	command := cli.AddScriptCommand(script.Id, fmt.Sprintf("%s [v%s]", script.Description, script.Version), func(string, ...string) error {
+	command := cli.AddScriptCommand(script.Id, fmt.Sprintf("%s [v%s]", blackterm.MarkdownString(script.Description), script.Version), func(string, ...string) error {
 		if err := jExec.run(cli.Output); err != nil {
 			return err
 		}
@@ -169,13 +170,13 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 
 	for _, input := range script.Inputs {
 		name := getFlagName(input.Name, "i-", command.Flags())
-		command.AddOption(name, "", input.Desc, inputFunc(jobRequest, link)).Must(true)
+		command.AddOption(name, "", blackterm.MarkdownString(input.Desc), inputFunc(jobRequest, link)).Must(true)
 	}
 
 	for _, option := range script.Options {
 		//desc:=option.Desc+
 		name := getFlagName(option.Name, "x-", command.Flags())
-		command.AddOption(name, "", option.Desc, optionFunc(jobRequest, link, option.Type)).Must(option.Required)
+		command.AddOption(name, "", blackterm.MarkdownString(option.Desc), optionFunc(jobRequest, link, option.Type)).Must(option.Required)
 	}
 	command.AddOption("output", "o", "Path where to store the results. This option is mandatory when the job is not executed in the background", func(name, folder string) error {
 		jExec.output = folder
