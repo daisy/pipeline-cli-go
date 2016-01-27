@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"bitbucket.org/kardianos/osext"
+	"github.com/kardianos/osext"
 	"launchpad.net/goyaml"
 )
 

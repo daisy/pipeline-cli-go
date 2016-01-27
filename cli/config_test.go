@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"bitbucket.org/kardianos/osext"
+	"github.com/kardianos/osext"
 )
 
 var (

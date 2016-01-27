@@ -36,10 +36,11 @@ build-setup:
 	@mkdir -p "${GOPATH}/src/github.com/daisy"
 	@test -d "${GOPATH}/src/github.com/daisy/pipeline-cli-go" || ln -s "${CURDIR}" "${GOPATH}/src/github.com/daisy/pipeline-cli-go"
 	@${GO} get github.com/capitancambio/go-subcommand
+	@${GO} get github.com/capitancambio/blackterm
 	@${GO} get launchpad.net/goyaml 
 	@${GO} get github.com/daisy/pipeline-clientlib-go
-	@${GO} get bitbucket.org/kardianos/osext
-	@${GO} get code.google.com/p/go.tools/cmd/cover 
+	@${GO} get github.com/kardianos/osext
+	@${GO} get golang.org/x/tools/cmd/cover 
 
 build-dp2: build-setup
 	@echo "Building dp2..."
