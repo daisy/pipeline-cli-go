@@ -50,8 +50,8 @@ build-dp2: build-setup
 dist: build-setup test
 	@echo "Building for x-platform..."
 	@${GO} get github.com/mitchellh/gox
-	@${GOX} -build-toolchain \
-	        -osarch="linux/amd64 linux/386 darwin/386 darwin/amd64 windows/386 windows/amd64"
+	#@${GOX} -build-toolchain \
+		#-osarch="linux/amd64 linux/386 darwin/386 darwin/amd64 windows/386 windows/amd64"
 	@${GOX} -output="${GOPATH}/bin/{{.OS}}_{{.Arch}}/{{.Dir}}" \
 	        -osarch="linux/amd64 linux/386 darwin/386 darwin/amd64 windows/386 windows/amd64" \
 	        ./dp2/ 
