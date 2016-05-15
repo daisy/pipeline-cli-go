@@ -12,15 +12,18 @@ var minJavaVersion = 1.7
 
 func main() {
 	log.SetFlags(log.Lshortfile)
-	if err := cli.AssertJava(minJavaVersion); err != nil {
-		fmt.Printf(
-			"Java version error:\n\tPlease make sure that java is accessible and the version is equal or greater than %v\n\tError: %s\n",
-			minJavaVersion,
-			err.Error(),
-		)
-		os.Exit(-1)
-	}
 	cnf := cli.NewConfig()
+	if cnf[cli.STARTING].(bool) {
+		println("Checking java")
+		if err := cli.AssertJava(minJavaVersion); err != nil {
+			fmt.Printf(
+				"Java version error:\n\tPlease make sure that java is accessible and the version is equal or greater than %v\n\tError: %s\n",
+				minJavaVersion,
+				err.Error(),
+			)
+			os.Exit(-1)
+		}
+	}
 	// proper error handlign missing
 
 	link := cli.NewLink(cnf)
