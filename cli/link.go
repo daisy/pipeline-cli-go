@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"time"
+	"regexp"
 
 	"github.com/daisy/pipeline-clientlib-go"
 )
@@ -210,7 +211,15 @@ func (m Message) String() string {
 		for len(level) < 10 {
 			level += " "
 		}
-		return fmt.Sprintf("%v %v%v", level, indent, m.Message)
+		str := ""
+		for i, line := range regexp.MustCompile("\r?\n|\r").Split(m.Message, -1) {
+			if (i == 0) {
+				str += fmt.Sprintf("%v %v%v", level, indent, line)
+			} else {
+				str += fmt.Sprintf("\n           %v%v", indent, line)
+			}
+		}
+		return str
 	} else {
 		return ""
 	}
