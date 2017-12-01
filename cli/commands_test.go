@@ -264,7 +264,7 @@ func TestVerboseJobStatusCommand(t *testing.T) {
 	if getCall(link) != JOB_CALL {
 		t.Errorf("status wasn't called")
 	}
-	exp := regexp.MustCompile("\\(\\d+\\)\\[\\w+\\]\\s+\\w+")
+	exp := regexp.MustCompile("\\[\\w+\\]\\t\\w+")
 	matches := exp.FindAll(r.Bytes(), -1)
 	if len(matches) != 2 {
 		t.Errorf("The messages weren't printed output:\n%s", string(string(r.Bytes())))

@@ -14,8 +14,8 @@ Job Id: {{.Data.Id }}
 Status: {{.Data.Status}}
 Priority: {{.Data.Priority}}
 {{if .Verbose}}Messages:
-{{range .Data.Messages}}
-({{.Sequence}})[{{.Level}}]      {{.Content}}
+{{range .Data.Messages.Message}}
+[{{.Level}}]	{{.Content}}
 {{end}}
 {{end}}
 `
