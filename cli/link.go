@@ -192,11 +192,12 @@ func (p PipelineLink) MoveDown(id string) (queue []pipeline.QueueJob, err error)
 
 //Convience structure to handle message and errors from the communication with the pipelineApi
 type Message struct {
-	Message string
-	Level   string
-	Depth   int
-	Status  string
-	Error   error
+	Message  string
+	Level    string
+	Depth    int
+	Status   string
+	Progress float64
+	Error    error
 }
 
 //Returns a simple string representation of the messages strucutre:
@@ -256,8 +257,14 @@ func getAsyncMessages(p PipelineLink, jobId string, messages chan Message) {
 			close(messages)
 			return
 		}
+		n := msgNum
 		if len(job.Messages.Message) > 0 {
-			msgNum = flattenMessages(job.Messages.Message, messages, job.Status, msgNum + 1, 0)
+			n = flattenMessages(job.Messages.Message, messages, job.Status, job.Messages.Progress, msgNum + 1, 0)
+		}
+		if (n > msgNum) {
+			msgNum = n
+		} else {
+			messages <- Message{Progress: job.Messages.Progress}
 		}
 		if job.Status == "DONE" || job.Status == "ERROR" || job.Status == "VALIDATION_FAIL" {
 			messages <- Message{Status: job.Status}
@@ -271,14 +278,14 @@ func getAsyncMessages(p PipelineLink, jobId string, messages chan Message) {
 
 //Flatten message coming from the Pipeline job and feed them into the channel
 //Return the sequence number of the last inner message
-func flattenMessages(from []pipeline.Message, to chan Message, status string, firstNum int, depth int) (lastNum int) {
+func flattenMessages(from []pipeline.Message, to chan Message, status string, progress float64, firstNum int, depth int) (lastNum int) {
 	for _, msg := range from {
 		lastNum = msg.Sequence
 		if lastNum >= firstNum {
-			to <- Message{Message: msg.Content, Level: msg.Level, Depth: depth, Status: status}
+			to <- Message{Message: msg.Content, Level: msg.Level, Depth: depth, Status: status, Progress: progress}
 		}
 		if len(msg.Message) > 0 {
-			lastNum = flattenMessages(msg.Message, to, status, firstNum, depth + 1)
+			lastNum = flattenMessages(msg.Message, to, status, progress, firstNum, depth + 1)
 		}
 	}
 	return lastNum
