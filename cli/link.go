@@ -191,16 +191,26 @@ func (p PipelineLink) MoveDown(id string) (queue []pipeline.QueueJob, err error)
 
 //Convience structure to handle message and errors from the communication with the pipelineApi
 type Message struct {
-	Message pipeline.Message
+	Message string
+	Level   string
+	Depth   int
 	Status  string
 	Error   error
 }
 
 //Returns a simple string representation of the messages strucutre:
-//(index)[LEVEL]        Message content
+//[LEVEL]   Message content
 func (m Message) String() string {
-	if m.Message.Content != "" {
-		return fmt.Sprintf("(%v)[%v]\t%v", m.Message.Sequence, m.Message.Level, m.Message.Content)
+	if m.Message != "" {
+		indent := ""
+		for i := 1; i <= m.Depth; i++ {
+			indent += "  "
+		}
+		level := "[" + m.Level + "]"
+		for len(level) < 10 {
+			level += " "
+		}
+		return fmt.Sprintf("%v %v%v", level, indent, m.Message)
 	} else {
 		return ""
 	}
@@ -229,7 +239,7 @@ func (p PipelineLink) Execute(jobReq JobRequest) (job pipeline.Job, messages cha
 
 //Feeds the channel with the messages describing the job's execution
 func getAsyncMessages(p PipelineLink, jobId string, messages chan Message) {
-	msgNum := 0
+	msgNum := -1
 	for {
 		job, err := p.pipeline.Job(jobId, msgNum)
 		if err != nil {
@@ -237,10 +247,8 @@ func getAsyncMessages(p PipelineLink, jobId string, messages chan Message) {
 			close(messages)
 			return
 		}
-		for _, msg := range job.Messages {
-			msgNum = msg.Sequence
-			messages <- Message{Message: msg, Status: job.Status}
-
+		if len(job.Messages.Message) > 0 {
+			msgNum = flattenMessages(job.Messages.Message, messages, job.Status, msgNum + 1, 0)
 		}
 		if job.Status == "DONE" || job.Status == "ERROR" || job.Status == "VALIDATION_FAIL" {
 			messages <- Message{Status: job.Status}
@@ -250,6 +258,21 @@ func getAsyncMessages(p PipelineLink, jobId string, messages chan Message) {
 		time.Sleep(MSG_WAIT)
 	}
 
+}
+
+//Flatten message coming from the Pipeline job and feed them into the channel
+//Return the sequence number of the last inner message
+func flattenMessages(from []pipeline.Message, to chan Message, status string, firstNum int, depth int) (lastNum int) {
+	for _, msg := range from {
+		lastNum = msg.Sequence
+		if lastNum >= firstNum {
+			to <- Message{Message: msg.Content, Level: msg.Level, Depth: depth, Status: status}
+		}
+		if len(msg.Message) > 0 {
+			lastNum = flattenMessages(msg.Message, to, status, firstNum, depth + 1)
+		}
+	}
+	return lastNum
 }
 
 func jobRequestToPipeline(req JobRequest, p PipelineLink) (pReq pipeline.JobRequest, err error) {

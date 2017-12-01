@@ -49,16 +49,18 @@ var (
 		Nicename: "my_little_job",
 		Id:       "job1",
 		Priority: "low",
-		Messages: []pipeline.Message{
-			pipeline.Message{
-				Sequence: 1,
-				Content:  "Message 1",
-				Level:    "INFO",
-			},
-			pipeline.Message{
-				Sequence: 2,
-				Content:  "Message 2",
-				Level:    "DEBUG",
+		Messages: pipeline.Messages{
+			Message: []pipeline.Message{
+				pipeline.Message{
+					Sequence: 1,
+					Content:  "Message 1",
+					Level:    "INFO",
+				},
+				pipeline.Message{
+					Sequence: 2,
+					Content:  "Message 2",
+					Level:    "DEBUG",
+				},
 			},
 		},
 	}
@@ -67,11 +69,13 @@ var (
 		Nicename: "the_other_job",
 		Id:       "job2",
 		Priority: "high",
-		Messages: []pipeline.Message{
-			pipeline.Message{
-				Sequence: 3,
-				Content:  "Message 3",
-				Level:    "WARN",
+		Messages: pipeline.Messages{
+			Message: []pipeline.Message{
+				pipeline.Message{
+					Sequence: 3,
+					Content:  "Message 3",
+					Level:    "WARN",
+				},
 			},
 		},
 	}
@@ -80,11 +84,13 @@ var (
 		Nicename: "errored job",
 		Id:       "job3",
 		Priority: "high",
-		Messages: []pipeline.Message{
-			pipeline.Message{
-				Sequence: 3,
-				Content:  "Message 3",
-				Level:    "WARN",
+		Messages: pipeline.Messages{
+			Message: []pipeline.Message{
+				pipeline.Message{
+					Sequence: 3,
+					Content:  "Message 3",
+					Level:    "WARN",
+				},
 			},
 		},
 	}
@@ -372,7 +378,7 @@ func TestAsyncMessages(t *testing.T) {
 	var msgs []string
 	go getAsyncMessages(link, "jobId", chMsg)
 	for msg := range chMsg {
-		msgs = append(msgs, msg.Message.Content)
+		msgs = append(msgs, msg.Message)
 	}
 	if len(msgs) != 4 {
 		t.Errorf("Wrong message list size %v", len(msgs))
