@@ -50,6 +50,7 @@ var (
 		Id:       "job1",
 		Priority: "low",
 		Messages: pipeline.Messages{
+			Progress: .75,
 			Message: []pipeline.Message{
 				pipeline.Message{
 					Sequence: 1,
