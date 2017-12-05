@@ -113,7 +113,8 @@ func (j jobExecution) run(stdOut io.Writer) error {
 			if err != nil {
 				return err
 			}
-			if err := j.link.Results(job.Id, wc); err != nil {
+			ok, err := j.link.Results(job.Id, wc)
+			if err != nil {
 				return err
 			}
 			if err := wc.Close(); err != nil {
@@ -128,6 +129,9 @@ func (j jobExecution) run(stdOut io.Writer) error {
 				fmt.Fprintf(stdOut, "The job has been deleted from the server\n")
 			}
 			fmt.Fprintf(stdOut, "Job finished with status: %v\n", status)
+			if (!ok && (status == "DONE" || status == "FAIL")) {
+				fmt.Fprintf(stdOut, "No results available\n")
+			}
 		}
 
 	}
