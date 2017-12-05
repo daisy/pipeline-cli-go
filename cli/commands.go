@@ -93,7 +93,8 @@ func AddResultsCommand(cli *Cli, link PipelineLink) {
 		if err != nil {
 			return
 		}
-		if err = link.Results(args[0], wc); err != nil {
+		ok, err := link.Results(args[0], wc)
+		if err != nil {
 			return
 		}
 		if err = wc.Close(); err != nil {
@@ -104,7 +105,11 @@ func AddResultsCommand(cli *Cli, link PipelineLink) {
 		if zipped {
 			extra = "zipfile "
 		}
-		return fmt.Sprintf("Results stored into %s%v\n", extra, outputPath), err
+		if ok {
+			return fmt.Sprintf("Results stored into %s%v\n", extra, outputPath), err
+		} else {
+			return fmt.Sprintf("No results available for job %s\n", args[0]), err
+		}
 	}).buildWithId(cli)
 	cmd.AddOption("output", "o", "Directory where to store the results", func(name, folder string) error {
 		outputPath = folder
