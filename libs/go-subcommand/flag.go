@@ -22,8 +22,10 @@ type Flag struct {
 	Long string
 	//Short definition (-o )
 	Short string
-	//Description
-	Description string
+	//Short description
+	ShortDesc string
+	//Long description
+	LongDesc string
 	//FlagType, option or switch
 	Type FlagType
 	//Function to call when the flag is found during the parsing process
@@ -43,7 +45,7 @@ func (f *Flag) Must(isIt bool) {
 //-s,--switch                   This is a switch
 //-i,--ignoreme [IGNOREME]      Optional option
 func (f Flag) String() string {
-	return fmt.Sprintf("%s\t%s", f.FlagStringPrefix(), f.Description)
+	return fmt.Sprintf("%s\t%s", f.FlagStringPrefix(), f.ShortDesc)
 }
 
 func (f Flag) FlagStringPrefix() string {
@@ -74,11 +76,14 @@ func checkDefinition(flag string) bool {
 }
 
 //builds the flag struct panicking if errors are encountered
-func buildFlag(long string, short string, desc string, fn FlagFunction, kind FlagType) *Flag {
+func buildFlag(long, short, shortDesc, longDesc string, fn FlagFunction, kind FlagType) *Flag {
 	long = strings.Trim(long, " ")
 	short = strings.Trim(short, " ")
 	if len(long) == 0 {
 		panic("Long definition is empty")
+	}
+	if longDesc == "" {
+		longDesc = shortDesc
 	}
 
 	if !checkDefinition(long) {
@@ -93,7 +98,8 @@ func buildFlag(long string, short string, desc string, fn FlagFunction, kind Fla
 		Long:        long,
 		Short:       short,
 		fn:          fn,
-		Description: desc,
+		ShortDesc:   shortDesc,
+		LongDesc:    longDesc,
 		Mandatory:   false,
 	}
 }

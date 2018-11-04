@@ -12,7 +12,7 @@ var emptyFnMult = func(command string, values ...string) error { return nil }
 //build option
 func TestParserOption(t *testing.T) {
 	parser := NewParser("test")
-	option := parser.AddOption("option", "o", "This is an option", emptyFn)
+	option := parser.AddOption("option", "o", "This is an option", "", emptyFn)
 
 	if _, exists := parser.innerFlagsLong[option.Long]; !exists {
 		t.Error("option is not present in the long names")
@@ -24,8 +24,8 @@ func TestParserOption(t *testing.T) {
 }
 
 func TestBuildFlagOk(t *testing.T) {
-	f := buildFlag("option", "o", "", emptyFn, Option)
-	f2 := buildFlag("switch", "s", "", emptyFn, Switch)
+	f := buildFlag("option", "o", "", "", emptyFn, Option)
+	f2 := buildFlag("switch", "s", "", "", emptyFn, Switch)
 	if f.Type != Option {
 		t.Error("Option type not properly set")
 	}
@@ -44,8 +44,8 @@ func TestBuildFlagOk(t *testing.T) {
 	if f.Mandatory {
 		t.Error("Option mandatory not properly set")
 	}
-	f = buildFlag("option", "", "", emptyFn, Option)
-	f2 = buildFlag("switch", "", "", emptyFn, Switch)
+	f = buildFlag("option", "", "", "", emptyFn, Option)
+	f2 = buildFlag("switch", "", "", "", emptyFn, Switch)
 
 	if f.Type != Option {
 		t.Error("Option type not properly set (empty short)")
@@ -61,7 +61,7 @@ func TestBuildFlagInvalidLong(t *testing.T) {
 			t.Error("Not panicked with wrong long definition")
 		}
 	}()
-	buildFlag("option OPTION", "o", "", emptyFn, Option)
+	buildFlag("option OPTION", "o", "", "", emptyFn, Option)
 }
 
 func TestBuildFlagInvalidShort(t *testing.T) {
@@ -70,7 +70,7 @@ func TestBuildFlagInvalidShort(t *testing.T) {
 			t.Error("Not panicked with wrong short definition")
 		}
 	}()
-	buildFlag("option", "o o", "", emptyFn, Option)
+	buildFlag("option", "o o", "", "", emptyFn, Option)
 }
 
 func TestEmptyLong(t *testing.T) {
@@ -79,7 +79,7 @@ func TestEmptyLong(t *testing.T) {
 			t.Error("Not panicked with empty long definition")
 		}
 	}()
-	buildFlag("", "o", "", emptyFn, Option)
+	buildFlag("", "o", "", "", emptyFn, Option)
 }
 
 func TestAddCommand(t *testing.T) {
@@ -110,7 +110,7 @@ func TestAddCommandTwice(t *testing.T) {
 func TestParseGlobalOption(t *testing.T) {
 	parser := NewParser("test")
 	processed := false
-	parser.AddOption("option", "o", "This is an option", func(name, val string) error {
+	parser.AddOption("option", "o", "This is an option", "", func(name, val string) error {
 		if val == "value" && name == "option" {
 			processed = true
 		}
@@ -125,7 +125,7 @@ func TestParseGlobalOption(t *testing.T) {
 
 func TestParseGlobalOptionError(t *testing.T) {
 	parser := NewParser("test")
-	parser.AddOption("option", "o", "This is an option", func(name, val string) error {
+	parser.AddOption("option", "o", "This is an option", "", func(name, val string) error {
 		return errors.New("ERROR!")
 	})
 	_, err := parser.Parse([]string{"--option", "value"})
@@ -138,7 +138,7 @@ func TestParseGlobalOptionError(t *testing.T) {
 func TestParseGlobalOptionShort(t *testing.T) {
 	parser := NewParser("test")
 	processed := false
-	parser.AddOption("option", "o", "This is an option", func(name, val string) error {
+	parser.AddOption("option", "o", "This is an option", "", func(name, val string) error {
 		if val == "value" && name == "option" {
 			processed = true
 		}
@@ -205,7 +205,7 @@ func TestParseGlobalNoOptionFound(t *testing.T) {
 
 func TestParseGlobalOptionEmpty(t *testing.T) {
 	parser := NewParser("test")
-	parser.AddOption("option", "o", "This is an option", emptyFn)
+	parser.AddOption("option", "o", "This is an option", "", emptyFn)
 	_, err := parser.Parse([]string{"--option"})
 	if err == nil {
 		t.Error("No error thrown")
@@ -273,7 +273,7 @@ func TestParseMandatorySwitch(t *testing.T) {
 
 func TestParseMandatoryOption(t *testing.T) {
 	parser := NewParser("test")
-	parser.AddOption("option", "o", "This is a mandatory option", func(string, string) error {
+	parser.AddOption("option", "o", "This is a mandatory option", "", func(string, string) error {
 		return nil
 	}).Must(true)
 	_, err := parser.Parse([]string{"command"})
@@ -284,7 +284,7 @@ func TestParseMandatoryOption(t *testing.T) {
 func TestParseMandatoryInnerOption(t *testing.T) {
 	parser := NewParser("test")
 	cmd := parser.AddCommand("command", "", func(string, ...string) error { return nil })
-	cmd.AddOption("option", "o", "This is a mandatory option", func(string, string) error {
+	cmd.AddOption("option", "o", "This is a mandatory option", "", func(string, string) error {
 		return nil
 	}).Must(true)
 	_, err := parser.Parse([]string{"command"})
@@ -345,7 +345,7 @@ func TestParseCommandWithLeftsMandatoryFlag(t *testing.T) {
 		arg2 = args[1]
 		return nil
 	})
-	cmd.AddOption("opt", "o", "Mandatory option", func(string, string) error {
+	cmd.AddOption("opt", "o", "Mandatory option", "", func(string, string) error {
 		visited = true
 		return nil
 	}).Must(true)
@@ -407,7 +407,7 @@ func TestSetHelpWithCommand(t *testing.T) {
 	cmd := parser.AddCommand("command", "", func(command string, args ...string) error {
 		return nil
 	})
-	cmd.AddOption("opt", "o", "Mandatory option", func(string, string) error {
+	cmd.AddOption("opt", "o", "Mandatory option", "", func(string, string) error {
 		return nil
 	}).Must(true)
 
@@ -562,7 +562,7 @@ func TestOrderedFlags(t *testing.T) {
 	parser := NewParser("test")
 	command := parser.AddCommand(name, "", emptyFnMult)
 	for _, o := range opts {
-		command.AddOption(o, "", "", emptyFn)
+		command.AddOption(o, "", "", "", emptyFn)
 	}
 	flags := command.Flags()
 	for idx, flag := range flags {
