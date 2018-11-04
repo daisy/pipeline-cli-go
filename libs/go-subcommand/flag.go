@@ -56,11 +56,7 @@ func (f Flag) FlagStringPrefix() string {
 		shortFormat = "-%v,"
 	}
 	if f.Type == Option {
-		if f.Mandatory {
-			format = "--%v %v"
-		} else {
-			format = "--%v [%v]"
-		}
+		format = "--%v %v"
 		prefix = fmt.Sprintf(shortFormat+format, f.Short, f.Long, strings.ToUpper(f.Long))
 	} else {
 		format = "--%v"
