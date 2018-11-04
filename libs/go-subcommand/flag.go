@@ -26,6 +26,8 @@ type Flag struct {
 	ShortDesc string
 	//Long description
 	LongDesc string
+	//Possible values
+	Values string
 	//FlagType, option or switch
 	Type FlagType
 	//Function to call when the flag is found during the parsing process
@@ -51,13 +53,17 @@ func (f Flag) String() string {
 func (f Flag) FlagStringPrefix() string {
 	var format string
 	var prefix string
+	var values string = f.Values
 	shortFormat := "%v"
 	if f.Short != "" {
 		shortFormat = "-%v,"
 	}
+	if values ==  "" {
+		values = strings.ToUpper(f.Long)
+	}
 	if f.Type == Option {
 		format = "--%v %v"
-		prefix = fmt.Sprintf(shortFormat+format, f.Short, f.Long, strings.ToUpper(f.Long))
+		prefix = fmt.Sprintf(shortFormat+format, f.Short, f.Long, values)
 	} else {
 		format = "--%v"
 		prefix = fmt.Sprintf(shortFormat+format, f.Short, f.Long)
@@ -72,7 +78,7 @@ func checkDefinition(flag string) bool {
 }
 
 //builds the flag struct panicking if errors are encountered
-func buildFlag(long, short, shortDesc, longDesc string, fn FlagFunction, kind FlagType) *Flag {
+func buildFlag(long, short, shortDesc, longDesc, values string, fn FlagFunction, kind FlagType) *Flag {
 	long = strings.Trim(long, " ")
 	short = strings.Trim(short, " ")
 	if len(long) == 0 {
@@ -96,6 +102,7 @@ func buildFlag(long, short, shortDesc, longDesc string, fn FlagFunction, kind Fl
 		fn:          fn,
 		ShortDesc:   shortDesc,
 		LongDesc:    longDesc,
+		Values:      values,
 		Mandatory:   false,
 	}
 }
