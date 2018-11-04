@@ -170,7 +170,7 @@ func (c *Cli) addConfigOptions(conf Config) {
 		})
 	}
 	//alternative configuration file
-	c.AddOption("file", "f", "Alternative configuration file", func(string, filePath string) error {
+	c.AddOption("file", "f", "Alternative configuration file", "", func(string, filePath string) error {
 		file, err := os.Open(filePath)
 		if err != nil {
 			log.Printf(err.Error())
