@@ -35,7 +35,26 @@ func (c *Command) Flags() []Flag {
 	for _, val := range c.orderedFlags {
 		flags = append(flags, *val)
 	}
+	return flags
+}
 
+func (c *Command) MandatoryFlags() []Flag {
+	flags := make([]Flag, 0)
+	for _, val := range c.orderedFlags {
+		if val.Mandatory {
+			flags = append(flags, *val)
+		}
+	}
+	return flags
+}
+
+func (c *Command) NonMandatoryFlags() []Flag {
+	flags := make([]Flag, 0)
+	for _, val := range c.orderedFlags {
+		if !val.Mandatory {
+			flags = append(flags, *val)
+		}
+	}
 	return flags
 }
 
