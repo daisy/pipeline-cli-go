@@ -66,12 +66,12 @@ func TestHelp(t *testing.T) {
 	//just to check that everything executes
 	output = ioutil.Discard
 	parser := NewParser("test")
-	parser.AddOption("option", "o", "This is an option", "", func(name, val string) error {
+	parser.AddOption("option", "o", "This is an option", "", "", func(name, val string) error {
 		return nil
 	})
 	parser.AddCommand("command", "desc", func(string, ...string) error {
 		return nil
-	}).AddOption("cop", "", "", "", func(string, string) error {
+	}).AddOption("cop", "", "", "", "", func(string, string) error {
 		return nil
 	})
 	_, err := parser.Parse([]string{"help"})

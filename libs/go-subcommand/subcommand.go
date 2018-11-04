@@ -85,8 +85,8 @@ func newCommand(parent *Command, name string, description string, fn CommandFunc
 // func setPath(option,value string){
 //      printf("According the option %v the path is set to %v",option,value);
 //}
-func (c *Command) AddOption(long, short, shortDesc, longDesc string, fn FlagFunction) *Flag {
-	flag := buildFlag(long, short, shortDesc, longDesc, fn, Option)
+func (c *Command) AddOption(long, short, shortDesc, longDesc, values string, fn FlagFunction) *Flag {
+	flag := buildFlag(long, short, shortDesc, longDesc, values, fn, Option)
 	c.addFlag(flag)
 	return flag
 }
@@ -101,7 +101,7 @@ func (c *Command) AddOption(long, short, shortDesc, longDesc string, fn FlagFunc
 //      printf("I'm get to get quite talkative! I'm set to be %v ",switch);
 //}
 func (c *Command) AddSwitch(long string, short string, shortDesc string, fn FlagFunction) *Flag {
-	flag := buildFlag(long, short, shortDesc, "", fn, Switch)
+	flag := buildFlag(long, short, shortDesc, "", "", fn, Switch)
 	c.addFlag(flag)
 	return flag
 }
