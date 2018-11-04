@@ -53,7 +53,7 @@ Usage: {{.Parent.Name}} [GLOBAL_OPTIONS] {{.Name}} [OPTIONS]  {{ .Arity.Descript
 {{.Description}}
 {{if .Flags}}
 Options:
-{{range .Flags }}       {{flagAligner .FlagStringPrefix}} {{.Description}}
+{{range .Flags }}       {{flagAligner .FlagStringPrefix}} {{.ShortDesc}}
 {{end}}
 {{end}}
 
@@ -62,7 +62,7 @@ Options:
 	GLOBAL_OPTIONS_TEMPLATE = `
 
 Global Options:
-{{range .Flags }}       {{flagAligner .FlagStringPrefix}} {{.Description}}
+{{range .Flags }}       {{flagAligner .FlagStringPrefix}} {{.ShortDesc}}
 {{end}}
 
 `
@@ -142,7 +142,7 @@ func (c *Cli) setHelp() {
 //Adds the configuration global options to the parser
 func (c *Cli) addConfigOptions(conf Config) {
 	for option, desc := range config_descriptions {
-		c.AddOption(option, "", fmt.Sprintf("%v (default %v)", desc, conf[option]), func(optName string, value string) error {
+		c.AddOption(option, "", fmt.Sprintf("%v (default %v)", desc, conf[option]), "", func(optName string, value string) error {
 			log.Println("option:", optName, "value:", value)
 			switch conf[optName].(type) {
 			case int:

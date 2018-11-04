@@ -23,7 +23,7 @@ var SCRIPT pipeline.Script = pipeline.Script{
 			Name:      "test-opt",
 			Ordered:   false,
 			Mediatype: "xml",
-			Desc:      "I'm a test option",
+			ShortDesc: "I'm a test option",
 			Type:      "anyFileURI",
 		},
 		pipeline.Option{
@@ -32,19 +32,19 @@ var SCRIPT pipeline.Script = pipeline.Script{
 			Name:      "another-opt",
 			Ordered:   false,
 			Mediatype: "xml",
-			Desc:      "I'm a test option",
+			ShortDesc: "I'm a test option",
 			Type:      "boolean",
 		},
 	},
 	Inputs: []pipeline.Input{
 		pipeline.Input{
-			Desc:      "input port not seq",
+			ShortDesc: "input port not seq",
 			Mediatype: "application/x-dtbook+xml",
 			Name:      "single",
 			Sequence:  false,
 		},
 		pipeline.Input{
-			Desc:      "input port",
+			ShortDesc: "input port",
 			Mediatype: "application/x-dtbook+xml",
 			Name:      "source",
 			Sequence:  true,

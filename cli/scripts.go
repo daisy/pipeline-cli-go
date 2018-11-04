@@ -170,15 +170,35 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 
 	for _, input := range script.Inputs {
 		name := getFlagName(input.Name, "i-", command.Flags())
-		command.AddOption(name, "", blackterm.MarkdownString(input.Desc), inputFunc(jobRequest, link)).Must(true)
+		shortDesc := input.ShortDesc
+		longDesc := input.LongDesc
+		if (shortDesc == "") {
+			shortDesc = input.NiceName
+		} else if len(longDesc) > len(shortDesc) {
+			shortDesc += " [...]"
+		}
+		shortDesc = blackterm.MarkdownString(shortDesc)
+		// FIXME: assumes markdown without html
+		longDesc = blackterm.MarkdownString(longDesc)
+		command.AddOption(name, "", shortDesc, longDesc, inputFunc(jobRequest, link)).Must(true)
 	}
 
 	for _, option := range script.Options {
 		//desc:=option.Desc+
 		name := getFlagName(option.Name, "x-", command.Flags())
-		command.AddOption(name, "", blackterm.MarkdownString(option.Desc), optionFunc(jobRequest, link, option.Type)).Must(option.Required)
+		shortDesc := option.ShortDesc
+		longDesc := option.LongDesc
+		if (shortDesc == "") {
+			shortDesc = option.NiceName
+		} else if len(longDesc) > len(shortDesc) {
+			shortDesc += " [...]"
+		}
+		shortDesc = blackterm.MarkdownString(shortDesc)
+		// FIXME: assumes markdown without html
+		longDesc = blackterm.MarkdownString(longDesc)
+		command.AddOption(name, "", shortDesc, longDesc, optionFunc(jobRequest, link, option.Type)).Must(option.Required)
 	}
-	command.AddOption("output", "o", "Path where to store the results. This option is mandatory when the job is not executed in the background", func(name, folder string) error {
+	command.AddOption("output", "o", "Path where to store the results. This option is mandatory when the job is not executed in the background", "", func(name, folder string) error {
 		jExec.output = folder
 		return nil
 	})
@@ -187,12 +207,12 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 		return nil
 	})
 
-	command.AddOption("nicename", "n", "Set job's nice name", func(name, nice string) error {
+	command.AddOption("nicename", "n", "Set job's nice name", "", func(name, nice string) error {
 		jExec.req.Nicename = nice
 
 		return nil
 	})
-	command.AddOption("priority", "r", "Set job's priority (high|medium|low)", func(name, priority string) error {
+	command.AddOption("priority", "r", "Set job's priority (high|medium|low)", "", func(name, priority string) error {
 		if checkPriority(priority) {
 			jExec.req.Priority = priority
 			return nil
@@ -219,7 +239,7 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 }
 
 func (c *ScriptCommand) addDataOption() {
-	c.AddOption("data", "d", "Zip file containing the files to convert", func(name, path string) error {
+	c.AddOption("data", "d", "Zip file containing the files to convert", "", func(name, path string) error {
 		file, err := os.Open(path)
 		defer func() {
 			err := file.Close()

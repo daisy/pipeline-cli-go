@@ -100,7 +100,7 @@ func AddResultsCommand(cli *Cli, link PipelineLink) {
 		}
 		return fmt.Sprintf("Results stored into %s%v\n", extra, outputPath), err
 	}).buildWithId(cli)
-	cmd.AddOption("output", "o", "Directory where to store the results", func(name, folder string) error {
+	cmd.AddOption("output", "o", "Directory where to store the results", "", func(name, folder string) error {
 		outputPath = folder
 		return nil
 	}).Must(true)
@@ -136,7 +136,7 @@ func AddLogCommand(cli *Cli, link PipelineLink) {
 	cmd := newCommandBuilder("log", "Stores the results from a job").
 		withCall(fn).buildWithId(cli)
 
-	cmd.AddOption("output", "o", "Write the log lines into the file provided instead of printing it", func(name, file string) error {
+	cmd.AddOption("output", "o", "Write the log lines into the file provided instead of printing it", "", func(name, file string) error {
 		outputPath = file
 		return nil
 	})
