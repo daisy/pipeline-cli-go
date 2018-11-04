@@ -3,6 +3,7 @@ package blackterm
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/capitancambio/chalk"
 	"github.com/russross/blackfriday"
@@ -13,7 +14,7 @@ Process a subset of markdown elements and prints them with flying colours!
 */
 func Markdown(input []byte) []byte {
 	tr := NewTerminalRenderer()
-	ret := blackfriday.Markdown(input, tr, blackfriday.EXTENSION_STRIKETHROUGH)
+	ret := blackfriday.Markdown(input, tr, blackfriday.EXTENSION_STRIKETHROUGH + blackfriday.EXTENSION_FENCED_CODE)
 	//get rid of \n at the end of the text
 	for len(ret) > 0 && ret[len(ret)-1] == '\n' {
 		ret = ret[:len(ret)-1]
@@ -42,8 +43,9 @@ func NewTerminalRenderer() TerminalRenderer {
 }
 
 func (tr TerminalRenderer) BlockCode(out *bytes.Buffer, text []byte, lang string) {
-
+	out.WriteString("    " + chalk.Red.Color(chalk.Bold.TextStyle(indent(string(text), "    "))) + "\n")
 }
+
 func (tr TerminalRenderer) BlockQuote(out *bytes.Buffer, text []byte) {}
 func (tr TerminalRenderer) BlockHtml(out *bytes.Buffer, text []byte)  {}
 func (tr TerminalRenderer) Header(out *bytes.Buffer, text func() bool, level int, id string) {
@@ -64,21 +66,17 @@ func (tr TerminalRenderer) Header(out *bytes.Buffer, text func() bool, level int
 func (tr TerminalRenderer) HRule(out *bytes.Buffer) {}
 func (tr TerminalRenderer) List(out *bytes.Buffer, text func() bool, flags int) {
 	text()
-	out.WriteByte('\n')
-
+	out.WriteString("\n")
 }
 func (tr TerminalRenderer) ListItem(out *bytes.Buffer, text []byte, flags int) {
-
 	out.WriteString(tr.Bullet)
-	out.Write(text)
+	out.WriteString(indent(string(text), "    "))
 	out.WriteByte('\n')
-
 }
 func (tr TerminalRenderer) Paragraph(out *bytes.Buffer, text func() bool) {
 	if text() {
-		out.WriteString("\n")
+		out.WriteString("\n\n")
 	}
-
 }
 func (tr TerminalRenderer) Table(out *bytes.Buffer, header []byte, body []byte, columnData []int) {}
 func (tr TerminalRenderer) TableRow(out *bytes.Buffer, text []byte)                               {}
@@ -93,17 +91,13 @@ func (tr TerminalRenderer) TitleBlock(out *bytes.Buffer, text []byte) {
 // Span-level callbacks{}
 func (tr TerminalRenderer) AutoLink(out *bytes.Buffer, link []byte, kind int) {}
 func (tr TerminalRenderer) CodeSpan(out *bytes.Buffer, text []byte) {
-	style := chalk.Green.NewStyle().WithBackground(chalk.Black).WithTextStyle(chalk.Bold)
-	out.WriteString(style.Prefix())
-	out.Write(text)
-	out.WriteString(style.Suffix())
+	out.WriteString(chalk.Red.Color(chalk.Bold.TextStyle(string(text))))
 }
 func (tr TerminalRenderer) DoubleEmphasis(out *bytes.Buffer, text []byte) {
-	out.WriteString(chalk.Inverse.TextStyle(string(text)))
+	out.WriteString(chalk.Bold.TextStyle(string(text)))
 }
 func (tr TerminalRenderer) Emphasis(out *bytes.Buffer, text []byte) {
-	out.WriteString(chalk.Bold.TextStyle(string(text)))
-
+	out.WriteString(chalk.Italic.TextStyle(string(text)))
 }
 func (tr TerminalRenderer) Image(out *bytes.Buffer, link []byte, title []byte, alt []byte) {
 	out.WriteString(fmt.Sprintf("[IMAGE: %s (%s)]", string(alt), string(link)))
@@ -113,15 +107,11 @@ func (tr TerminalRenderer) LineBreak(out *bytes.Buffer) {
 	out.WriteString("\n")
 }
 func (tr TerminalRenderer) Link(out *bytes.Buffer, link []byte, title []byte, content []byte) {
-	out.WriteString(fmt.Sprintf("%s (%s)", string(content), string(link)))
+	out.WriteString(fmt.Sprintf("%s (%s)", string(content), chalk.Underline.TextStyle(string(link))))
 }
 func (tr TerminalRenderer) RawHtmlTag(out *bytes.Buffer, tag []byte) {}
 func (tr TerminalRenderer) TripleEmphasis(out *bytes.Buffer, text []byte) {
-	style := chalk.Inverse.NewStyle().WithForeground(chalk.Red)
-	out.WriteString(style.Prefix())
-	out.Write(text)
-	out.WriteString(style.Suffix())
-
+	out.WriteString(chalk.Italic.TextStyle(chalk.Bold.TextStyle(string(text))))
 }
 func (tr TerminalRenderer) StrikeThrough(out *bytes.Buffer, text []byte) {
 	out.WriteString(chalk.Strikethrough.TextStyle(string(text)))
@@ -141,3 +131,14 @@ func (tr TerminalRenderer) NormalText(out *bytes.Buffer, text []byte) {
 func (tr TerminalRenderer) DocumentHeader(out *bytes.Buffer) {}
 func (tr TerminalRenderer) DocumentFooter(out *bytes.Buffer) {}
 func (tr TerminalRenderer) GetFlags() int                    { return 0 }
+
+func indent(s string, indent string) string {
+	parts := strings.Split(s, "\n")
+	result := parts[0]
+	for _, part := range parts[1:] {
+		result += "\n"
+		result += indent
+		result += part
+	}
+	return result
+}
