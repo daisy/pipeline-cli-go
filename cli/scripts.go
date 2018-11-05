@@ -15,6 +15,7 @@ import (
 	"strconv"
 
 	"github.com/capitancambio/blackterm"
+	"github.com/capitancambio/chalk"
 	"github.com/capitancambio/go-subcommand"
 	"github.com/daisy/pipeline-clientlib-go"
 )
@@ -183,7 +184,7 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 		shortDesc = blackterm.MarkdownString(shortDesc)
 		// FIXME: assumes markdown without html
 		longDesc = blackterm.MarkdownString(longDesc)
-		command.AddOption(name, "", shortDesc, longDesc, inputFunc(jobRequest, link)).Must(true)
+		command.AddOption(name, "", shortDesc, longDesc, italic("FILE"), inputFunc(jobRequest, link)).Must(true)
 	}
 
 	for _, option := range script.Options {
@@ -200,9 +201,10 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 		// FIXME: assumes markdown without html
 		longDesc = blackterm.MarkdownString(longDesc)
 		command.AddOption(
-			name, "", shortDesc, longDesc, optionFunc(jobRequest, link, option.Type, option.Sequence)).Must(option.Required)
+			name, "", shortDesc, longDesc, optionTypeToString(option.Type, name, option.Default),
+			optionFunc(jobRequest, link, option.Type, option.Sequence)).Must(option.Required)
 	}
-	command.AddOption("output", "o", "Path where to store the results. This option is mandatory when the job is not executed in the background", "", func(name, folder string) error {
+	command.AddOption("output", "o", "Path where to store the results. This option is mandatory when the job is not executed in the background", "", italic("DIRECTORY"), func(name, folder string) error {
 		jExec.output = folder
 		return nil
 	})
@@ -211,12 +213,12 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 		return nil
 	})
 
-	command.AddOption("nicename", "n", "Set job's nice name", "", func(name, nice string) error {
+	command.AddOption("nicename", "n", "Set job's nice name", "", italic("NICENAME"), func(name, nice string) error {
 		jExec.req.Nicename = nice
 
 		return nil
 	})
-	command.AddOption("priority", "r", "Set job's priority (high|medium|low)", "", func(name, priority string) error {
+	command.AddOption("priority", "r", "Set job's priority", "", "(high|" + underline("medium") + "|low)", func(name, priority string) error {
 		if checkPriority(priority) {
 			jExec.req.Priority = priority
 			return nil
@@ -242,8 +244,64 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 	return jobRequest, nil
 }
 
+func optionTypeToString(optionType pipeline.DataType, optionName string, defaultValue string) string {
+	switch t := optionType.(type) {
+	case pipeline.AnyFileURI:
+		return italic("FILE")
+	case pipeline.AnyDirURI:
+		return italic("DIRECTORY")
+	case pipeline.XsBoolean:
+		if defaultValue == "true" {
+			return "(" + underline("true") + "|false)"
+		} else if defaultValue == "false" {
+			return "(true|" + underline("false") + ")"
+		} else {
+			return "(true|false)"
+		}
+	case pipeline.XsInteger:
+		return italic("INTEGER")
+	case pipeline.Choice:
+		var choices []string
+		for _, value := range t.Values {
+			choices = append(choices, optionTypeToString(value, "", defaultValue))
+		}
+		return "(" + strings.Join(choices, "|") + ")"
+	case pipeline.Value:
+		if t.Value == defaultValue {
+			return underline(t.Value)
+		} else {
+			return t.Value
+		}
+	case pipeline.Pattern:
+		if optionName == "" {
+			return italic("PATTERN")
+		}
+	case pipeline.XsAnyURI:
+		if optionName == "" {
+			return italic("URI")
+		}
+	case pipeline.XsString:
+		if optionName == "" {
+			return italic("STRING")
+		}
+	default:
+		if optionName == "" {
+			return italic("STRING")
+		}
+	}
+	return italic(strings.ToUpper(optionName))
+}
+
+func italic(s string) string {
+	return chalk.Italic.TextStyle(s)
+}
+
+func underline(s string) string {
+	return chalk.Underline.TextStyle(s)
+}
+
 func (c *ScriptCommand) addDataOption() {
-	c.AddOption("data", "d", "Zip file containing the files to convert", "", func(name, path string) error {
+	c.AddOption("data", "d", "Zip file containing the files to convert", "", "", func(name, path string) error {
 		file, err := os.Open(path)
 		defer func() {
 			err := file.Close()

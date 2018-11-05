@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+	"regexp"
 
 	"github.com/capitancambio/go-subcommand"
 )
@@ -143,7 +144,7 @@ func (c *Cli) setHelp() {
 //Adds the configuration global options to the parser
 func (c *Cli) addConfigOptions(conf Config) {
 	for option, desc := range config_descriptions {
-		c.AddOption(option, "", fmt.Sprintf("%v (default %v)", desc, conf[option]), "", func(optName string, value string) error {
+		c.AddOption(option, "", fmt.Sprintf("%v (default %v)", desc, conf[option]), "", "", func(optName string, value string) error {
 			log.Println("option:", optName, "value:", value)
 			switch conf[optName].(type) {
 			case int:
@@ -171,7 +172,7 @@ func (c *Cli) addConfigOptions(conf Config) {
 		})
 	}
 	//alternative configuration file
-	c.AddOption("file", "f", "Alternative configuration file", "", func(string, filePath string) error {
+	c.AddOption("file", "f", "Alternative configuration file", "", "", func(string, filePath string) error {
 		file, err := os.Open(filePath)
 		if err != nil {
 			log.Printf(err.Error())
@@ -276,16 +277,26 @@ func printHelp(cli Cli, globals, admin bool, args ...string) error {
 func aligner(names []string) func(string) string {
 	longest := getLongestName(names)
 	return func(name string) string {
-		return fmt.Sprintf("%s%s", name, strings.Repeat(" ", longest-len(name)+4))
+		return fmt.Sprintf("%s%s", name, strings.Repeat(" ", longest-realLen(name)+4))
 	}
 }
 
 func getLongestName(name []string) int {
 	max := -1
 	for _, s := range name {
-		if max < len(s) {
-			max = len(s)
+		len := realLen(s)
+		if max < len {
+			max = len
 		}
 	}
 	return max
+}
+
+func realLen(s string) int {
+	return len(uncolor(s))
+}
+
+// remove ANSI color codes
+func uncolor(s string) string {
+	regexp.MustCompile(`\x1b\[[0-9;]*m`).ReplaceAllString(s, "")
 }
