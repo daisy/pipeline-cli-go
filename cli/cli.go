@@ -59,6 +59,28 @@ Usage: {{.Parent.Name}} [GLOBAL_OPTIONS] {{.Name}}{{if .MandatoryFlags}} REQUIRE
 {{range .NonMandatoryFlags }}       {{flagAligner .FlagStringPrefix}} {{.ShortDesc}}
 {{end}}{{end}}
 
+List of global options:                 {{.Parent.Name}} help -g
+Detailed help:                          {{.Parent.Name}} help --verbose {{.Name}}
+{{if .Flags}}Detailed help for a single option:      {{.Parent.Name}} help {{.Name}} OPTION
+{{end}}
+`
+
+	COMMAND_DETAILED_HELP_TEMPLATE = `
+Usage: {{.Parent.Name}} [GLOBAL_OPTIONS] {{.Name}}{{if .MandatoryFlags}} REQUIRED_OPTIONS{{end}}{{if .MandatoryFlags}} [OPTIONS]{{end}} {{ .Arity.Description}}
+
+{{.Description}}
+
+{{if .MandatoryFlags}}Required options:
+{{range .MandatoryFlags }}       {{.FlagStringPrefix}}
+{{indent .LongDesc}}
+
+{{end}}{{end}}{{if .NonMandatoryFlags}}{{if .MandatoryFlags}}Other options{{end}}{{if not .MandatoryFlags}}Options{{end}}:
+{{range .NonMandatoryFlags }}       {{.FlagStringPrefix}}
+{{indent .LongDesc}}
+
+{{end}}{{end}}
+List of global options:       {{.Parent.Name}} help -g
+
 `
 
 	GLOBAL_OPTIONS_TEMPLATE = `
@@ -128,15 +150,20 @@ func NewCli(name string, link *PipelineLink) (cli *Cli, err error) {
 func (c *Cli) setHelp() {
 	globals := false
 	admin := false
+	details := false
 	cmd := c.Parser.SetHelp("help", "Help description", func(help string, args ...string) error {
-		return printHelp(*c, globals, admin, args...)
+		return printHelp(*c, globals, admin, details, args...)
 	})
 	cmd.AddSwitch("globals", "g", "Show global options", func(string, string) error {
 		globals = true
 		return nil
 	})
-	cmd.AddSwitch("admin", "a", "showadmin options", func(string, string) error {
+	cmd.AddSwitch("admin", "a", "Show admin options", func(string, string) error {
 		admin = true
+		return nil
+	})
+	cmd.AddSwitch("verbose", "", "Show detailed help", func(string, string) error {
+		details = true
 		return nil
 	})
 }
@@ -237,13 +264,12 @@ func (c *Cli) Printf(format string, vals ...interface{}) {
 }
 
 //prints the help
-func printHelp(cli Cli, globals, admin bool, args ...string) error {
+func printHelp(cli Cli, globals, admin, details bool, args ...string) error {
 	if globals {
 		funcMap := template.FuncMap{
 			"flagAligner": aligner(flagsToStrings(cli.Flags())),
 		}
-		tmpl := template.Must(template.New("globals").Funcs(funcMap).Parse(GLOBAL_OPTIONS_TEMPLATE))
-		tmpl.Execute(os.Stdout, cli)
+		template.Must(template.New("globals").Funcs(funcMap).Parse(GLOBAL_OPTIONS_TEMPLATE)).Execute(os.Stdout, cli)
 
 	} else if len(args) == 0 {
 		funcMap := template.FuncMap{
@@ -253,23 +279,43 @@ func printHelp(cli Cli, globals, admin bool, args ...string) error {
 		if admin {
 			tmplName = ADMIN_HELP_TEMPLATE
 		}
-		tmpl := template.Must(template.New("mainHelp").Funcs(funcMap).Parse(tmplName))
-		tmpl.Execute(os.Stdout, cli)
+		template.Must(template.New("mainHelp").Funcs(funcMap).Parse(tmplName)).Execute(os.Stdout, cli)
 
 	} else {
-		if len(args) > 1 {
-			return fmt.Errorf("help: only one parameter is accepted. %v found (%v)", len(args), strings.Join(args, ","))
+		if len(args) > 2 {
+			return fmt.Errorf("help: only one or two parameters accepted. %v found (%v)", len(args), strings.Join(args, ","))
 		}
 		cmd, ok := cli.Parser.Commands[args[0]]
 		if !ok {
 			return fmt.Errorf("help: command %v not found ", args[0])
 		}
-		funcMap := template.FuncMap{
-			"flagAligner": aligner(flagsToStrings(cmd.Flags())),
+		if len(args) == 1 {
+			funcMap := template.FuncMap{
+				"flagAligner": aligner(flagsToStrings(cmd.Flags())),
+				"indent": func(s string) string {
+					margin := "            "
+					return margin + indent(s, margin)
+				},
+			}
+			tmpl := COMMAND_HELP_TEMPLATE
+			if details {
+				tmpl = COMMAND_DETAILED_HELP_TEMPLATE
+			}
+			template.Must(template.New("commandHelp").Funcs(funcMap).Parse(tmpl)).Execute(os.Stdout, cmd)
+		} else {
+			for _, flag := range cmd.Flags() {
+				if flag.Long == args[1] {
+					help := flag.FlagStringPrefix()
+					if !flag.Mandatory {
+						help = "[" + help + "]"
+					}
+					help = "\nUsage: " + cli.Parser.Name + " " + cmd.Name + " " + help + " ...\n\n" + flag.LongDesc + "\n\n"
+					fmt.Fprintf(os.Stdout, help)
+					return nil
+				}
+			}
+			return fmt.Errorf("help: %v option %v not found ", cmd.Name, args[1])
 		}
-		tmpl := template.Must(template.New("commandHelp").Funcs(funcMap).Parse(COMMAND_HELP_TEMPLATE))
-		//cmdFlag := commmandFlag{*cmd, cli.Name}
-		tmpl.Execute(os.Stdout, cmd)
 	}
 	return nil
 }
@@ -299,4 +345,16 @@ func realLen(s string) int {
 // remove ANSI color codes
 func uncolor(s string) string {
 	regexp.MustCompile(`\x1b\[[0-9;]*m`).ReplaceAllString(s, "")
+}
+
+// hanging indent
+func indent(s string, indent string) string {
+	parts := strings.Split(s, "\n")
+	result := parts[0]
+	for _, part := range parts[1:] {
+		result += "\n"
+		result += indent
+		result += part
+	}
+	return result
 }
