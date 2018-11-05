@@ -167,6 +167,7 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 		}
 		return nil
 	}, jobRequest)
+	command.SetArity(0, "")
 
 	for _, input := range script.Inputs {
 		name := getFlagName(input.Name, "i-", command.Flags())

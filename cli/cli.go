@@ -46,16 +46,17 @@ Admin commands:
 List of global options:                 {{.Name}} help -g 
 Detailed help for a single command:     {{.Name}} help COMMAND
 `
-	//TODO: Check if required options to write/ignore []
 	COMMAND_HELP_TEMPLATE = `
-Usage: {{.Parent.Name}} [GLOBAL_OPTIONS] {{.Name}} [OPTIONS]  {{ .Arity.Description}}
+Usage: {{.Parent.Name}} [GLOBAL_OPTIONS] {{.Name}}{{if .MandatoryFlags}} REQUIRED_OPTIONS{{end}}{{if .MandatoryFlags}} [OPTIONS]{{end}} {{ .Arity.Description}}
 
 {{.Description}}
-{{if .Flags}}
-Options:
-{{range .Flags }}       {{flagAligner .FlagStringPrefix}} {{.ShortDesc}}
-{{end}}
-{{end}}
+
+{{if .MandatoryFlags}}Required options:
+{{range .MandatoryFlags }}       {{flagAligner .FlagStringPrefix}} {{.ShortDesc}}
+{{end}}{{end}}
+{{if .NonMandatoryFlags}}{{if .MandatoryFlags}}Other options{{end}}{{if not .MandatoryFlags}}Options{{end}}:
+{{range .NonMandatoryFlags }}       {{flagAligner .FlagStringPrefix}} {{.ShortDesc}}
+{{end}}{{end}}
 
 `
 
