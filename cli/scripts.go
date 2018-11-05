@@ -223,6 +223,15 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 			shortDesc += " [...]"
 		}
 		shortDesc = blackterm.MarkdownString(shortDesc)
+		longDesc += ("\n\nPossible values: " + optionTypeToDetailedHelp(option.Type))
+		if ! option.Required {
+			longDesc += "\n\nDefault value: "
+			if option.Default == "" {
+				longDesc += "(empty)"
+			} else {
+				longDesc += "`" + option.Default + "`"
+			}
+		}
 		// FIXME: assumes markdown without html
 		longDesc = blackterm.MarkdownString(longDesc)
 		command.AddOption(
@@ -323,6 +332,68 @@ func italic(s string) string {
 
 func underline(s string) string {
 	return chalk.Underline.TextStyle(s)
+}
+
+func optionTypeToDetailedHelp(optionType pipeline.DataType) string {
+	help := ""
+	switch t := optionType.(type) {
+	case pipeline.AnyFileURI:
+		if t.Documentation != "" {
+			help += t.Documentation
+		} else {
+			help += "A _FILE_"
+		}
+	case pipeline.AnyDirURI:
+		if t.Documentation != "" {
+			help += t.Documentation
+		} else {
+			help += "A _DIRECTORY_"
+		}
+	case pipeline.XsBoolean:
+		if t.Documentation != "" {
+			help += t.Documentation
+		} else {
+			help += "`true` or `false`"
+		}
+	case pipeline.XsInteger:
+		if t.Documentation != "" {
+			help += t.Documentation
+		} else {
+			help += "An _INTEGER_"
+		}
+	case pipeline.Choice:
+		help += "One of the following:\n"
+		for _, value := range t.Values {
+			help += "\n- "
+			help += indent(optionTypeToDetailedHelp(value), "  ")
+		}
+	case pipeline.Value:
+		help += ("`" + t.Value + "`")
+		if t.Documentation != "" {
+			help += (": " + t.Documentation)
+		}
+	case pipeline.Pattern:
+		if t.Documentation != "" {
+			help += t.Documentation
+		} else {
+			help += ("A string that matches the pattern:\n" + t.Pattern)
+		}
+	case pipeline.XsAnyURI:
+		if t.Documentation != "" {
+			help += t.Documentation
+		} else {
+			help += "A _URI_"
+		}
+	case pipeline.XsString:
+		if t.Documentation != "" {
+			help += t.Documentation
+		} else {
+			help += "A _STRING_"
+		}
+	default:
+		help += "A _STRING_"
+	}
+	return help
 }
 
 func (c *ScriptCommand) addDataOption() {
