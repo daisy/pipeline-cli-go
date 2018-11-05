@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"regexp"
+	"strconv"
 
 	"github.com/capitancambio/blackterm"
 	"github.com/capitancambio/go-subcommand"
@@ -222,7 +224,8 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 		shortDesc = blackterm.MarkdownString(shortDesc)
 		// FIXME: assumes markdown without html
 		longDesc = blackterm.MarkdownString(longDesc)
-		command.AddOption(name, "", shortDesc, longDesc, optionFunc(jobRequest, link, option.Type)).Must(option.Required)
+		command.AddOption(
+			name, "", shortDesc, longDesc, optionFunc(jobRequest, link, option.Type, option.Sequence)).Must(option.Required)
 	}
 	command.AddOption("output", "o", "Path where to store the results. This option is mandatory when the job is not executed in the background", "", func(name, folder string) error {
 		jExec.output = folder
@@ -289,39 +292,114 @@ func (c *ScriptCommand) addDataOption() {
 //Returns a function that fills the request info with the subcommand option name
 //and value
 func inputFunc(req *JobRequest, link *PipelineLink) func(string, string) error {
-	return func(name, value string) error {
-		var err error
+	return func(name, value string) (err error) {
 		//control prefix
+		basePath := getBasePath(link.IsLocal())
 		if strings.HasPrefix("i-", name) {
-			req.Inputs[name[2:]], err = pathToUri(value, ",", getBasePath(link.IsLocal()))
-		} else {
-			req.Inputs[name], err = pathToUri(value, ",", getBasePath(link.IsLocal()))
+			name = name[2:]
 		}
-		return err
+		// FIXME: check if input is a sequence
+		for _, path := range strings.Split(value, ",") {
+			var u *url.URL
+			u, err = pathToUri(path, basePath)
+			if err != nil {
+				return
+			}
+			req.Inputs[name] = append(req.Inputs[name], *u)
+		}
+		return
 	}
 }
 
 //Returns a function that fills the request option with the subcommand option name
 //and value
-func optionFunc(req *JobRequest, link *PipelineLink, optionType string) func(string, string) error {
+func optionFunc(req *JobRequest, link *PipelineLink, optionType pipeline.DataType, sequence bool) func(string, string) error {
 	return func(name, value string) error {
-		//control prefix
 		if strings.HasPrefix("x-", name) {
 			name = name[2:]
 		}
-		if optionType == "anyFileURI" || optionType == "anyDirURI" {
-			urls, err := pathToUri(value, ",", getBasePath(link.IsLocal()))
-			if err != nil {
-				return err
-			}
-			for _, url := range urls {
-				req.Options[name] = append(req.Options[name], url.String())
+		var err error
+		if sequence {
+			for _, v := range strings.Split(value, ",") {
+				v, err = validateOption(v, optionType, link)
+				if err != nil {
+					return validationError(name, v, err)
+				}
+				req.Options[name] = append(req.Options[name], v)
 			}
 		} else {
-			req.Options[name] = []string{value}
+			value, err = validateOption(value, optionType, link)
+			if err != nil {
+				return validationError(name, value, err)
+			}
+			req.Options[name] = append(req.Options[name], value)
 		}
 		return nil
 	}
+}
+
+func validationError(optionName, value string, cause error) error {
+	msg := "'" + value + "' is not allowed as the value for option --" + optionName
+	if cause != nil {
+		msg += (": " + cause.Error())
+	}
+	return errors.New(msg)
+}
+
+func validateOption(value string, optionType pipeline.DataType, link *PipelineLink) (result string, err error) {
+	result = value
+	switch t := optionType.(type) {
+	case pipeline.XsBoolean:
+		var b bool
+		b, err = strconv.ParseBool(value)
+		if err == nil {
+			result = strconv.FormatBool(b)
+		}
+	case pipeline.XsInteger:
+		_, err = strconv.ParseInt(value, 0, 0)
+	case pipeline.XsAnyURI:
+		// _, err = url.Parse(value)
+	case pipeline.AnyFileURI:
+		var u *url.URL
+		u, err = pathToUri(value, getBasePath(link.IsLocal()))
+		if err == nil {
+			result = u.String()
+		}
+	case pipeline.AnyDirURI:
+		var u *url.URL
+		u, err = pathToUri(value, getBasePath(link.IsLocal()))
+		if err == nil {
+			result = u.String()
+		}
+	case pipeline.Pattern:
+		var match bool
+		match, err = regexp.MatchString("^(?:" + t.Pattern + ")$", value)
+		if err == nil && ! match {
+			err = errors.New("does not match /" + t.Pattern + "/")
+			return
+		}
+	case pipeline.Choice:
+		for _, v := range t.Values {
+			result, err = validateOption(value, v, link)
+			if err == nil {
+				break
+			}
+		}
+		if err != nil {
+			err = errors.New("does not match " + uncolor(optionTypeToString(t, "", "")))
+			return
+		}
+	case pipeline.Value:
+		if t.Value != value {
+			err = errors.New("does not match '" + t.Value + "'")
+			return
+		}
+	default:
+	}
+	if err != nil {
+		err = errors.New("does not match " + uncolor(optionTypeToString(optionType, "", ""))+ ": " + err.Error())
+	}
+	return
 }
 
 //Gets the basepath. If the fwk accepts local uri's (file:///)
@@ -340,37 +418,44 @@ func getBasePath(isLocal bool) string {
 
 //Accepts several paths separated by separator and constructs the URLs
 //relative to base path
-func pathToUri(paths string, separator string, basePath string) (urls []url.URL, err error) {
-	var urlBase *url.URL
-
+func pathToUri(path string, basePath string) (u *url.URL, err error) {
 	if basePath != "" {
-		if string(basePath[0]) != "/" {
-			//for windows path to build a proper url
-			basePath = "/" + basePath
-		}
-		urlBase, err = url.Parse("file:" + basePath)
-	}
-	if err != nil {
-		return nil, err
-	}
-	inputs := strings.Split(paths, ",")
-	for _, input := range inputs {
-		var urlInput *url.URL
+		// localfs
+		var baseUrl *url.URL
 		if basePath != "" {
-			urlInput, err = url.Parse(filepath.ToSlash(input))
-			if err != nil {
-				return nil, err
+			if string(basePath[0]) != "/" {
+				//for windows path to build a proper url
+				basePath = "/" + basePath
 			}
-			urlInput = urlBase.ResolveReference(urlInput)
-		} else {
-			//TODO is opaque really apropriate?
-			urlInput = &url.URL{
-				Opaque: filepath.ToSlash(input),
-			}
+			baseUrl, err = url.Parse("file:" + basePath)
 		}
-		urls = append(urls, *urlInput)
+		if err != nil {
+			return
+		}
+		u, err = url.Parse(filepath.ToSlash(path))
+		if err != nil {
+			return
+		}
+		u = baseUrl.ResolveReference(u)
+		// check that file exists (do it at the end so that the url resolving part can be tested)
+		// FIXME: use basePath instead of implicit pwd
+		// FIXME: does this also work for directories?
+		_, err = os.Stat(path)
+		if os.IsNotExist(err) {
+			return
+		} else {
+			err = nil
+		}
+		if u.Scheme != "file" || ! u.IsAbs() {
+			err = errors.New("unexpected error")
+		}
+	} else {
+		// FIXME: check if file present in zip
+		//TODO is opaque really apropriate?
+		u = &url.URL{
+			Opaque: filepath.ToSlash(path),
+		}
 	}
-	//clean
 	return
 }
 
