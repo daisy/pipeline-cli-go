@@ -266,7 +266,7 @@ func getAsyncMessages(p PipelineLink, jobId string, messages chan Message) {
 		} else {
 			messages <- Message{Progress: job.Messages.Progress}
 		}
-		if job.Status == "DONE" || job.Status == "ERROR" || job.Status == "FAIL" {
+		if job.Status == "SUCCESS" || job.Status == "ERROR" || job.Status == "FAIL" {
 			messages <- Message{Status: job.Status}
 			close(messages)
 			return

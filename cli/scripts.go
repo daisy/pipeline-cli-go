@@ -129,7 +129,7 @@ func (j jobExecution) run(stdOut io.Writer) error {
 				fmt.Fprintf(stdOut, "The job has been deleted from the server\n")
 			}
 			fmt.Fprintf(stdOut, "Job finished with status: %v\n", status)
-			if (!ok && (status == "DONE" || status == "FAIL")) {
+			if (!ok && (status == "SUCCESS" || status == "FAIL")) {
 				fmt.Fprintf(stdOut, "No results available\n")
 			}
 		}
