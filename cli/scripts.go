@@ -205,7 +205,7 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 		jExec.verbose = false
 		return nil
 	})
-	command.AddSwitch("persistent", "p", "Delete the job after it is executed", func(string, string) error {
+	command.AddSwitch("persistent", "p", "Do not delete the job after it is executed", func(string, string) error {
 		jExec.persistent = true
 		return nil
 	})
