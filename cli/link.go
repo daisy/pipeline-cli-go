@@ -27,7 +27,7 @@ type PipelineApi interface {
 	ScriptUrl(id string) string
 	Job(string, int) (pipeline.Job, error)
 	DeleteJob(id string) (bool, error)
-	Results(id string, w io.Writer) error
+	Results(id string, w io.Writer) (bool, error)
 	Log(id string) ([]byte, error)
 	Jobs() (pipeline.Jobs, error)
 	Halt(key string) error
@@ -135,7 +135,7 @@ func (p PipelineLink) Delete(jobId string) (ok bool, err error) {
 }
 
 //Return the zipped results as a []byte
-func (p PipelineLink) Results(jobId string, w io.Writer) error {
+func (p PipelineLink) Results(jobId string, w io.Writer) (ok bool, err error) {
 	return p.pipeline.Results(jobId, w)
 }
 func (p PipelineLink) Log(jobId string) (data []byte, err error) {
@@ -266,7 +266,7 @@ func getAsyncMessages(p PipelineLink, jobId string, messages chan Message) {
 		} else {
 			messages <- Message{Progress: job.Messages.Progress}
 		}
-		if job.Status == "DONE" || job.Status == "ERROR" || job.Status == "VALIDATION_FAIL" {
+		if job.Status == "SUCCESS" || job.Status == "ERROR" || job.Status == "FAIL" {
 			messages <- Message{Status: job.Status}
 			close(messages)
 			return

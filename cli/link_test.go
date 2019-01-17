@@ -66,7 +66,7 @@ var (
 		},
 	}
 	JOB_2 = pipeline.Job{
-		Status:   "DONE",
+		Status:   "SUCCESS",
 		Nicename: "the_other_job",
 		Id:       "job2",
 		Priority: "high",
