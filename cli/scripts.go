@@ -82,16 +82,26 @@ func (j jobExecution) run(stdOut io.Writer) error {
 			return err
 		}
 	}
-	//get realtime messages and status from the webservice
+	//get realtime messages, status and progress from the webservice
 	status := job.Status
+	progress := 0.0
+	printProgressBar(stdOut, progress)
 	for msg := range messages {
 		if msg.Error != nil {
 			err = msg.Error
 			return err
 		}
-		//print messages
-		if j.verbose {
-			fmt.Fprintln(stdOut, msg.String())
+		if j.verbose && msg.Message != "" || msg.Progress > progress {
+			//erase previous line
+			//FIXME: don't do this when debug logging enabled
+			fmt.Fprint(stdOut, "\033[1A\033[K")
+			if j.verbose && msg.Message != "" {
+				fmt.Fprintln(stdOut, msg.String())
+			}
+			if (msg.Progress > progress) {
+				progress = msg.Progress
+			}
+			printProgressBar(stdOut, progress)
 		}
 		status = msg.Status
 	}
@@ -122,6 +132,17 @@ func (j jobExecution) run(stdOut io.Writer) error {
 
 	}
 	return nil
+}
+
+func printProgressBar(stdOut io.Writer, value float64) {
+	bar := ""
+	for i := 1; i <= int(value * 72); i++ {
+		bar += "#"
+	}
+	for len(bar) < 72 {
+		bar += " "
+	}
+	fmt.Fprintf(stdOut, "%v %.1f%%\n", bar, value * 100)
 }
 
 var commonFlags = []string{"--output", "--zip", "--nicename", "--priority", "--quiet", "--persistent", "--background"}

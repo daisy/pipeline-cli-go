@@ -12,10 +12,11 @@ const (
 	JobStatusTemplate = `
 Job Id: {{.Data.Id }}
 Status: {{.Data.Status}}
-Priority: {{.Data.Priority}}
+{{if .Running}}Progress: {{.Data.Messages.Progress | printAsPercentage}}
+{{end}}Priority: {{.Data.Priority}}
 {{if .Verbose}}Messages:
-{{range .Data.Messages}}
-({{.Sequence}})[{{.Level}}]      {{.Content}}
+{{range .Data.Messages.Message}}
+[{{.Level}}]	{{.Content}}
 {{end}}
 {{end}}
 `
@@ -39,12 +40,14 @@ Pipeline authentication:        {{.Authentication}}
 type printableJob struct {
 	Data    pipeline.Job
 	Verbose bool
+	Running bool
 }
 
 func AddJobStatusCommand(cli *Cli, link PipelineLink) {
 	printable := &printableJob{
 		Data:    pipeline.Job{},
 		Verbose: false,
+		Running: false,
 	}
 	fn := func(args ...string) (interface{}, error) {
 		job, err := link.Job(args[0])
@@ -52,6 +55,9 @@ func AddJobStatusCommand(cli *Cli, link PipelineLink) {
 			return nil, err
 		}
 		printable.Data = job
+		if (job.Status == "RUNNING") {
+			printable.Running = true
+		}
 		return printable, nil
 	}
 	cmd := newCommandBuilder("status", "Returns the status of the job with id JOB_ID").
