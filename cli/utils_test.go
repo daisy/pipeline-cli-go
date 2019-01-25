@@ -132,7 +132,7 @@ func TestLoadKeyOpenError(t *testing.T) {
 	keyFile = "thiskeyfiledoensntexist"
 	_, err := loadKey()
 	if err == nil {
-		t.Errorf("Expected error loading key didn't occur", err)
+		t.Errorf("Expected error loading key didn't occur")
 	}
 }
 
