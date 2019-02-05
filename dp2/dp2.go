@@ -8,7 +8,7 @@ import (
 	"github.com/daisy/pipeline-cli-go/cli"
 )
 
-var minJavaVersion = 9
+var minJavaVersion = 11
 
 func main() {
 	log.SetFlags(log.Lshortfile)
