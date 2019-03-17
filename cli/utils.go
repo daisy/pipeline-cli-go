@@ -106,7 +106,7 @@ func NewZipInflator(folder string) *ZipInflator {
 
 }
 
-//Writes the  data to a intermediate buffer
+//Write writes the  data to a intermediate buffer
 func (z *ZipInflator) Write(data []byte) (int, error) {
 	return z.buff.Write(data)
 }

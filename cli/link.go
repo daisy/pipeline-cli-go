@@ -105,7 +105,7 @@ func bringUp(pLink *PipelineLink) error {
 	return nil
 }
 
-//ScriptList returns the list of scripts available in the framework
+//Scripts returns the list of scripts available in the framework
 func (p PipelineLink) Scripts() (scripts []pipeline.Script, err error) {
 	scriptsStruct, err := p.pipeline.Scripts()
 	if err != nil {
@@ -122,7 +122,7 @@ func (p PipelineLink) Scripts() (scripts []pipeline.Script, err error) {
 	return scripts, err
 }
 
-//Gets the job identified by the jobId
+//Job gets the job identified by the jobId
 func (p PipelineLink) Job(jobId string) (job pipeline.Job, err error) {
 	job, err = p.pipeline.Job(jobId, 0)
 	return
@@ -134,7 +134,7 @@ func (p PipelineLink) Delete(jobId string) (ok bool, err error) {
 	return
 }
 
-//Return the zipped results as a []byte
+//Results returns the zipped results as a []byte
 func (p PipelineLink) Results(jobId string, w io.Writer) (ok bool, err error) {
 	return p.pipeline.Results(jobId, w)
 }
@@ -200,7 +200,7 @@ type Message struct {
 	Error    error
 }
 
-//Returns a simple string representation of the messages strucutre:
+//String returns a simple string representation of the messages strucutre:
 //[LEVEL]   Message content
 func (m Message) String() string {
 	if m.Message != "" {
@@ -226,7 +226,7 @@ func (m Message) String() string {
 	}
 }
 
-//Executes the job request and returns a channel fed with the job's messages,errors, and status.
+//Execute executes the job request and returns a channel fed with the job's messages,errors, and status.
 //The last message will have no contents but the status of the in which the job finished
 func (p PipelineLink) Execute(jobReq JobRequest) (job pipeline.Job, messages chan Message, err error) {
 	req, err := jobRequestToPipeline(jobReq, p)

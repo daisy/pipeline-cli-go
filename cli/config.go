@@ -128,7 +128,7 @@ func (c Config) UpdateDebug() {
 	}
 }
 
-//Returns the Url composed by HOSTNAME:PORT/PATH/
+//Url returns the Url composed by HOSTNAME:PORT/PATH/
 func (c Config) Url() string {
 	return fmt.Sprintf("%v:%v/%v/", c[HOST], c[PORT], c[PATH])
 }

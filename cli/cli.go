@@ -209,21 +209,21 @@ func (c *Cli) addConfigOptions(conf Config) {
 	})
 }
 
-//Adds the command to the cli and stores the it into the scripts list
+//AddScriptCommand adds the command to the cli and stores the it into the scripts list
 func (c *Cli) AddScriptCommand(name, desc string, fn func(string, ...string) error, request *JobRequest) *subcommand.Command {
 	cmd := c.Parser.AddCommand(name, desc, fn)
 	c.Scripts = append(c.Scripts, &ScriptCommand{cmd, request})
 	return cmd
 }
 
-//Adds a static command to the cli and keeps track of it for the displaying the help
+//AddCommand adds a static command to the cli and keeps track of it for the displaying the help
 func (c *Cli) AddCommand(name, desc string, fn func(string, ...string) error) *subcommand.Command {
 	cmd := c.Parser.AddCommand(name, desc, fn)
 	c.StaticCommands = append(c.StaticCommands, cmd)
 	return cmd
 }
 
-//Adds admin related commands to the cli and keeps track of it for displaying help
+//AddAdminCommand adds admin related commands to the cli and keeps track of it for displaying help
 func (c *Cli) AddAdminCommand(name, desc string, fn func(string, ...string) error) *subcommand.Command {
 	cmd := c.Parser.AddCommand(name, desc, fn)
 	c.AdminCommands = append(c.AdminCommands, cmd)

@@ -11,6 +11,7 @@ import (
 
 /*
 Process a subset of markdown elements and prints them with flying colours!
+*/Process a subset of markdown elements and prints them with flying colours!
 */
 func Markdown(input []byte) []byte {
 	tr := NewTerminalRenderer()

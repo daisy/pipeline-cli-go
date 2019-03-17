@@ -28,7 +28,7 @@ type Flagged interface {
 	Flags() []Flag
 }
 
-//getFlags returns a slice containing the c's flags
+//Flags returns a slice containing the c's flags
 func (c *Command) Flags() []Flag {
 	//return c.Name
 	flags := make([]Flag, 0)
@@ -58,7 +58,7 @@ func (c *Command) NonMandatoryFlags() []Flag {
 	return flags
 }
 
-//Returns the command parent
+//Parent returns the command parent
 func (c Command) Parent() *Command {
 	return c.parent
 }
@@ -76,7 +76,7 @@ func newCommand(parent *Command, name string, description string, fn CommandFunc
 	}
 }
 
-//Adds a new option to the command to be used as "--option OPTION" (expects a value after the flag) in the command line
+//AddOption adds a new option to the command to be used as "--option OPTION" (expects a value after the flag) in the command line
 //The short definition has no length restriction but it should be significantly shorter that its long counterpart, it can be an empty string.
 //The function fn receives the name of the option and its value
 //Example:
@@ -91,7 +91,7 @@ func (c *Command) AddOption(long, short, shortDesc, longDesc, values string, fn 
 	return flag
 }
 
-//Adds a new switch to the command to be used as "--switch" (expects no value after the flag) in the command line
+//AddSwitch adds a new switch to the command to be used as "--switch" (expects no value after the flag) in the command line
 //The short definition has no length restriction but it should be significantly shorter that its long counterpart, it can be an empty string.
 //The function fn receives two strings, the first is the switch name and the second is just an empty string
 //Example:

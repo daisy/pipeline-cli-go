@@ -27,7 +27,7 @@ func (p *Parser) OnCommand(fn CommandFunction) {
 	p.fn = fn
 }
 
-//Execute this function once the flags have been consumed. This can be used to dinamically
+//PostFlags executes this function once the flags have been consumed. This can be used to dinamically
 //add commands depending on the flags' state
 func (p *Parser) PostFlags(fn func() error) {
 	p.postFlagsFn = fn

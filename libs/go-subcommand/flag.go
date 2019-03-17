@@ -42,7 +42,7 @@ func (f *Flag) Must(isIt bool) {
 	f.Mandatory = isIt
 }
 
-//Gets a help friendly flag representation:
+//String gets a help friendly flag representation:
 //-o,--option  OPTION           This option does this and that
 //-s,--switch                   This is a switch
 //-i,--ignoreme [IGNOREME]      Optional option
