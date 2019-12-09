@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/url"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"regexp"
@@ -545,13 +544,21 @@ func getBasePath(isLocal bool) string {
 	}
 }
 
+// mockable version of filepath.ToSlash
+func toSlash(path string) string {
+	if pathSeparator == '/' {
+		return path
+	}
+	return strings.Replace(path, string(pathSeparator), "/", -1)
+}
+
 //Accepts several paths separated by separator and constructs the URLs
 //relative to base path
 func pathToUri(path string, basePath string) (u *url.URL, err error) {
 	if basePath != "" {
 		// localfs
 		var baseUrl *url.URL
-		basePath = filepath.ToSlash(basePath)
+		basePath = toSlash(basePath)
 		if string(basePath[0]) != "/" {
 			//for windows path to build a proper url
 			basePath = "/" + basePath
@@ -560,10 +567,10 @@ func pathToUri(path string, basePath string) (u *url.URL, err error) {
 		if err != nil {
 			return
 		}
-		u, err = url.Parse(filepath.ToSlash(path))
+		u, err = url.Parse(toSlash(path))
 		if err == nil && u.IsAbs() && u.Scheme != "file" {
 			// this means the path started with a drive name (like C:) which resulted in an absolute but wrong URL (e.g. c:///)
-			u, err = url.Parse("file:/" + filepath.ToSlash(path))
+			u, err = url.Parse("file:/" + toSlash(path))
 		}
 		if err != nil {
 			return
@@ -587,7 +594,7 @@ func pathToUri(path string, basePath string) (u *url.URL, err error) {
 		// FIXME: check if file present in zip
 		//TODO is opaque really apropriate?
 		u = &url.URL{
-			Opaque: filepath.ToSlash(path),
+			Opaque: toSlash(path),
 		}
 	}
 	return
