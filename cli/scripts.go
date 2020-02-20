@@ -208,7 +208,7 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 		shortDesc = blackterm.MarkdownString(shortDesc)
 		// FIXME: assumes markdown without html
 		longDesc = blackterm.MarkdownString(longDesc)
-		command.AddOption(name, "", shortDesc, longDesc, italic("FILE"), inputFunc(jobRequest, link)).Must(true)
+		command.AddOption(name, "", shortDesc, longDesc, italic("FILE"), inputFunc(jobRequest, link)).Must(input.Required)
 	}
 
 	for _, option := range script.Options {
