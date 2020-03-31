@@ -203,7 +203,6 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 		if (shortDesc == "") {
 			shortDesc = input.NiceName
 		} else if len(longDesc) > len(shortDesc) {
-			shortDesc += " [...]"
 		}
 		shortDesc = blackterm.MarkdownString(shortDesc)
 		// FIXME: assumes markdown without html
@@ -219,7 +218,6 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 		if (shortDesc == "") {
 			shortDesc = option.NiceName
 		} else if len(longDesc) > len(shortDesc) {
-			shortDesc += " [...]"
 		}
 		shortDesc = blackterm.MarkdownString(shortDesc)
 		longDesc += ("\n\nPossible values: " + optionTypeToDetailedHelp(option.Type))
