@@ -94,11 +94,11 @@ func (j jobExecution) run(stdOut io.Writer) error {
 			return err
 		}
 		if j.verbose && msg.Message != "" || msg.Progress > progress {
-			//erase previous line
+			//erase the progress bar (last two lines)
 			//FIXME: don't do this when debug logging enabled
-			fmt.Fprint(stdOut, "\033[1A\033[K")
+			fmt.Fprint(stdOut, "\n\033[1A\033[K\033[1A\033[K")
 			if j.verbose && msg.Message != "" {
-				fmt.Fprintln(stdOut, msg.String())
+				fmt.Fprintf(stdOut, "%v\n", msg.String())
 			}
 			if (msg.Progress > progress) {
 				progress = msg.Progress
@@ -122,7 +122,7 @@ func (j jobExecution) run(stdOut io.Writer) error {
 			if err := wc.Close(); err != nil {
 				return err
 			}
-
+			fmt.Fprintln(stdOut)
 			if !j.persistent {
 				_, err = j.link.Delete(job.Id)
 				if err != nil {
@@ -141,14 +141,18 @@ func (j jobExecution) run(stdOut io.Writer) error {
 }
 
 func printProgressBar(stdOut io.Writer, value float64) {
+	line := ""
+	for len(line) < 78 {
+		line += "_"
+	}
 	bar := ""
 	for i := 1; i <= int(value * 72); i++ {
-		bar += "#"
+		bar += "█"
 	}
-	for len(bar) < 72 {
-		bar += " "
+	for len(bar) < 216 { // 72 * 3 because 3 bytes per character
+		bar += "░"
 	}
-	fmt.Fprintf(stdOut, "%v %.1f%%\n", bar, value * 100)
+	fmt.Fprintf(stdOut, "%v\n%v %.1f%% ", line, bar, value * 100)
 }
 
 var commonFlags = []string{"--output", "--zip", "--nicename", "--priority", "--quiet", "--persistent", "--background"}
