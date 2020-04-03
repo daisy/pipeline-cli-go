@@ -192,12 +192,19 @@ func scriptToCommand(script pipeline.Script, cli *Cli, link *PipelineLink) (req 
 		verbose: true,
 		zipped:  false,
 	}
-	command := cli.AddScriptCommand(script.Id, fmt.Sprintf("%s [v%s]", blackterm.MarkdownString(script.Description), script.Version), func(string, ...string) error {
-		if err := jExec.run(cli.Output); err != nil {
-			return err
-		}
-		return nil
-	}, jobRequest)
+	desc := blackterm.MarkdownString(script.Description)
+	command := cli.AddScriptCommand(
+		script.Id,
+		desc,
+		fmt.Sprintf("%s [v%s]", desc, script.Version),
+		func(string, ...string) error {
+			if err := jExec.run(cli.Output); err != nil {
+				return err
+			}
+			return nil
+		},
+		jobRequest,
+	)
 	command.SetArity(0, "")
 
 	for _, input := range script.Inputs {
