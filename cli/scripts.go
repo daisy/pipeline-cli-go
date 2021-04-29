@@ -380,7 +380,11 @@ func optionTypeToDetailedHelp(optionType pipeline.DataType) string {
 			help += indent(optionTypeToDetailedHelp(value), "  ")
 		}
 	case pipeline.Value:
-		help += ("`" + t.Value + "`")
+		if t.Value == "" {
+			help += "(empty)";
+		} else {
+			help += ("`" + t.Value + "`")
+		}
 		if t.Documentation != "" {
 			help += (": " + t.Documentation)
 		}
