@@ -307,7 +307,11 @@ func optionTypeToString(optionType pipeline.DataType, optionName string, default
 		for _, value := range t.Values {
 			choices = append(choices, optionTypeToString(value, "", defaultValue))
 		}
-		return "(" + strings.Join(choices, "|") + ")"
+		var choicesString = "(" + strings.Join(choices, "|") + ")"
+		if len(choicesString) > 60 {
+			break;
+		}
+		return choicesString
 	case pipeline.Value:
 		if t.Value == defaultValue {
 			return underline(t.Value)
