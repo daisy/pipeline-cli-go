@@ -18,8 +18,17 @@ jobs:
         with:
           java-version: '8'
           distribution: 'adopt'
-      - name: Cache downloaded dependencies
-        uses: actions/cache@v2
+      - name: Cache downloaded Go dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Cache downloaded Java dependencies
+        uses: actions/cache@v3
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
