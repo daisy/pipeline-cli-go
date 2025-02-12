@@ -131,14 +131,11 @@ func NewCli(name string, link *PipelineLink) (cli *Cli, err error) {
 			os.Exit(-1)
 		}
 		cli.AddScripts(scripts, link)
-		if !link.IsLocal() {
-			//it we are not in local mode we need to send the data
-			for _, cmd := range cli.Scripts {
-
-				cmd.addDataOption()
-			}
+		for _, cmd := range cli.Scripts {
+			//if we are not in local mode we need to send the data
+			//a remote server can also be in local mode, so always allow the data option
+			cmd.addDataOption(!link.IsLocal())
 		}
-
 		return nil
 	})
 	//add config flags

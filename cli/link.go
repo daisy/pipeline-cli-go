@@ -311,16 +311,20 @@ func flattenMessages(from []pipeline.Message, to chan Message, status string, pr
 	return lastSeq
 }
 
-func jobRequestToPipeline(req JobRequest, p PipelineLink) (pReq pipeline.JobRequest, err error) {
+func jobRequestToPipeline(req JobRequest, p PipelineLink) (pipeline.JobRequest, error) {
 	href := p.pipeline.ScriptUrl(req.Script)
-	pReq = pipeline.JobRequest{
+	pReq := pipeline.JobRequest{
 		Script:   pipeline.Script{Href: href},
 		Nicename: req.Nicename,
 		Priority: req.Priority,
 	}
 	for name, values := range req.Inputs {
 		input := pipeline.Input{Name: name}
-		for _, value := range values {
+		for _, v := range values {
+			value, err := v(req.Data)
+			if (err != nil) {
+				return pReq, err
+			}
 			input.Items = append(input.Items, pipeline.Item{Value: value.String()})
 		}
 		pReq.Inputs = append(pReq.Inputs, input)
@@ -329,11 +333,19 @@ func jobRequestToPipeline(req JobRequest, p PipelineLink) (pReq pipeline.JobRequ
 	for name, values := range req.Options {
 		option := pipeline.Option{Name: name}
 		if len(values) > 1 {
-			for _, value := range values {
+			for _, v := range values {
+				value, err := v(req.Data)
+				if (err != nil) {
+					return pReq, err
+				}
 				option.Items = append(option.Items, pipeline.Item{Value: value})
 			}
 		} else {
-			option.Value = values[0]
+			var err error
+			option.Value, err = values[0](req.Data)
+			if (err != nil) {
+				return pReq, err
+			}
 		}
 		if name == "stylesheet-parameters" {
 			stylesheetParametersOption = option
@@ -342,7 +354,11 @@ func jobRequestToPipeline(req JobRequest, p PipelineLink) (pReq pipeline.JobRequ
 		}
 	}
 	var params []string
-	for name, param := range req.StylesheetParameters {
+	for name, p := range req.StylesheetParameters {
+		param, err := p(req.Data)
+		if (err != nil) {
+			return pReq, err
+		}
 		switch param.Type.(type) {
 		case pipeline.XsBoolean,
 		     pipeline.XsInteger,
@@ -376,5 +392,5 @@ func jobRequestToPipeline(req JobRequest, p PipelineLink) (pReq pipeline.JobRequ
 	if stylesheetParametersOption.Name != "" {
 		pReq.Options = append(pReq.Options, stylesheetParametersOption)
 	}
-	return
+	return pReq, nil
 }
