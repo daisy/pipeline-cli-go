@@ -33,17 +33,17 @@ var SCRIPT pipeline.Script = pipeline.Script{
 			Ordered:   false,
 			Mediatype: "xml",
 			ShortDesc: "I'm a test option",
-			Type:      pipeline.Choice{
-				XmlDefinition:  "<choice><value>foo</value><value>bar</value></choice>",
+			Type: pipeline.Choice{
+				XmlDefinition: "<choice><value>foo</value><value>bar</value></choice>",
 				Values: []pipeline.DataType{
 					pipeline.Value{
 						XmlDefinition: "<value>foo</value>",
-						Value: "foo",
+						Value:         "foo",
 						Documentation: "",
 					},
 					pipeline.Value{
 						XmlDefinition: "<value>bar</value>",
-						Value: "bar",
+						Value:         "bar",
 						Documentation: "",
 					},
 				},
@@ -219,14 +219,6 @@ func TestConfigIntOptions(t *testing.T) {
 	if err == nil {
 		t.Errorf("Port: non numeric type controll failed")
 	}
-	err = cli.Run([]string{"--" + WSTIMEUP, "abit", "test"})
-	if err == nil {
-		t.Errorf("ws_time_out: non numeric type controll failed")
-	}
-	err = cli.Run([]string{"--timeout" + TIMEOUT, "now!", "test"})
-	if err == nil {
-		t.Errorf("Port: non numeric type controll failed")
-	}
 
 }
 func TestConfigBooleanOptions(t *testing.T) {
@@ -246,10 +238,6 @@ func TestConfigBooleanOptions(t *testing.T) {
 	if err == nil {
 		t.Errorf("starting: non boolean type controll failed")
 	}
-	err = cli.Run([]string{"--timeout" + TIMEOUT, "now!", "test"})
-	if err == nil {
-		t.Errorf("Port: no numeric type controll failed")
-	}
 
 }
 func TestConfigOptions(t *testing.T) {
@@ -264,11 +252,9 @@ func TestConfigOptions(t *testing.T) {
 		HOST:         "http://google.com",
 		PORT:         80,
 		PATH:         "pipeline",
-		WSTIMEUP:     1,
-		EXECLINE:     "the_noose",
+		APPPATH:      "the_noose",
 		CLIENTKEY:    "rounded",
 		CLIENTSECRET: "he_likes_justin_beiber",
-		TIMEOUT:      3,
 		DEBUG:        true,
 		STARTING:     true,
 	}
@@ -276,11 +262,9 @@ func TestConfigOptions(t *testing.T) {
 	err = cli.Run([]string{"--" + HOST, exp[HOST].(string),
 		"--" + PORT, strconv.Itoa(exp[PORT].(int)),
 		"--" + PATH, exp[PATH].(string),
-		"--" + WSTIMEUP, strconv.Itoa(exp[WSTIMEUP].(int)),
-		"--" + EXECLINE, exp[EXECLINE].(string),
+		"--" + APPPATH, exp[APPPATH].(string),
 		"--" + CLIENTKEY, exp[CLIENTKEY].(string),
 		"--" + CLIENTSECRET, exp[CLIENTSECRET].(string),
-		"--" + TIMEOUT, strconv.Itoa(exp[TIMEOUT].(int)),
 		"--" + DEBUG, strconv.FormatBool(true),
 		"--" + STARTING, strconv.FormatBool(true),
 		"help",

@@ -20,7 +20,7 @@ const (
 	OH_MY_GOSH = "-Dgosh.args=--noi"
 )
 
-//Holds the needed information to launch the pipeline
+// Holds the needed information to launch the pipeline
 type Launcher struct {
 	pinger Pinger                //An object to ask about the status of the ws
 	timeup int                   //The time up to wait for it
@@ -28,17 +28,17 @@ type Launcher struct {
 	runner func(*exec.Cmd) error //A function to start the command (only modifiable for testing)
 }
 
-//Interface that allows to check if the ws is up
+// Interface that allows to check if the ws is up
 type Pinger interface {
 	Alive() (alive pipeline.Alive, err error)
 }
 
-//Wraps a call to cmd.Start
+// Wraps a call to cmd.Start
 func execRunner(cmd *exec.Cmd) error {
 	return cmd.Start()
 }
 
-//Creates a new launcher
+// Creates a new launcher
 func NewPipelineLauncher(p Pinger, path string, timeup int) Launcher {
 	return Launcher{
 		pinger: p,
@@ -48,7 +48,7 @@ func NewPipelineLauncher(p Pinger, path string, timeup int) Launcher {
 	}
 }
 
-//Configures the command to be exected
+// Configures the command to be executed
 func (l Launcher) command() *exec.Cmd {
 	path := filepath.FromSlash(l.path)
 	log.Printf("command path %v\n", path)
@@ -68,7 +68,7 @@ func (l Launcher) command() *exec.Cmd {
 	return cmd
 }
 
-//Waits for the pipeline
+// Waits for the pipeline
 func (l Launcher) wait(cAlive chan pipeline.Alive, tries chan int) {
 	log.Println("Calling alive")
 	triesCnt := 1
@@ -87,7 +87,7 @@ func (l Launcher) wait(cAlive chan pipeline.Alive, tries chan int) {
 
 }
 
-//Launches the pipeline writing the output messages to the supplied
+// Launches the pipeline writing the output messages to the supplied
 func (l Launcher) Launch(w io.Writer) (alive pipeline.Alive, err error) {
 	log.Println("Starting the fwk")
 	//launch the ws
@@ -121,8 +121,8 @@ func (l Launcher) Launch(w io.Writer) (alive pipeline.Alive, err error) {
 	}
 }
 
-//Appends the gogo shell ignore input directive
-//to the JAVA_OPS
+// Appends the gogo shell ignore input directive
+// to the JAVA_OPS
 func appendOpts(javaOptsVar string) string {
 	//just the value
 	val := strings.TrimLeft(javaOptsVar, JAVA_OPTS+"=")

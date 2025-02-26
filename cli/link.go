@@ -6,9 +6,11 @@ import (
 	"io"
 	"log"
 	"os"
-	"time"
+	"os/exec"
 	"regexp"
+	"slices"
 	"strings"
+	"time"
 
 	"github.com/daisy/pipeline-clientlib-go"
 )
@@ -17,7 +19,7 @@ const (
 	MSG_WAIT = 1000 * time.Millisecond //waiting time for getting messages
 )
 
-//Convinience for testing, propably move to pipeline-clientlib-go
+// Convinience for testing, propably move to pipeline-clientlib-go
 type PipelineApi interface {
 	SetCredentials(string, string)
 	SetUrl(string)
@@ -45,7 +47,7 @@ type PipelineApi interface {
 	MoveDown(id string) ([]pipeline.QueueJob, error)
 }
 
-//Maintains some information about the pipeline client
+// Maintains some information about the pipeline client
 type PipelineLink struct {
 	pipeline       PipelineApi //Allows access to the pipeline fwk
 	config         Config
@@ -84,17 +86,43 @@ func (p PipelineLink) IsLocal() bool {
 	return p.FsAllow
 }
 
-//checks if the pipeline is up
-//otherwise it brings it up and fills the
-//link object
+// checks if the pipeline is up
+// otherwise it brings it up and fills the
+// link object
 func bringUp(pLink *PipelineLink) error {
 	alive, err := pLink.pipeline.Alive()
 	if err != nil {
-		if pLink.config[STARTING].(bool) {
-			alive, err = NewPipelineLauncher(pLink.pipeline,
-				pLink.config.ExecPath(), pLink.config[TIMEOUT].(int)).Launch(os.Stdout)
-			if err != nil {
-				return fmt.Errorf("Error bringing the pipeline2 up %v", err.Error())
+		// Requested behavior :
+		// dp2 launches pipeline-ui (if needed); dp2 calls pipeline-ui as cli handler; pipeline-ui calls dp2 with the port info as an argument
+
+		// When port attribute is set, the cli tool should not try to start a pipeline instance
+		// and directly connect to pipeline instance for which the port is set on the command line
+		if pLink.config[STARTING].(bool) && !(slices.Contains(os.Args[1:], "--port") || slices.Contains(os.Args[1:], "--host")) {
+			execpath := pLink.config.ExecPath()
+			// if execpath ends with DAISY Pipeline or DAISY Pipeline.exe
+			// we forward the command to the electron app
+			if strings.HasSuffix(execpath, "DAISY Pipeline") || strings.HasSuffix(execpath, "DAISY Pipeline.exe") {
+				args := os.Args[1:]
+				if len(os.Args) == 1 {
+					args = append(args, "help")
+				}
+				cmd := exec.Command(execpath, args...)
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+				if err := cmd.Run(); err != nil {
+					return fmt.Errorf("Could not use the pipeline app: %v", err)
+				} else {
+					os.Exit(cmd.ProcessState.ExitCode())
+				}
+			} else {
+				alive, err = NewPipelineLauncher(
+					pLink.pipeline,
+					execpath,
+					10,
+				).Launch(os.Stdout)
+				if err != nil {
+					return fmt.Errorf("Error bringing the pipeline2 up %v", err.Error())
+				}
 			}
 		} else {
 			return fmt.Errorf("Could not connect to the webservice and I'm not configured to start one\n\tError: %v", err.Error())
@@ -107,7 +135,7 @@ func bringUp(pLink *PipelineLink) error {
 	return nil
 }
 
-//ScriptList returns the list of scripts available in the framework
+// ScriptList returns the list of scripts available in the framework
 func (p PipelineLink) Scripts() (scripts []pipeline.Script, err error) {
 	scriptsStruct, err := p.pipeline.Scripts()
 	if err != nil {
@@ -125,19 +153,19 @@ func (p PipelineLink) Scripts() (scripts []pipeline.Script, err error) {
 	return scripts, err
 }
 
-//Gets the job identified by the jobId
+// Gets the job identified by the jobId
 func (p PipelineLink) Job(jobId string) (job pipeline.Job, err error) {
 	job, err = p.pipeline.Job(jobId, 0)
 	return
 }
 
-//Deletes the given job
+// Deletes the given job
 func (p PipelineLink) Delete(jobId string) (ok bool, err error) {
 	ok, err = p.pipeline.DeleteJob(jobId)
 	return
 }
 
-//Return the zipped results as a []byte
+// Return the zipped results as a []byte
 func (p PipelineLink) Results(jobId string, w io.Writer) (ok bool, err error) {
 	return p.pipeline.Results(jobId, w)
 }
@@ -154,7 +182,7 @@ func (p PipelineLink) Jobs() (jobs []pipeline.Job, err error) {
 	return
 }
 
-//Admin
+// Admin
 func (p PipelineLink) Halt(key string) error {
 	return p.pipeline.Halt(key)
 }
@@ -193,7 +221,7 @@ func (p PipelineLink) MoveDown(id string) (queue []pipeline.QueueJob, err error)
 	return p.pipeline.MoveDown(id)
 }
 
-//Convience structure to handle message and errors from the communication with the pipelineApi
+// Convience structure to handle message and errors from the communication with the pipelineApi
 type Message struct {
 	Message  string
 	Level    string
@@ -203,8 +231,8 @@ type Message struct {
 	Error    error
 }
 
-//Returns a simple string representation of the messages strucutre:
-//[LEVEL]   Message content
+// Returns a simple string representation of the messages strucutre:
+// [LEVEL]   Message content
 func (m Message) String() string {
 	if m.Message != "" {
 		indent := ""
@@ -217,7 +245,7 @@ func (m Message) String() string {
 		}
 		str := ""
 		for i, line := range regexp.MustCompile("\r?\n|\r").Split(m.Message, -1) {
-			if (i == 0) {
+			if i == 0 {
 				str += fmt.Sprintf("%v %v%v", level, indent, line)
 			} else {
 				str += fmt.Sprintf("\n           %v%v", indent, line)
@@ -229,8 +257,8 @@ func (m Message) String() string {
 	}
 }
 
-//Executes the job request and returns a channel fed with the job's messages,errors, and status.
-//The last message will have no contents but the status of the in which the job finished
+// Executes the job request and returns a channel fed with the job's messages,errors, and status.
+// The last message will have no contents but the status of the in which the job finished
 func (p PipelineLink) Execute(jobReq JobRequest) (job pipeline.Job, messages chan Message, err error) {
 	req, err := jobRequestToPipeline(jobReq, p)
 	if err != nil {
@@ -260,7 +288,7 @@ func (p PipelineLink) StylesheetParameters(paramReq StylesheetParametersRequest)
 	return
 }
 
-//Feeds the channel with the messages describing the job's execution
+// Feeds the channel with the messages describing the job's execution
 func getAsyncMessages(p PipelineLink, jobId string, messages chan Message) {
 	msgSeq := -1
 	for {
@@ -272,9 +300,9 @@ func getAsyncMessages(p PipelineLink, jobId string, messages chan Message) {
 		}
 		n := msgSeq
 		if len(job.Messages.Message) > 0 {
-			n = flattenMessages(job.Messages.Message, messages, job.Status, job.Messages.Progress, msgSeq + 1, 0)
+			n = flattenMessages(job.Messages.Message, messages, job.Status, job.Messages.Progress, msgSeq+1, 0)
 		}
-		if (n > msgSeq) {
+		if n > msgSeq {
 			msgSeq = n
 		} else {
 			messages <- Message{Progress: job.Messages.Progress}
@@ -289,8 +317,8 @@ func getAsyncMessages(p PipelineLink, jobId string, messages chan Message) {
 
 }
 
-//Flatten message coming from the Pipeline job and feed them into the channel
-//Return the sequence number of the inner message with the highest sequence number
+// Flatten message coming from the Pipeline job and feed them into the channel
+// Return the sequence number of the inner message with the highest sequence number
 func flattenMessages(from []pipeline.Message, to chan Message, status string, progress float64, firstSeq int, depth int) (lastSeq int) {
 	lastSeq = -1
 	for _, msg := range from {
@@ -302,7 +330,7 @@ func flattenMessages(from []pipeline.Message, to chan Message, status string, pr
 			}
 		}
 		if len(msg.Message) > 0 {
-			seq := flattenMessages(msg.Message, to, status, progress, firstSeq, depth + 1)
+			seq := flattenMessages(msg.Message, to, status, progress, firstSeq, depth+1)
 			if seq > lastSeq {
 				lastSeq = seq
 			}
@@ -345,18 +373,18 @@ func jobRequestToPipeline(req JobRequest, p PipelineLink) (pReq pipeline.JobRequ
 	for name, param := range req.StylesheetParameters {
 		switch param.Type.(type) {
 		case pipeline.XsBoolean,
-		     pipeline.XsInteger,
-		     pipeline.XsNonNegativeInteger:
+			pipeline.XsInteger,
+			pipeline.XsNonNegativeInteger:
 			params = append(params, fmt.Sprintf("%s: %s", name, param.Value))
 		default:
 			params = append(params,
-			                fmt.Sprintf("%s: '%s'", name, strings.NewReplacer(
-			                                                  "\n", "\\A ",
-			                                                  "'", "\\27 ",
-			                                              ).Replace(param.Value)))
+				fmt.Sprintf("%s: '%s'", name, strings.NewReplacer(
+					"\n", "\\A ",
+					"'", "\\27 ",
+				).Replace(param.Value)))
 		}
 	}
-	if (len(params) > 0) {
+	if len(params) > 0 {
 		value := fmt.Sprintf("(%s)", strings.Join(params, ", "))
 		if stylesheetParametersOption.Name == "" {
 			stylesheetParametersOption = pipeline.Option{Name: "stylesheet-parameters"}
@@ -369,8 +397,8 @@ func jobRequestToPipeline(req JobRequest, p PipelineLink) (pReq pipeline.JobRequ
 				stylesheetParametersOption.Value = ""
 			}
 			stylesheetParametersOption.Items = append(
-					stylesheetParametersOption.Items,
-					pipeline.Item{Value: value})
+				stylesheetParametersOption.Items,
+				pipeline.Item{Value: value})
 		}
 	}
 	if stylesheetParametersOption.Name != "" {

@@ -109,7 +109,7 @@ func (in Inputs) Less(i, j int) bool {
 	return in[i].Name < in[j].Name
 }
 
-//Tests the correct creation of a new link
+// Tests the correct creation of a new link
 func TestNewLink(t *testing.T) {
 
 	config[STARTING] = true
@@ -242,7 +242,7 @@ func TestBadStart(t *testing.T) {
 	pipeline := newPipelineTest(true)
 	pipeline.authentication = true
 	config[STARTING] = true
-	config[EXECLINE] = "nonexistingprogram"
+	config[APPPATH] = "nonexistingprogram"
 	link := PipelineLink{pipeline: pipeline, config: config}
 	err := link.Init()
 	if err == nil {

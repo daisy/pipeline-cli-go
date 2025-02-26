@@ -1,6 +1,8 @@
 module github.com/daisy/pipeline-cli-go
 
-go 1.19
+go 1.23.0
+
+toolchain go1.23.5
 
 // replace github.com/daisy/pipeline-clientlib-go => /Users/bert/src/github/daisy/pipeline/clientlib/go
 
@@ -17,7 +19,8 @@ require (
 	github.com/mitchellh/gox v1.0.1
 	github.com/mitchellh/iochan v1.0.0
 	github.com/russross/blackfriday v1.6.0
-	golang.org/x/mod v0.7.0
-	golang.org/x/tools v0.5.0
+	golang.org/x/exp v0.0.0-20250218142911-aa4b98e5adaa
+	golang.org/x/mod v0.23.0
+	golang.org/x/tools v0.30.0
 	launchpad.net/goyaml v0.0.0-20140305200416-000000000051
 )
