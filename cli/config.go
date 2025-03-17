@@ -1,13 +1,17 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"slices"
+	"strings"
 
 	"github.com/kardianos/osext"
 	"launchpad.net/goyaml"
@@ -17,9 +21,8 @@ import (
 const (
 	HOST         = "host"
 	PORT         = "port"
-	PATH         = "ws_path"
-	WSTIMEUP     = "ws_timeup"
-	EXECLINE     = "exec_line"
+	PATH         = "path"
+	APPPATH      = "app_path"
 	CLIENTKEY    = "client_key"
 	CLIENTSECRET = "client_secret"
 	TIMEOUT      = "timeout"
@@ -42,8 +45,7 @@ var config = Config{
 	HOST:         "http://localhost",
 	PORT:         8181,
 	PATH:         "ws",
-	WSTIMEUP:     25,
-	EXECLINE:     "",
+	APPPATH:      "",
 	CLIENTKEY:    "",
 	CLIENTSECRET: "",
 	TIMEOUT:      10,
@@ -57,13 +59,12 @@ var config_descriptions = map[string]string{
 	HOST:         "Pipeline's webservice host",
 	PORT:         "Pipeline's webserivce port",
 	PATH:         "Pipeline's webservice path, as in http://daisy.org:8181/path",
-	WSTIMEUP:     "Time to wait until the webserivce starts in seconds",
-	EXECLINE:     "Pipeline webserivice executable path",
+	APPPATH:      "Path of the DAISY Pipeline app or the pipeline launch script to use the webservice. If empty or only containing 'DAISY Pipeline', the app is searched in the PATH",
 	CLIENTKEY:    "Client key for authenticated requests",
 	CLIENTSECRET: "Client secrect for authenticated requests",
 	TIMEOUT:      "Http connection timeout in seconds",
 	DEBUG:        "Print debug messages. true or false. ",
-	STARTING:     "Start the webservice in the local computer if it is not running. true or false",
+	STARTING:     "Start the webservice or the DAISY Pipeline app in the local computer if it is not running. true or false",
 }
 
 //Makes a copy of the default config
@@ -95,10 +96,33 @@ func NewConfig() Config {
 
 //Loads the default configuration file
 func loadDefault(cnf Config) error {
-	folder, err := osext.ExecutableFolder()
+	// first check if a config file is present in the current working directory
+	cwd, err := os.Getwd()
+	if err == nil {
+		file, err := os.Open(filepath.Join(cwd, DEFAULT_FILE))
+		if err == nil {
+			err = cnf.FromYaml(file)
+			defer file.Close()
+			if err == nil {
+				return nil
+			}
+		}
+	}
+	// no config file found in folder, check next to the dp2 executable
+	// check if the current executable is a symlink, and if so, get the real path
+	execPath, err := osext.Executable()
 	if err != nil {
 		return err
 	}
+	if info, err := os.Lstat(execPath); err == nil && (info.Mode()&os.ModeSymlink != 0) {
+		if resolvedPath, err := os.Readlink(execPath); err == nil {
+			execPath = resolvedPath
+		} else {
+			return err
+		}
+	}
+
+	folder := filepath.Dir(execPath)
 	file, err := os.Open(folder + string(os.PathSeparator) + DEFAULT_FILE)
 	if err != nil {
 		return err
@@ -113,6 +137,11 @@ func loadDefault(cnf Config) error {
 
 //Loads the contents of the yaml file into the configuration
 func (c Config) FromYaml(r io.Reader) error {
+	// only use the default webservice values if app_path is not set or can
+	// not be found (and the webservice is not configured by the user)
+	c[HOST] = ""
+	c[PORT] = 0
+	c[PATH] = ""
 	bytes, err := ioutil.ReadAll(r)
 	if err != nil {
 		return err
@@ -122,6 +151,29 @@ func (c Config) FromYaml(r io.Reader) error {
 		return err
 	}
 	c.UpdateDebug()
+	// Check app path validity
+	if (c[APPPATH].(string) != "" ) {
+		if _, err := os.Stat(c.ExecPath()); errors.Is(err, os.ErrNotExist) {
+			// app does not exists, disable the app path and warn the user
+			fmt.Printf("warning - provided app path was not found : %s\n", c[APPPATH].(string))
+			c[APPPATH] = ""
+		}
+	}
+	// App path is empty or points to a non-existing path or a webservice config is defined
+	// - Reset webservice default values if not defined in config file
+	// - Disable starting the app
+	if(c[APPPATH].(string) == "" || c[HOST].(string) != "" || c[PORT].(int) != 0 || c[PATH].(string) != "") {
+		c[STARTING] = false
+		if(c[HOST].(string) == "") {
+			c[HOST] = config[HOST]
+		}
+		if(c[PORT].(int) == 0) {
+			c[PORT] = config[PORT]
+		}
+		if(c[PATH].(string) == "") {
+			c[PATH] = config[PATH]
+		}
+	}
 	return err
 }
 
@@ -135,11 +187,14 @@ func (c Config) UpdateDebug() {
 	}
 }
 
-//Returns the Url composed by HOSTNAME:PORT/PATH/
+// Returns the Url composed by `HOSTNAME:PORT/PATH/`
+//
+// Note that the PATH is trimmed from slashes at begining or end of the string
 func (c Config) Url() string {
-	return fmt.Sprintf("%v:%v/%v/", c[HOST], c[PORT], c[PATH])
+	return fmt.Sprintf("%v:%v/%v/", c[HOST], c[PORT], strings.Trim(c[PATH].(string), "/"))
 }
 func (c Config) ExecPath() string {
+	// this will possibly not resolve symlinked executables
 	base, err := osext.ExecutableFolder()
 	if err != nil {
 		panic("Error getting executable path")
@@ -148,7 +203,27 @@ func (c Config) ExecPath() string {
 }
 
 func (c Config) buildPath(base string) string {
-	p := filepath.FromSlash(c[EXECLINE].(string))
+	execpath := c[APPPATH].(string)
+	//empty app path defaults to looking for DAISY Pipeline app in the PATH
+	if execpath == "" {
+		execpath = "DAISY Pipeline"
+	}
+
+	switch runtime.GOOS {
+	case "windows":
+		//on windows, check by its extension if the provided runner is a script
+		//or an executable, and add the .exe extension if it's not there
+		//(to handle default execpath value)
+		winExt := []string{".exe", ".bat", ".cmd", ".ps1"}
+		if !slices.Contains(winExt, execpath[len(execpath)-4:]) {
+			execpath += ".exe"
+		}
+	}
+	if path, _err := exec.LookPath(execpath); _err == nil {
+		//exec found in path, return the absolute path of the app
+		return filepath.FromSlash(path)
+	}
+	p := filepath.FromSlash(execpath)
 	if filepath.IsAbs(p) {
 		return p
 	} else {
