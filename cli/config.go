@@ -191,7 +191,12 @@ func (c Config) UpdateDebug() {
 //
 // Note that the PATH is trimmed from slashes at begining or end of the string
 func (c Config) Url() string {
-	return fmt.Sprintf("%v:%v/%v/", c[HOST], c[PORT], strings.Trim(c[PATH].(string), "/"))
+	path := strings.Trim(c[PATH].(string), "/")
+	if (path != "") {
+		// re-add trailing slash at the end of the path
+		path += "/"
+	}
+	return fmt.Sprintf("%v:%v/%v", c[HOST], c[PORT], path)
 }
 func (c Config) ExecPath() string {
 	// this will possibly not resolve symlinked executables
