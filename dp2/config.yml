@@ -1,18 +1,20 @@
-#WS CONFIGURATION
+# Pipeline's webservice host
 host: http://localhost
+# Pipeline's webservice port
 port: 8181
-ws_path: ws
-ws_timeup: 25
-#DP2 launch config 
-exec_line: ../../../../../../../daisy/pipeline-assembly/target/dev-launcher/bin/pipeline2
-
-local: true
-# ROBOT CONF
-client_key: clientid
-client_secret: supersecret
-#connection settings
+# Pipeline's webservice path, as in HOST:PORT/PATH (e.g. http://localhost:8181/ws)
+path: ws
+# Timeout for requests to the webservice in seconds
 timeout: 10
-#debug
-debug: false
-starting: true
+# Path of the DAISY Pipeline app or the pipeline launch script to use the webservice.
+# If empty or only containing 'DAISY Pipeline', the app is searched in the PATH
+#app_path:
+# Client key for authenticated requests
+#client_key:
+# Client secrect for authenticated requests
+#client_secret:
 
+# Print debug messages
+debug: false
+# Start the webservice or the DAISY Pipeline app in the local computer if it is not running
+starting: false

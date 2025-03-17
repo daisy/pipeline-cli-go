@@ -15,8 +15,7 @@ var (
 #WS CONFIGURATION
 host: http://daisy.org
 port: 9999
-ws_path: ws
-ws_timeup: 10
+path: ws
 #DP2 launch config 
 exec_line: prog 
 local: true
@@ -34,8 +33,7 @@ starting: true
 		"url":           "http://localhost:8181/ws/",
 		"host":          "http://daisy.org",
 		"port":          9999,
-		"ws_path":       "ws",
-		"ws_timeup":     10,
+		"path":          "ws",
 		"exec_line":     "prog",
 		"client_key":    "clientid",
 		"client_secret": "supersecret",
@@ -65,14 +63,9 @@ func tCompareCnfs(one, exp Config, t *testing.T) {
 	if res != exp[test] {
 		t.Errorf(T_STRING, test, exp[test], res)
 	}
-	test = WSTIMEUP
-	res = one[WSTIMEUP]
-	if res != exp[test] {
-		t.Errorf(T_STRING, test, exp[test], res)
-	}
 
-	test = EXECLINE
-	res = one[EXECLINE]
+	test = APPPATH
+	res = one[APPPATH]
 	if res != exp[test] {
 		t.Errorf(T_STRING, test, exp[test], res)
 	}
@@ -153,15 +146,15 @@ func TestNewConfigDefaultFile(t *testing.T) {
 func TestBuildPath(t *testing.T) {
 	//from a absolute path
 	conf := Config{}
-	conf[EXECLINE] = "/home/cosa/pipeline2"
+	conf[APPPATH] = "/home/cosa/pipeline2"
 	base := "/tmp"
 	path := conf.buildPath(base)
 	fmt.Printf("path %+v\n", path)
-	if path != conf[EXECLINE] {
-		t.Errorf("If the path is absolute no resolving against base should be done %v %v", path, conf[EXECLINE])
+	if path != conf[APPPATH] {
+		t.Errorf("If the path is absolute no resolving against base should be done %v %v", path, conf[APPPATH])
 
 	}
-	conf[EXECLINE] = "../cosa/pipeline2"
+	conf[APPPATH] = "../cosa/pipeline2"
 	path = conf.buildPath(base)
 	if path != filepath.FromSlash("/tmp/../cosa/pipeline2") {
 		t.Errorf("The path is not being resolved %v", path)
