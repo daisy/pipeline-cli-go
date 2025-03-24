@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/kardianos/osext"
 	"launchpad.net/goyaml"
@@ -79,10 +80,16 @@ func copyConf() Config {
 func NewConfig() Config {
 	cnf := copyConf()
 	if err := loadDefault(cnf); err != nil {
-		fmt.Println("Warning : no default configuration file found")
-		log.Println(err.Error())
-		return copyConf()
+		cnf = copyConf()
+		// Only warn about missing configurationg file when debugging is enabled.
+		// Because debugging is disabled by default, we assume that if a --debug
+		// argument is found in the command line, it is there for enabling it.
+		if cnf[DEBUG].(bool) || slices.Contains(os.Args[1:], "--debug") {
+			fmt.Println("Warning : no default configuration file found")
+			fmt.Println(err.Error())
+		}
 	}
+	cnf.UpdateDebug()
 	return cnf
 }
 
