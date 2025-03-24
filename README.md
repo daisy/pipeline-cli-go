@@ -63,14 +63,12 @@ Modify the settings in the file config.yml or alternatively use the global witch
 Global Options:
        --host [HOST]    Pipeline's webservice host (default http://localhost)
        --port [PORT]    Pipeline's webserivce port (default 8181)
-       --exec_line_win [EXEC_LINE_WIN]  Pipeline webserivice executable path in windows systems (default )
+       --app_path [APPPATH]  DAISY Pipeline app or Pipeline webservice executable path (default to empty)
        --debug [DEBUG]  Print debug messages. true or false.  (default false)
-       --ws_path [WS_PATH]      Pipeline's webservice path, as in http://daisy.org:8181/path (default ws)
-       --exec_line_nix [EXEC_LINE_NIX]  Pipeline webserivice executable path in unix-like systems (default /home/javi/bin/pipeline2)
+       --path [path]      Pipeline's webservice path, as in http://daisy.org:8181/path (default ws)
        --client_secret [CLIENT_SECRET]  Client secrect for authenticated requests (default supersecret)
        --timeout [TIMEOUT]      Http connection timeout in seconds (default 10)
-       --starting [STARTING]    Start the webservice in the local computer if it is not running. true or false (default false)
-       --ws_timeup [WS_TIMEUP]  Time to wait until the webserivce starts in seconds (default 25)
+       --starting [STARTING]    Start the DAISY Pipeline app or the webservice in the local computer if it is not running. true or false (default false)
        --client_key [CLIENT_KEY]        Client key for authenticated requests (default clientid)
        -f,--file [FILE]        Alternative configuration file
 ```
