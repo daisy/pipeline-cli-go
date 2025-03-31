@@ -23,6 +23,7 @@ const (
 	PORT         = "port"
 	PATH         = "ws_path"
 	APPPATH      = "app_path"
+	EXECLINE     = "exec_line" // hidden feature
 	CLIENTKEY    = "client_key"
 	CLIENTSECRET = "client_secret"
 	TIMEOUT      = "timeout"
@@ -46,6 +47,7 @@ var config = Config{
 	PORT:         8181,
 	PATH:         "ws",
 	APPPATH:      "",
+	EXECLINE:     "",
 	CLIENTKEY:    "",
 	CLIENTSECRET: "",
 	TIMEOUT:      10,
@@ -153,7 +155,7 @@ func (c Config) FromYaml(r io.Reader) error {
 	c.UpdateDebug()
 	// Check app path validity
 	if (c[APPPATH].(string) != "" ) {
-		if _, err := os.Stat(c.ExecPath()); errors.Is(err, os.ErrNotExist) {
+		if _, err := os.Stat(c.AppPath()); errors.Is(err, os.ErrNotExist) {
 			// app does not exists, disable the app path and warn the user
 			fmt.Printf("warning - provided app path was not found : %s\n", c[APPPATH].(string))
 			c[APPPATH] = ""
@@ -213,16 +215,13 @@ func (c Config) Url() string {
 	testUrl := fmt.Sprintf("%v:%v/%v", host, port, path)
 	return testUrl
 }
-func (c Config) ExecPath() string {
+
+func (c Config) AppPath() string {
 	// this will possibly not resolve symlinked executables
 	base, err := osext.ExecutableFolder()
 	if err != nil {
 		panic("Error getting executable path")
 	}
-	return c.buildPath(base)
-}
-
-func (c Config) buildPath(base string) string {
 	execpath := c[APPPATH].(string)
 	// An empty app path defaults to looking for DAISY Pipeline app in
 	// the PATH. Note that we choose not to use "DAISY Pipeline" as
@@ -231,14 +230,28 @@ func (c Config) buildPath(base string) string {
 	if execpath == "" {
 		execpath = "DAISY Pipeline"
 	}
+	return buildPath(base, execpath)
+}
 
+func (c Config) ExecLine() string {
+	base, err := osext.ExecutableFolder()
+	if err != nil {
+		panic("Error getting executable path")
+	}
+	return buildPath(base, c[EXECLINE].(string))
+}
+
+func buildPath(base string, execpath string) string {
+	if (execpath == "") {
+		return ""
+	}
 	switch runtime.GOOS {
 	case "windows":
 		//on windows, check by its extension if the provided runner is a script
 		//or an executable, and add the .exe extension if it's not there
 		//(to handle default execpath value)
 		winExt := []string{".exe", ".bat", ".cmd", ".ps1"}
-		if !slices.Contains(winExt, execpath[len(execpath)-4:]) {
+		if execpath != "" && !slices.Contains(winExt, execpath[len(execpath)-4:]) {
 			execpath += ".exe"
 		}
 	}

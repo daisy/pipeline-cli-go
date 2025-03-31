@@ -262,6 +262,7 @@ func TestConfigOptions(t *testing.T) {
 		PORT:         80,
 		PATH:         "pipeline",
 		APPPATH:      "the_noose",
+		EXECLINE:     "",
 		CLIENTKEY:    "rounded",
 		CLIENTSECRET: "he_likes_justin_beiber",
 		TIMEOUT:      3,

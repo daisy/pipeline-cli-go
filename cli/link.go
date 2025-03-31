@@ -100,23 +100,44 @@ func bringUp(pLink *PipelineLink) error {
 		// - The default webservice config, reinstated due to missing or incorrect app path
 		alive, err = pLink.pipeline.Alive()
 		if err != nil {
-			return fmt.Errorf("could not connect to pipeline webservice at %s\n\tError: %v", pLink.config.Url(), err.Error())
+			if pLink.config[STARTING] != nil && pLink.config[STARTING].(bool) {
+				execpath := pLink.config.ExecLine()
+				if (execpath != "") {
+					// the exec_line setting was kept for backward compatibility, intended
+					// for use on Linux (where there is no Pipeline app available)
+					alive, err = NewPipelineLauncher(
+						pLink.pipeline,
+						execpath,
+						pLink.config[TIMEOUT].(int),
+					).Launch(os.Stdout)
+					if err != nil {
+						return fmt.Errorf("failed to bring up the webservice: %v", err.Error())
+					}
+				}
+			}
+			if (err != nil) {
+				return fmt.Errorf("could not connect to the webservice at %s\n\tError: %v",
+					pLink.config.Url(),
+					err.Error())
+			}
 		}
 	} else {
-		// No webservice configured fron initial configuration checks
-		// Check if daisy pipeline app is running
+		// No webservice configured from initial configuration checks
+		// Check if Pipeline app is running
 		processes, err := ps.Processes()
 		if err == nil {
 			execFound := ""
 			for _, element := range processes {
 				app := element.Executable()
-				if strings.HasSuffix(app, "DAISY Pipeline") || strings.HasSuffix(app, "DAISY Pipeline.exe") {
+				if strings.HasSuffix(app, "DAISY Pipeline") ||
+					strings.HasSuffix(app, "DAISY Pipeline.exe") ||
+					pLink.config[APPPATH] != nil && pLink.config[APPPATH].(string) == app {
 					execFound = app
 					break
 				}
 			}
 			if execFound != "" {
-				// Found a running instance of the pipeline app : reuse it with the command line tool
+				// Found a running instance of the Pipeline app: reuse it with the command line tool
 				// (Note: multiple instance of the app are not allowed in the electron app)
 				args := os.Args[1:]
 				if len(os.Args) == 1 {
@@ -126,7 +147,8 @@ func bringUp(pLink *PipelineLink) error {
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 				if err := cmd.Run(); err != nil {
-					return fmt.Errorf("could not use the running instance of the pipeline app: %v", err)
+					return fmt.Errorf(
+						"could not connect to the running instance of the DAISY Pipeline app: %v", err)
 				} else {
 					os.Exit(cmd.ProcessState.ExitCode())
 				}
@@ -135,12 +157,11 @@ func bringUp(pLink *PipelineLink) error {
 		// if no running app process was found, continue here
 		// If the starting flag was set to true (set in config + valid path was provided)
 		if pLink.config[STARTING] != nil && pLink.config[STARTING].(bool) {
-			// execpath is validated now at the config level in config.FromYaml
-			// and the ExecPath returns the resolved path
-			execpath := pLink.config.ExecPath()
-			// if execpath ends with DAISY Pipeline or DAISY Pipeline.exe
-			// we forward the command to the electron app
-			if strings.HasSuffix(execpath, "DAISY Pipeline") || strings.HasSuffix(execpath, "DAISY Pipeline.exe") {
+			// app_path is validated at the config level in config.FromYaml()
+			// config.AppPath() returns the resolved path
+			execpath := pLink.config.AppPath()
+			if (execpath != "") {
+				// forward the command to the electron app
 				args := os.Args[1:]
 				if len(os.Args) == 1 {
 					args = append(args, "help")
@@ -149,29 +170,27 @@ func bringUp(pLink *PipelineLink) error {
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 				if err := cmd.Run(); err != nil {
-					return fmt.Errorf("could not use the pipeline app: %v", err)
+					return fmt.Errorf(
+						"could not start the DAISY Pipeline app at %s: %v", execpath, err)
 				} else {
 					os.Exit(cmd.ProcessState.ExitCode())
 				}
 			} else {
-				// path is expected to be a pipeline launch command
-				alive, err = NewPipelineLauncher(
-					pLink.pipeline,
-					execpath,
-					pLink.config[TIMEOUT].(int),
-				).Launch(os.Stdout)
-				if err != nil {
-					return fmt.Errorf("error bringing the pipeline2 up %v", err.Error())
-				}
+				return fmt.Errorf(
+					"could not locate the Pipeline app")
 			}
-		} else {
-			// fallback to default configuration
-			pLink.config = copyConf()
-			pLink.pipeline.SetUrl(pLink.config.Url())
-			alive, err = pLink.pipeline.Alive()
-			if err != nil {
-				return fmt.Errorf("could not connect to DAISY Pipeline app or default pipeline webservice at %s, and I'm not configured to start one\n\tError: %v",pLink.config.Url(), err.Error())
-			}
+		}
+		// fallback to default configuration
+		pLink.config = copyConf()
+		pLink.pipeline.SetUrl(pLink.config.Url())
+		alive, err = pLink.pipeline.Alive()
+		if err != nil {
+			return fmt.Errorf(
+				"The DAISY Pipeline app is not running," +
+				" and could not connect to the default webservice address (%s)." +
+				" Pass \"--starting true\" to start the app automatically.\n\tError: %v",
+				pLink.config.Url(),
+				err.Error())
 		}
 	}
 	log.Println("Setting values")

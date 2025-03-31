@@ -30,6 +30,7 @@ starting: true
 		"port":          9999,
 		"ws_path":       "ws",
 		"app_path":      "", // value should be emptied by the loading to avoid loading non existing programs
+		"exec_line":     "",
 		"client_key":    "clientid",
 		"client_secret": "supersecret",
 		"timeout":       10,
@@ -143,14 +144,14 @@ func TestBuildPath(t *testing.T) {
 	conf := Config{}
 	conf[APPPATH] = "/home/cosa/pipeline2"
 	base := "/tmp"
-	path := conf.buildPath(base)
+	path := buildPath(base, conf[APPPATH].(string))
 	fmt.Printf("path %+v\n", path)
 	if path != conf[APPPATH] {
 		t.Errorf("If the path is absolute no resolving against base should be done %v %v", path, conf[APPPATH])
 
 	}
 	conf[APPPATH] = "../cosa/pipeline2"
-	path = conf.buildPath(base)
+	path = buildPath(base, conf[APPPATH].(string))
 	if path != filepath.FromSlash("/tmp/../cosa/pipeline2") {
 		t.Errorf("The path is not being resolved %v", path)
 
