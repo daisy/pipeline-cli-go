@@ -56,15 +56,15 @@ var config = Config{
 //Config items descriptions
 var config_descriptions = map[string]string{
 
-	HOST:         "Pipeline's webservice host",
-	PORT:         "Pipeline's webserivce port",
-	PATH:         "Pipeline's webservice path, as in http://daisy.org:8181/path",
-	APPPATH:      "Path of the DAISY Pipeline app or the pipeline launch script to use the webservice. If empty or only containing 'DAISY Pipeline', the app is searched in the PATH",
+	HOST:         "Host part of webservice address. Leave empty if you wish to use the app_path setting",
+	PORT:         "Port part of webservice address. Leave empty if you wish to use the app_path setting",
+	PATH:         "Path part of webservice address, as in HOST:PORT/PATH (e.g. http://localhost:8181/ws). Leave empty if you wish to use the app_path setting",
+	APPPATH:      "Path to the DAISY Pipeline app. If left empty, the PATH is searched for a \"DAISY Pipeline\" executable",
 	CLIENTKEY:    "Client key for authenticated requests",
-	CLIENTSECRET: "Client secrect for authenticated requests",
-	TIMEOUT:      "Http connection timeout in seconds",
-	DEBUG:        "Print debug messages. true or false. ",
-	STARTING:     "Start the webservice or the DAISY Pipeline app in the local computer if it is not running. true or false",
+	CLIENTSECRET: "Client secret for authenticated requests",
+	TIMEOUT:      "Timeout for requests to the webservice in seconds",
+	DEBUG:        "Print debug messages",
+	STARTING:     "Start the DAISY Pipeline app if it is not running",
 }
 
 //Makes a copy of the default config
@@ -224,7 +224,10 @@ func (c Config) ExecPath() string {
 
 func (c Config) buildPath(base string) string {
 	execpath := c[APPPATH].(string)
-	//empty app path defaults to looking for DAISY Pipeline app in the PATH
+	// An empty app path defaults to looking for DAISY Pipeline app in
+	// the PATH. Note that we choose not to use "DAISY Pipeline" as
+	// the default config value, because this would result in a
+	// "provided app path was not found" warning if no app is found.
 	if execpath == "" {
 		execpath = "DAISY Pipeline"
 	}

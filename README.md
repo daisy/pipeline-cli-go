@@ -57,18 +57,5 @@ Detailed help for a single command:     dp2 help COMMAND
 Configuration
 -------------
 
-Modify the settings in the file config.yml or alternatively use the global witches:
-
-```
-Global Options:
-       --host [HOST]    Pipeline's webservice host (default http://localhost)
-       --port [PORT]    Pipeline's webserivce port (default 8181)
-       --app_path [APPPATH]  DAISY Pipeline app or Pipeline webservice executable path (default to empty)
-       --debug [DEBUG]  Print debug messages. true or false.  (default false)
-       --ws_path [WS_PATH]      Pipeline's webservice path, as in http://daisy.org:8181/path (default ws)
-       --client_secret [CLIENT_SECRET]  Client secrect for authenticated requests (default supersecret)
-       --timeout [TIMEOUT]      Http connection timeout in seconds (default 10)
-       --starting [STARTING]    Start the DAISY Pipeline app or the webservice in the local computer if it is not running. true or false (default false)
-       --client_key [CLIENT_KEY]        Client key for authenticated requests (default clientid)
-       -f,--file [FILE]        Alternative configuration file
-```
+Modify the settings in config.yml or alternatively use the global
+switches (run `dp2 help -g` to get the list).
