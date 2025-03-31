@@ -14,7 +14,7 @@ var (
 	YAML = `
 host: http://daisy.org
 port: 9999
-path: ws
+ws_path: ws
 app_path: prog
 client_key: clientid
 client_secret: supersecret
@@ -28,7 +28,7 @@ starting: true
 		"url":           "http://localhost:8181/ws/",
 		"host":          "http://daisy.org",
 		"port":          9999,
-		"path":          "ws",
+		"ws_path":       "ws",
 		"app_path":      "", // value should be emptied by the loading to avoid loading non existing programs
 		"client_key":    "clientid",
 		"client_secret": "supersecret",

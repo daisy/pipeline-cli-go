@@ -21,7 +21,7 @@ import (
 const (
 	HOST         = "host"
 	PORT         = "port"
-	PATH         = "path"
+	PATH         = "ws_path"
 	APPPATH      = "app_path"
 	CLIENTKEY    = "client_key"
 	CLIENTSECRET = "client_secret"

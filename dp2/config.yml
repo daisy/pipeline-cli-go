@@ -3,7 +3,7 @@ host: http://localhost
 # Pipeline's webservice port
 port: 8181
 # Pipeline's webservice path, as in HOST:PORT/PATH (e.g. http://localhost:8181/ws)
-path: ws
+ws_path: ws
 # Timeout for requests to the webservice in seconds
 timeout: 10
 # Path of the DAISY Pipeline app or the pipeline launch script to use the webservice.
