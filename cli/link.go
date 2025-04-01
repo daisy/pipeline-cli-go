@@ -92,7 +92,9 @@ func (p PipelineLink) IsLocal() bool {
 func bringUp(pLink *PipelineLink) error {
 	var alive pipeline.Alive
 	var err error
-	if !(pLink.config[HOST].(string) == "" && pLink.config[PORT].(int) == 0 && pLink.config[PATH].(string) == "") {
+	if !((pLink.config[HOST] == nil || pLink.config[HOST].(string) == "") &&
+		 (pLink.config[HOST] == nil || pLink.config[PORT].(int) == 0) &&
+		 (pLink.config[PATH] == nil || pLink.config[PATH].(string) == "")) {
 		// A webservice is configured to be used in loaded configuration either from
 		// - the user provided config (config file or command line)
 		// - The default webservice config, reinstated due to missing or incorrect app path
@@ -132,7 +134,7 @@ func bringUp(pLink *PipelineLink) error {
 		}
 		// if no running app process was found, continue here
 		// If the starting flag was set to true (set in config + valid path was provided)
-		if pLink.config[STARTING].(bool) {
+		if pLink.config[STARTING] != nil && pLink.config[STARTING].(bool) {
 			// execpath is validated now at the config level in config.FromYaml
 			// and the ExecPath returns the resolved path
 			execpath := pLink.config.ExecPath()

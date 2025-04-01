@@ -187,16 +187,31 @@ func (c Config) UpdateDebug() {
 	}
 }
 
-// Returns the Url composed by `HOSTNAME:PORT/PATH/`
+// Returns the Url composed by `HOST:PORT/PATH/`
+//
+// For each HOST, PORT and PATH values, if not defined in the config file,
+// the default values are used to build the url (http://localhost:8181/ws/).
 //
 // Note that the PATH is trimmed from slashes at begining or end of the string
 func (c Config) Url() string {
-	path := strings.Trim(c[PATH].(string), "/")
+	var path = config[PATH].(string);
+	if c[PATH] != nil {
+		path = strings.Trim(c[PATH].(string), "/")
+	}
 	if (path != "") {
 		// re-add trailing slash at the end of the path
 		path += "/"
 	}
-	return fmt.Sprintf("%v:%v/%v", c[HOST], c[PORT], path)
+	var host = config[HOST].(string)
+	if (c[HOST] != nil) {
+		host = c[HOST].(string)
+	}
+	var port = config[PORT].(int)
+	if (c[PORT] != nil) {
+		port = c[PORT].(int)
+	}
+	testUrl := fmt.Sprintf("%v:%v/%v", host, port, path)
+	return testUrl
 }
 func (c Config) ExecPath() string {
 	// this will possibly not resolve symlinked executables
