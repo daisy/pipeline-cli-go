@@ -168,7 +168,10 @@ func (c *Cli) setHelp() {
 //Adds the configuration global options to the parser
 func (c *Cli) addConfigOptions(conf Config) {
 	for option, desc := range config_descriptions {
-		c.AddOption(option, "", fmt.Sprintf("%v (default %v)", desc, conf[option]), "", "", func(optName string, value string) error {
+		if conf[option] != "" {
+			desc = fmt.Sprintf("%v (default %v)", desc, conf[option])
+		}
+		c.AddOption(option, "", desc, "", "", func(optName string, value string) error {
 			log.Println("option:", optName, "value:", value)
 			switch conf[optName].(type) {
 			case int:
@@ -202,6 +205,7 @@ func (c *Cli) addConfigOptions(conf Config) {
 			log.Printf(err.Error())
 			return fmt.Errorf("File not found %v", filePath)
 		}
+		conf[CONFPATH] = filePath
 		return conf.FromYaml(file)
 	})
 }
