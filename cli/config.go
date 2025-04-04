@@ -29,6 +29,7 @@ const (
 	TIMEOUT      = "timeout"
 	DEBUG        = "debug"
 	STARTING     = "starting"
+	CONFPATH     = "conf_path"
 )
 
 //Other convinience constants
@@ -36,6 +37,8 @@ const (
 	ERR_STR      = "Error parsing configuration: %v"
 	DEFAULT_FILE = "config.yml"
 )
+
+var WIN_EXT = []string{".exe", ".bat", ".cmd", ".ps1"}
 
 //Config is just a map
 type Config map[string]interface{}
@@ -53,6 +56,7 @@ var config = Config{
 	TIMEOUT:      10,
 	DEBUG:        false,
 	STARTING:     false,
+	CONFPATH:     DEFAULT_FILE, // path to the config file, for path resolution (not exposed through config_descriptions)
 }
 
 //Config items descriptions
@@ -68,6 +72,7 @@ var config_descriptions = map[string]string{
 	DEBUG:        "Print debug messages",
 	STARTING:     "Start the DAISY Pipeline app if it is not running",
 }
+
 
 //Makes a copy of the default config
 func copyConf() Config {
@@ -103,6 +108,7 @@ func loadDefault(cnf Config) error {
 	if err == nil {
 		file, err := os.Open(filepath.Join(cwd, DEFAULT_FILE))
 		if err == nil {
+			cnf[CONFPATH] = filepath.Join(cwd, DEFAULT_FILE)
 			err = cnf.FromYaml(file)
 			defer file.Close()
 			if err == nil {
@@ -125,11 +131,12 @@ func loadDefault(cnf Config) error {
 	}
 
 	folder := filepath.Dir(execPath)
-	file, err := os.Open(folder + string(os.PathSeparator) + DEFAULT_FILE)
+	file, err := os.Open(filepath.Join(folder, DEFAULT_FILE))
 	if err != nil {
 		return err
 	}
 	defer file.Close()
+	cnf[CONFPATH] = filepath.Join(folder, DEFAULT_FILE)
 	err = cnf.FromYaml(file)
 	if err != nil {
 		return err
@@ -155,11 +162,30 @@ func (c Config) FromYaml(r io.Reader) error {
 	c.UpdateDebug()
 	// Check app path validity
 	if (c[APPPATH].(string) != "" ) {
-		if _, err := os.Stat(c.AppPath()); errors.Is(err, os.ErrNotExist) {
-			// app does not exists, disable the app path and warn the user
-			fmt.Printf("warning - provided app path was not found : %s\n", c[APPPATH].(string))
-			c[APPPATH] = ""
+		apppath := c.AppPath()
+		switch runtime.GOOS {
+		case "windows":
+			for _, ext := range WIN_EXT {
+				if _, err := os.Stat(apppath + ext); !errors.Is(err, os.ErrNotExist) {
+					// found an executable with the given extension
+					c[APPPATH] = apppath + ext
+					break
+				}
+			}
+			// Check if the app path exists as is
+			if _, err := os.Stat(apppath); errors.Is(err, os.ErrNotExist) {
+				// app does not exists, disable the app path and warn the user
+				fmt.Printf("warning - provided app path was not found : %s (resolved as %s)\n", c[APPPATH].(string), apppath)
+				c[APPPATH] = ""
+			}
+		default:
+			if _, err := os.Stat(apppath); errors.Is(err, os.ErrNotExist) {
+				// app does not exists, disable the app path and warn the user
+				fmt.Printf("warning - provided app path was not found : %s (resolved as %s)\n", c[APPPATH].(string), apppath)
+				c[APPPATH] = ""
+			}
 		}
+		
 	}
 	// App path is empty or points to a non-existing path or a webservice config is defined
 	// - Reset webservice default values if not defined in config file
@@ -217,11 +243,18 @@ func (c Config) Url() string {
 }
 
 func (c Config) AppPath() string {
-	// this will possibly not resolve symlinked executables
-	base, err := osext.ExecutableFolder()
-	if err != nil {
-		panic("Error getting executable path")
+	var base = ""
+	err := error(nil)
+	if c[CONFPATH] != nil {
+		base = filepath.Dir(c[CONFPATH].(string))
+	} else {
+		// this will possibly not resolve symlinked executables
+		base, err = osext.ExecutableFolder()
+		if err != nil {
+			panic("Error getting executable path")
+		}
 	}
+	
 	execpath := c[APPPATH].(string)
 	// An empty app path defaults to looking for DAISY Pipeline app in
 	// the PATH. Note that we choose not to use "DAISY Pipeline" as
@@ -234,9 +267,16 @@ func (c Config) AppPath() string {
 }
 
 func (c Config) ExecLine() string {
-	base, err := osext.ExecutableFolder()
-	if err != nil {
-		panic("Error getting executable path")
+	var base = ""
+	err := error(nil)
+	if c[CONFPATH] != nil {
+		base = filepath.Dir(c[CONFPATH].(string))
+	} else {
+		// this will possibly not resolve symlinked executables
+		base, err = osext.ExecutableFolder()
+		if err != nil {
+			panic("Error getting executable path")
+		}
 	}
 	return buildPath(base, c[EXECLINE].(string))
 }
@@ -245,24 +285,32 @@ func buildPath(base string, execpath string) string {
 	if (execpath == "") {
 		return ""
 	}
+	// Check if the execpath is available the PATH
 	switch runtime.GOOS {
 	case "windows":
-		//on windows, check by its extension if the provided runner is a script
-		//or an executable, and add the .exe extension if it's not there
-		//(to handle default execpath value)
-		winExt := []string{".exe", ".bat", ".cmd", ".ps1"}
-		if execpath != "" && !slices.Contains(winExt, execpath[len(execpath)-4:]) {
-			execpath += ".exe"
+		//on windows, check for all extensions if a matching executable can be found in PATH
+		for _, ext := range WIN_EXT {
+			testingapp := execpath
+			if len(testingapp) < len(ext) || testingapp[len(testingapp)-len(ext):] != ext {
+				testingapp = testingapp + ext
+			}
+			if path, _err := exec.LookPath(testingapp); _err == nil {
+				//app or executable found in path, return the absolute path of it
+				return filepath.FromSlash(path)
+			}
 		}
-	}
-	if path, _err := exec.LookPath(execpath); _err == nil {
-		//exec found in path, return the absolute path of the app
-		return filepath.FromSlash(path)
+		fallthrough
+	default:
+		// Check if the execpath is available the PATH
+		if path, _err := exec.LookPath(execpath); _err == nil {
+			//app or executable found in path, return the absolute path of it
+			return filepath.FromSlash(path)
+		}
 	}
 	p := filepath.FromSlash(execpath)
 	if filepath.IsAbs(p) {
 		return p
 	} else {
-		return base + string(filepath.Separator) + p
+		return filepath.Join(base, p)
 	}
 }

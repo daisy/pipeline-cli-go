@@ -205,6 +205,7 @@ func (c *Cli) addConfigOptions(conf Config) {
 			log.Printf(err.Error())
 			return fmt.Errorf("File not found %v", filePath)
 		}
+		conf[CONFPATH] = filePath
 		return conf.FromYaml(file)
 	})
 }

@@ -268,6 +268,7 @@ func TestConfigOptions(t *testing.T) {
 		TIMEOUT:      3,
 		DEBUG:        true,
 		STARTING:     true,
+		CONFPATH:     DEFAULT_FILE,
 	}
 
 	err = cli.Run([]string{"--" + HOST, exp[HOST].(string),
@@ -337,6 +338,8 @@ func TestConfigFile(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
-	tCompareCnfs(res, EXP, t)
+	EXP2 := copyMap(EXP)
+	EXP2[CONFPATH] = tmpFile.Name()
+	tCompareCnfs(res, EXP2, t)
 
 }

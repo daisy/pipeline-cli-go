@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/kardianos/osext"
@@ -36,8 +37,18 @@ starting: true
 		"timeout":       10,
 		"starting":      false, // should be reset to false as the prog exec does not exists
 		"debug":         true,
+		"conf_path":     "config.yml", // default value, relative to the executable path
 	}
 )
+
+func copyMap(m map[string]interface{})map[string]interface{} {
+    m2 := make(map[string]interface{}, len(m))
+    var id string
+    for id = range m {
+		m2[id] = m[id]
+    }
+    return m2
+}
 
 func tCompareCnfs(one, exp Config, t *testing.T) {
 	var res interface{}
@@ -94,7 +105,15 @@ func tCompareCnfs(one, exp Config, t *testing.T) {
 	if res != exp[test] {
 		t.Errorf(T_STRING, test, exp[test], res)
 	}
+
+	test = CONFPATH
+	res = one[test]
+	if res != exp[test] {
+		t.Errorf(T_STRING, test, exp[test], res)
+	}
 }
+
+
 func TestConfigYaml(t *testing.T) {
 	yalmStr := bytes.NewBufferString(YAML)
 	cnf := copyConf()
@@ -125,7 +144,11 @@ func TestNewConfigDefaultFile(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
-	file, err := os.Create(folder + string(os.PathSeparator) + DEFAULT_FILE)
+	confpath := filepath.Join(folder, DEFAULT_FILE)
+	file, err := os.Create(confpath)
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
 	_, err = file.WriteString(YAML)
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
@@ -136,25 +159,59 @@ func TestNewConfigDefaultFile(t *testing.T) {
 	}
 
 	cnf := NewConfig()
-	tCompareCnfs(cnf, EXP, t)
+	// When reading from a file, the confpath should point to the file path
+	EXP2 := copyMap(EXP)
+	EXP2[CONFPATH] = confpath
+	tCompareCnfs(cnf, EXP2, t)
+
+	// testing with a dummy executable file relative to config
+	dummypath := filepath.Join(folder, "prog")
+	_, err = os.Create(dummypath)
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	cnf = NewConfig()
+	apppath := cnf.AppPath()
+	expected := filepath.Join(folder, cnf[APPPATH].(string))
+	if apppath != expected {
+		t.Errorf("The app path is not being resolved (result: %v | expected: %v)", apppath, expected)
+	}
 }
 
+
 func TestBuildPath(t *testing.T) {
+
 	//from a absolute path
 	conf := Config{}
 	conf[APPPATH] = "/home/cosa/pipeline2"
 	base := "/tmp"
+	switch runtime.GOOS {
+	case "windows":
+		//on windows, check by its extension if the provided runner is a script
+		//or an executable, and add the .exe extension if it's not there
+		//(to handle default execpath value)
+		conf[APPPATH] = "C:\\Users\\cosa\\pipeline2.exe"
+		base = "F:\\tmp"
+	}
+	
 	path := buildPath(base, conf[APPPATH].(string))
 	fmt.Printf("path %+v\n", path)
 	if path != conf[APPPATH] {
-		t.Errorf("If the path is absolute no resolving against base should be done %v %v", path, conf[APPPATH])
+		t.Errorf("If the path is absolute no resolving against base should be done (result: %v | tested: %v)", path, conf[APPPATH])
 
 	}
 	conf[APPPATH] = "../cosa/pipeline2"
+	switch runtime.GOOS {
+	case "windows":
+		//on windows, check by its extension if the provided runner is a script
+		//or an executable, and add the .exe extension if it's not there
+		//(to handle default execpath value)
+		conf[APPPATH] = "../cosa/pipeline2.exe"
+	}
 	path = buildPath(base, conf[APPPATH].(string))
-	if path != filepath.FromSlash("/tmp/../cosa/pipeline2") {
-		t.Errorf("The path is not being resolved %v", path)
-
+	expected := filepath.Join(base, conf[APPPATH].(string))
+	if path != expected {
+		t.Errorf("The path is not being resolved (result: %v | expected: %v)", path, expected)
 	}
 
 }
