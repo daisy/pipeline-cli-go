@@ -13,6 +13,7 @@ import (
 
 	"github.com/daisy/pipeline-clientlib-go"
 	"github.com/mitchellh/go-ps"
+	"github.com/shirou/gopsutil/process"
 )
 
 const (
@@ -130,14 +131,19 @@ func bringUp(pLink *PipelineLink) error {
 			for _, element := range processes {
 				app := element.Executable()
 				if strings.HasSuffix(app, "DAISY Pipeline") ||
-					strings.HasSuffix(app, "DAISY Pipeline.exe") ||
-					pLink.config[APPPATH] != nil && pLink.config[APPPATH].(string) == app {
-					execFound = app
-					break
+					strings.HasSuffix(app, "DAISY Pipeline.exe") {
+					processApp, err := process.NewProcess(int32(element.Pid()))
+					if err == nil {
+						app, err = processApp.Exe()
+						if err == nil {
+							execFound = app
+						}
+					}
 				}
+
 			}
 			if execFound != "" {
-				// Found a running instance of the Pipeline app: reuse it with the command line tool
+				// Found the path of a running instance of the Pipeline app: reuse it with the command line tool
 				// (Note: multiple instance of the app are not allowed in the electron app)
 				args := os.Args[1:]
 				if len(os.Args) == 1 {
@@ -148,7 +154,7 @@ func bringUp(pLink *PipelineLink) error {
 				cmd.Stderr = os.Stderr
 				if err := cmd.Run(); err != nil {
 					return fmt.Errorf(
-						"could not connect to the running instance of the DAISY Pipeline app: %v", err)
+						"could not connect to the running instance of the DAISY Pipeline app: %v\r\n(path : %s)", err, execFound)
 				} else {
 					os.Exit(cmd.ProcessState.ExitCode())
 				}
